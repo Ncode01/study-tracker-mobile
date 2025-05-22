@@ -65,3 +65,16 @@
 - **TasksScreen UI:** Built a tabbed UI with `TabBar` for open/completed tasks, using `Consumer<TaskProvider>` and a new `TaskListItem` widget for display and toggling.
 - **Bugfixes:** Removed unused imports in `task_model.dart` and `database_helper.dart`.
 - **Documentation:** Updated `PROGRESS_LOG.md` and this file to reflect all changes in Step 7.
+
+## Design Decisions - Step 8
+
+- **Session Model:** Created `Session` model in `session_model.dart` with toMap/fromMap for SQLite. Includes id, projectId, projectName, startTime, endTime, durationMinutes.
+- **Database Schema:** Updated `DatabaseHelper` to create a `sessions` table. Added CRUD for sessions, and updateProject for loggedMinutes.
+- **TimerServiceProvider:** Manages timer state, start/stop logic, session creation, and project loggedMinutes update. Cancels previous timer if a new one is started. Notifies listeners for UI updates.
+- **ProjectProvider:** Added `updateProjectLoggedTime` to update loggedMinutes and DB, then notify listeners.
+- **Provider Integration:** Registered `TimerServiceProvider` and `SessionProvider` in `main.dart`'s `MultiProvider`.
+- **ProjectListItem:** Play/stop button now starts/stops timer for a project. Shows elapsed time if active. UI updates dynamically.
+- **SessionsScreen:** Displays all sessions using `SessionProvider` and `SessionListItem`.
+- **SessionListItem:** Shows project name, duration, and formatted start/end times using `intl`.
+- **Dependency:** Added `intl` for date formatting.
+- **Documentation:** Updated `PROGRESS_LOG.md` and this file for all changes in Step 8.

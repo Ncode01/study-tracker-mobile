@@ -45,3 +45,15 @@
 - Created: `lib/src/features/tasks/widgets/task_list_item.dart` (Purpose: Widget for displaying and toggling tasks.)
 - Modified: `lib/src/features/tasks/screens/tasks_screen.dart` (Reason: Implemented tabbed UI for open/completed tasks using TaskProvider.)
 - Fixed: Removed unused imports in `task_model.dart` and `database_helper.dart`.
+
+## Step 8: Project Timers & Session Creation
+- Created: `lib/src/models/session_model.dart` (Session data model for DB.)
+- Modified: `lib/src/services/database_helper.dart` (Added sessions table, session CRUD, updateProject.)
+- Created: `lib/src/features/timer/providers/timer_service_provider.dart` (Timer logic, session creation, project update.)
+- Modified: `lib/src/features/projects/providers/project_provider.dart` (Add updateProjectLoggedTime.)
+- Modified: `lib/main.dart` (Add TimerServiceProvider and SessionProvider to MultiProvider.)
+- Modified: `lib/src/features/projects/widgets/project_list_item.dart` (Timer-aware play/stop button, elapsed time.)
+- Created: `lib/src/features/sessions/providers/session_provider.dart` (SessionProvider for session state.)
+- Modified: `lib/src/features/sessions/screens/sessions_screen.dart` (Show all sessions using SessionProvider.)
+- Created: `lib/src/features/sessions/widgets/session_list_item.dart` (Session display widget.)
+- Dependency: Added `intl` for date formatting.

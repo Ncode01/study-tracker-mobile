@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:study/src/features/timer/providers/timer_service_provider.dart';
 import 'package:study/src/models/project_model.dart';
 import 'package:study/src/constants/app_colors.dart';
 import 'package:study/src/utils/formatters.dart';
@@ -13,6 +15,10 @@ class ProjectListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final timerProvider = Provider.of<TimerServiceProvider>(context);
+    final isActive =
+        timerProvider.isTimerRunning &&
+        timerProvider.activeProjectId == project.id;
     final percent =
         project.goalMinutes > 0
             ? (project.loggedMinutes / project.goalMinutes * 100).clamp(0, 100)
@@ -24,10 +30,25 @@ class ProjectListItem extends StatelessWidget {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(
+              isActive ? Icons.stop : Icons.play_arrow,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              if (isActive) {
+                timerProvider.stopTimer(context);
+              } else {
+                timerProvider.startTimer(project, context);
+              }
+            },
+            tooltip: isActive ? 'Stop Timer' : 'Start Timer',
+          ),
+          SizedBox(width: 8),
           CircleAvatar(
             backgroundColor: project.color,
             radius: 22,
-            child: Icon(Icons.play_arrow, color: Colors.white),
+            child: Icon(Icons.folder, color: Colors.white),
           ),
           SizedBox(width: 16),
           Column(
@@ -42,12 +63,27 @@ class ProjectListItem extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 4),
-              Text(
-                '${formatDuration(project.loggedMinutes)} / ${formatDuration(project.goalMinutes)}',
-                style: TextStyle(
-                  color: AppColors.secondaryTextColor,
-                  fontSize: 13,
-                ),
+              Row(
+                children: [
+                  Text(
+                    '${formatDuration(project.loggedMinutes)} / ${formatDuration(project.goalMinutes)}',
+                    style: TextStyle(
+                      color: AppColors.secondaryTextColor,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (isActive) ...[
+                    SizedBox(width: 8),
+                    Text(
+                      formatDuration(timerProvider.elapsedTime.inMinutes),
+                      style: TextStyle(
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

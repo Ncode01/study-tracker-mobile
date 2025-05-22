@@ -20,4 +20,24 @@ class ProjectProvider extends ChangeNotifier {
     await DatabaseHelper.instance.insertProject(project);
     await fetchProjects();
   }
+
+  Future<void> updateProjectLoggedTime({
+    required String projectId,
+    required int newLoggedMinutes,
+  }) async {
+    final index = _projects.indexWhere((p) => p.id == projectId);
+    if (index == -1) return;
+    final old = _projects[index];
+    final updated = Project(
+      id: old.id,
+      name: old.name,
+      color: old.color,
+      goalMinutes: old.goalMinutes,
+      loggedMinutes: newLoggedMinutes,
+      dueDate: old.dueDate,
+    );
+    await DatabaseHelper.instance.updateProject(updated);
+    _projects[index] = updated;
+    notifyListeners();
+  }
 }
