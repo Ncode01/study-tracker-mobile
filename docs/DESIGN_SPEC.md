@@ -24,3 +24,14 @@
 - **Placeholder Form Screens:** Added `AddProjectScreen` and `AddTaskScreen` as stateless widgets with basic AppBars and placeholder form content, using `SingleChildScrollView` to prevent overflow on small screens.
 - **IndexedStack Management:** The Add button does not change the main screen's `IndexedStack` index, ensuring navigation state is preserved for other tabs.
 - **File Cleanup:** The old `AddItemScreen` is now obsolete and can be deleted.
+
+## Design Decisions - Step 4
+
+- **AddProjectScreen Form:** Converted to a StatefulWidget to manage form state and user input.
+- **Form Structure:** Used a `Form` widget with a `GlobalKey<FormState>` for validation and structure.
+- **Project Name Field:** Implemented with a `TextFormField` and validator for required input.
+- **Goal Time Field:** Implemented with a `TextFormField` for flexible input (to be parsed/validated in a future step).
+- **Color Picker:** Provided a row of selectable color circles (predefined palette), with a border and check icon to indicate selection.
+- **Due Date Picker:** Used a row with a display of the selected date and a button to open a `showDatePicker` dialog, styled for dark mode.
+- **Button:** The "Create Project" button validates the form and prints values for now.
+- **Styling:** All fields and sections use padding and spacing for a clean, modern look consistent with the dark theme.

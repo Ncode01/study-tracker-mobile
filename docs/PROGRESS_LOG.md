@@ -21,3 +21,6 @@
 - Created: `lib/src/features/projects/screens/add_project_screen.dart` (Purpose: Placeholder form screen for creating a new project.)
 - Created: `lib/src/features/tasks/screens/add_task_screen.dart` (Purpose: Placeholder form screen for creating a new task.)
 - Modified: `lib/src/features/core_ui/screens/main_screen.dart` (Reason: Refactored Add button to open modal, removed AddItemScreen from navigation logic.)
+
+## Step 4: Add Project Form UI
+- Modified: `lib/src/features/projects/screens/add_project_screen.dart` (Reason: Implemented full Add Project form UI with TextFormFields, color picker, date picker, and local state management.)
