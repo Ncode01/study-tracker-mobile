@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import 'package:study/src/constants/app_colors.dart';
+import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/models/project_model.dart';
 
 /// Form screen for creating a new project.
 class AddProjectScreen extends StatefulWidget {
@@ -89,10 +93,20 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                   TextFormField(
                     controller: _goalTimeController,
                     decoration: const InputDecoration(
-                      labelText: 'Goal Time (e.g., 2h 30m or 150 min)',
+                      labelText: 'Goal Time (minutes)',
                       border: OutlineInputBorder(),
                     ),
                     style: const TextStyle(color: AppColors.textColor),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a goal time in minutes';
+                      }
+                      if (int.tryParse(value.trim()) == null) {
+                        return 'Enter a valid number of minutes';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -159,13 +173,27 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                   const SizedBox(height: 32),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState?.validate() ?? false) {
-                          // For now, just print values
-                          debugPrint('Project Name: ${_nameController.text}');
-                          debugPrint('Goal Time: ${_goalTimeController.text}');
-                          debugPrint('Color: $_selectedColor');
-                          debugPrint('Due Date: $_selectedDueDate');
+                          final uuid = const Uuid().v4();
+                          final name = _nameController.text.trim();
+                          final goalMinutes =
+                              int.tryParse(_goalTimeController.text.trim()) ??
+                              0;
+                          final project = Project(
+                            id: uuid,
+                            name: name,
+                            color: _selectedColor,
+                            goalMinutes: goalMinutes,
+                            loggedMinutes: 0,
+                            dueDate: _selectedDueDate,
+                          );
+                          final provider = Provider.of<ProjectProvider>(
+                            context,
+                            listen: false,
+                          );
+                          await provider.addProject(project);
+                          if (mounted) Navigator.pop(context);
                         }
                       },
                       child: const Text('Create Project'),

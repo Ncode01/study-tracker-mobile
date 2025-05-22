@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:study/src/app.dart'; // Import the AppRoot widget
+import 'package:provider/provider.dart';
+import 'package:study/src/app.dart';
+import 'package:study/src/features/projects/providers/project_provider.dart';
 
 void main() {
-  runApp(const AppRoot()); // Run the AppRoot widget
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => ProjectProvider())],
+      child: const AppRoot(),
+    ),
+  );
 }

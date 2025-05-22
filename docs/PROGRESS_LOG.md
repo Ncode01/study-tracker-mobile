@@ -24,3 +24,14 @@
 
 ## Step 4: Add Project Form UI
 - Modified: `lib/src/features/projects/screens/add_project_screen.dart` (Reason: Implemented full Add Project form UI with TextFormFields, color picker, date picker, and local state management.)
+
+## Step 5: Add Task Form UI
+- Modified: `lib/src/features/tasks/screens/add_task_screen.dart` (Reason: Implemented full Add Task form UI with TextFormField, project dropdown, date picker, and local state management.)
+
+## Step 6: Provider state management and SQLite integration
+- Added: `lib/src/services/database_helper.dart` (Purpose: SQLite database helper for projects.)
+- Modified: `lib/src/models/project_model.dart` (Reason: Added toMap/fromMap for DB serialization.)
+- Added: `lib/src/features/projects/providers/project_provider.dart` (Purpose: Provider for managing project state and DB interaction.)
+- Modified: `lib/main.dart` (Reason: Integrated Provider and ProjectProvider.)
+- Modified: `lib/src/features/projects/screens/add_project_screen.dart` (Reason: Save new projects via provider and DB.)
+- Modified: `lib/src/features/projects/screens/projects_screen.dart` (Reason: Display projects from provider/DB instead of static list.)

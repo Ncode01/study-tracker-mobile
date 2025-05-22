@@ -35,3 +35,22 @@
 - **Due Date Picker:** Used a row with a display of the selected date and a button to open a `showDatePicker` dialog, styled for dark mode.
 - **Button:** The "Create Project" button validates the form and prints values for now.
 - **Styling:** All fields and sections use padding and spacing for a clean, modern look consistent with the dark theme.
+
+## Design Decisions - Step 5
+
+- **AddTaskScreen Form:** Converted to a StatefulWidget to manage form state and user input.
+- **Form Structure:** Used a `Form` widget with a `GlobalKey<FormState>` for validation and structure.
+- **Task Name Field:** Implemented with a `TextFormField` and validator for required input.
+- **Assign to Project Field:** Used a `DropdownButtonFormField<String>` with dummy project names for now, styled for the dark theme.
+- **Due Date Picker:** Used a row with a display of the selected date and a button to open a `showDatePicker` dialog, styled for dark mode.
+- **Button:** The "Create Task" button validates the form and prints values for now.
+- **Styling:** All fields and sections use padding and spacing for a clean, modern look consistent with the dark theme.
+
+## Design Decisions - Step 6
+
+- **State Management:** Adopted the `provider` package for app-wide state management. `ProjectProvider` extends `ChangeNotifier` and manages the list of projects, fetching from and saving to the SQLite database.
+- **Database:** Used `sqflite` for local SQLite storage. The `projects` table schema includes: `id` (TEXT PRIMARY KEY), `name`, `color` (as int), `goalMinutes`, `loggedMinutes`, and `dueDate` (as ISO8601 string).
+- **Database Helper:** Created a singleton `DatabaseHelper` service to encapsulate all SQLite operations for projects.
+- **Project Model:** Added `toMap` and `fromMap` methods to serialize/deserialize projects for the database. Used `uuid` for unique project IDs.
+- **Provider Integration:** Wrapped the app in a `MultiProvider` in `main.dart` and provided `ProjectProvider` globally. `ProjectsScreen` and `AddProjectScreen` now interact with the provider for all project data.
+- **UI Updates:** `ProjectsScreen` uses a `Consumer<ProjectProvider>` to display the current list of projects from the database. `AddProjectScreen` creates and saves new projects via the provider.

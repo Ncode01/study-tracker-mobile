@@ -29,4 +29,31 @@ class Project {
     required this.goalMinutes,
     this.dueDate,
   });
+
+  /// Converts this [Project] to a map for database storage.
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'color': color.value,
+      'goalMinutes': goalMinutes,
+      'loggedMinutes': loggedMinutes,
+      'dueDate': dueDate?.toIso8601String(),
+    };
+  }
+
+  /// Creates a [Project] from a map fetched from the database.
+  factory Project.fromMap(Map<String, dynamic> map) {
+    return Project(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      color: Color(map['color'] as int),
+      goalMinutes: map['goalMinutes'] as int,
+      loggedMinutes: map['loggedMinutes'] as int? ?? 0,
+      dueDate:
+          map['dueDate'] != null && map['dueDate'] != ''
+              ? DateTime.tryParse(map['dueDate'] as String)
+              : null,
+    );
+  }
 }
