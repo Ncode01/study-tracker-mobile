@@ -78,3 +78,23 @@
 - **SessionListItem:** Shows project name, duration, and formatted start/end times using `intl`.
 - **Dependency:** Added `intl` for date formatting.
 - **Documentation:** Updated `PROGRESS_LOG.md` and this file for all changes in Step 8.
+
+## Design Decisions - Step 9
+
+- **Calendar Integration:** Integrated `table_calendar` into `SessionsScreen` for date selection and filtering. Calendar styled for dark theme.
+- **SessionProvider:** Now manages selected date, sessions for selected date, and summary (total worked minutes, session count). Fetches sessions for selected date from DB.
+- **DatabaseHelper:** Updated `getSessionsForDate` to use `strftime('%Y-%m-%d', startTime) = ?` for accurate date filtering.
+- **SessionsScreen:** Displays calendar, summary, and session list for selected date. Uses `TableCalendar` and `Consumer<SessionProvider>`.
+- **Testing:** Added unit tests for `ProjectProvider`, `TaskProvider`, and `TimerServiceProvider` (using mockito). Added widget tests for `ProjectListItem` and `TaskListItem`.
+- **Dependencies:** Added `table_calendar`, `mockito`, and `build_runner` (dev) for calendar UI and testing.
+- **Documentation:** Updated `PROGRESS_LOG.md` and this file for all changes in Step 9.
+
+## Design Decisions - Step 10
+
+- **Charting:** Added `fl_chart` for bar and pie (donut) charts. Bar chart visualizes time per day; donut chart shows project breakdown.
+- **Database Aggregation:** `DatabaseHelper` provides `getAggregatedTimePerDay` and `getAggregatedTimePerProject` for stats, using SQL group-by queries.
+- **StatsProvider:** Manages stats state, selected period (week/month/year), and fetches aggregated data for charts. Exposes data and period selection to UI.
+- **StatsScreen UI:** Uses `Consumer<StatsProvider>`. Shows period selectors, total/avg time, bar chart (insights), and donut chart (projects breakdown). Charts update with period selection. Dark theme styling.
+- **Testing:** Added unit tests for `StatsProvider` (mocking DB, verifying aggregation and period logic).
+- **Dependency:** Added `fl_chart` for charts.
+- **Documentation:** Updated `PROGRESS_LOG.md` and this file for all changes in Step 10.

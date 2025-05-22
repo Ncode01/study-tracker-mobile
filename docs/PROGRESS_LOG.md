@@ -57,3 +57,23 @@
 - Modified: `lib/src/features/sessions/screens/sessions_screen.dart` (Show all sessions using SessionProvider.)
 - Created: `lib/src/features/sessions/widgets/session_list_item.dart` (Session display widget.)
 - Dependency: Added `intl` for date formatting.
+
+## Step 9: Sessions Screen Calendar, Date Filtering & Tests
+- Added: `table_calendar` (calendar UI), `mockito` (testing), `build_runner` (testing) dependencies.
+- Modified: `lib/src/services/database_helper.dart` (Accurate date filtering for sessions).
+- Modified: `lib/src/features/sessions/providers/session_provider.dart` (Date state, fetchSessionsForDate, summary getters).
+- Modified: `lib/src/features/sessions/screens/sessions_screen.dart` (Calendar, summary, and session list for selected date).
+- Added: `test/mocks/mock_database_helper.dart` and generated mocks.
+- Added: `test/features/projects/providers/project_provider_test.dart` (unit test).
+- Added: `test/features/tasks/providers/task_provider_test.dart` (unit test).
+- Added: `test/features/timer/providers/timer_service_provider_test.dart` (unit test).
+- Added: `test/features/projects/widgets/project_list_item_test.dart` (widget test).
+- Added: `test/features/tasks/widgets/task_list_item_test.dart` (widget test).
+
+## Step 10: Stats Screen UI & Basic Data Aggregation
+- Added: `fl_chart` dependency for charts.
+- Modified: `lib/src/services/database_helper.dart` (Added getAggregatedTimePerDay, getAggregatedTimePerProject).
+- Created: `lib/src/features/stats/providers/stats_provider.dart` (StatsProvider for stats state and aggregation logic).
+- Modified: `lib/main.dart` (Add StatsProvider to MultiProvider).
+- Modified: `lib/src/features/stats/screens/stats_screen.dart` (Implement UI: bar chart, donut chart, period selectors, data display).
+- Added: `test/features/stats/providers/stats_provider_test.dart` (unit test for StatsProvider).
