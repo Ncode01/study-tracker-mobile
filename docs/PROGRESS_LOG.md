@@ -1,0 +1,18 @@
+## Step 1: Project Setup, Theme, and Bottom Navigation
+- Created: `lib/src/app.dart` (Purpose: Root `MaterialApp` widget.)
+- Created: `lib/src/constants/app_colors.dart` (Purpose: Defines the application's color palette.)
+- Created: `lib/src/constants/app_theme.dart` (Purpose: Defines the application's dark theme.)
+- Created: `lib/src/features/core_ui/screens/main_screen.dart` (Purpose: Provides the main screen with bottom navigation.)
+- Created: `lib/src/features/projects/screens/projects_screen.dart` (Purpose: Placeholder screen for projects.)
+- Created: `lib/src/features/sessions/screens/sessions_screen.dart` (Purpose: Placeholder screen for sessions.)
+- Created: `lib/src/features/add_item/screens/add_item_screen.dart` (Purpose: Placeholder screen for adding items.)
+- Created: `lib/src/features/tasks/screens/tasks_screen.dart` (Purpose: Placeholder screen for tasks.)
+- Created: `lib/src/features/stats/screens/stats_screen.dart` (Purpose: Placeholder screen for stats.)
+- Modified: `lib/main.dart` (Reason: Updated to use the new `AppRoot` widget and removed old default code.)
+
+## Step 2: Projects Screen UI
+- Created: `lib/src/models/project_model.dart` (Purpose: Defines the Project data model.)
+- Created: `lib/src/features/projects/widgets/project_list_item.dart` (Purpose: Reusable widget for displaying a project in the list.)
+- Created: `lib/src/features/projects/widgets/date_scroller.dart` (Purpose: Horizontal date scroller widget for the Projects screen.)
+- Created: `lib/src/utils/formatters.dart` (Purpose: Utility for formatting durations in minutes to 'Xh YYm'.)
+- Modified: `lib/src/features/projects/screens/projects_screen.dart` (Reason: Implemented full ProjectsScreen UI with AppBar, date scroller, filter chips, and project list.)
