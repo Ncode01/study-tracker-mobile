@@ -35,3 +35,13 @@
 - Modified: `lib/main.dart` (Reason: Integrated Provider and ProjectProvider.)
 - Modified: `lib/src/features/projects/screens/add_project_screen.dart` (Reason: Save new projects via provider and DB.)
 - Modified: `lib/src/features/projects/screens/projects_screen.dart` (Reason: Display projects from provider/DB instead of static list.)
+
+## Step 7: Tasks CRUD, Provider, and UI
+- Created: `lib/src/models/task_model.dart` (Purpose: Defines the Task data model with toMap/fromMap for DB.)
+- Modified: `lib/src/services/database_helper.dart` (Reason: Added tasks table schema and CRUD methods for tasks.)
+- Created: `lib/src/features/tasks/providers/task_provider.dart` (Purpose: Provider for managing task state and DB interaction.)
+- Modified: `lib/main.dart` (Reason: Integrated TaskProvider in MultiProvider.)
+- Modified: `lib/src/features/tasks/screens/add_task_screen.dart` (Reason: Save new tasks via TaskProvider, use real project list, add description field.)
+- Created: `lib/src/features/tasks/widgets/task_list_item.dart` (Purpose: Widget for displaying and toggling tasks.)
+- Modified: `lib/src/features/tasks/screens/tasks_screen.dart` (Reason: Implemented tabbed UI for open/completed tasks using TaskProvider.)
+- Fixed: Removed unused imports in `task_model.dart` and `database_helper.dart`.

@@ -85,8 +85,9 @@ class DateScrollerItem extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(day, style: TextStyle(color: textColor, fontSize: 13)),

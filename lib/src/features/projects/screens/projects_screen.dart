@@ -96,7 +96,7 @@ class ProjectsScreen extends StatelessWidget {
               builder: (context, provider, _) {
                 final projects = provider.projects;
                 if (projects.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
                       'No projects found',
                       style: TextStyle(color: AppColors.secondaryTextColor),

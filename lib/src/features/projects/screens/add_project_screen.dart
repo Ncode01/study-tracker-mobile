@@ -193,7 +193,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                             listen: false,
                           );
                           await provider.addProject(project);
-                          if (mounted) Navigator.pop(context);
+                          if (!mounted) return;
+                          Navigator.pop(context);
                         }
                       },
                       child: const Text('Create Project'),

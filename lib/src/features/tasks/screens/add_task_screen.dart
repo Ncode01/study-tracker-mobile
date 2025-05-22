@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import 'package:study/src/constants/app_colors.dart';
+import 'package:study/src/features/tasks/providers/task_provider.dart';
+import 'package:study/src/models/task_model.dart';
+import 'package:study/src/features/projects/providers/project_provider.dart';
 
 /// Form screen for creating a new task.
 class AddTaskScreen extends StatefulWidget {
@@ -13,14 +18,14 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   String? _selectedProject;
   DateTime? _selectedDueDate;
-
-  final List<String> _dummyProjects = ['O/L', 'Physics', 'NOI'];
 
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -77,14 +82,26 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                                 : null,
                   ),
                   const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                    style: const TextStyle(color: AppColors.textColor),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedProject,
                     items:
-                        _dummyProjects
+                        context
+                            .read<ProjectProvider>()
+                            .projects
                             .map(
-                              (name) => DropdownMenuItem<String>(
-                                value: name,
-                                child: Text(name),
+                              (proj) => DropdownMenuItem<String>(
+                                value: proj.id,
+                                child: Text(proj.name),
                               ),
                             )
                             .toList(),
@@ -122,11 +139,32 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   const SizedBox(height: 32),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState?.validate() ?? false) {
-                          debugPrint('Task Name: ${_nameController.text}');
-                          debugPrint('Project: $_selectedProject');
-                          debugPrint('Due Date: $_selectedDueDate');
+                          if (_selectedProject == null ||
+                              _selectedDueDate == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please select a project and due date.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          final task = Task(
+                            id: const Uuid().v4(),
+                            projectId: _selectedProject!,
+                            title: _nameController.text.trim(),
+                            description: _descriptionController.text.trim(),
+                            dueDate: _selectedDueDate!,
+                          );
+                          await Provider.of<TaskProvider>(
+                            context,
+                            listen: false,
+                          ).addTask(task);
+                          if (!mounted) return;
+                          Navigator.of(context).pop();
                         }
                       },
                       child: const Text('Create Task'),

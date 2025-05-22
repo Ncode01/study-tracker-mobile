@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'package:study/src/models/project_model.dart';
+import 'package:study/src/models/task_model.dart';
+import 'package:study/src/models/session_model.dart';
 
 /// Singleton class to manage SQLite database operations.
 class DatabaseHelper {
@@ -35,6 +36,27 @@ class DatabaseHelper {
         dueDate TEXT
       )
     ''');
+    await db.execute('''
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        dueDate TEXT,
+        isCompleted INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY(projectId) REFERENCES projects(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE sessions (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        projectName TEXT NOT NULL,
+        startTime TEXT NOT NULL,
+        endTime TEXT NOT NULL,
+        durationMinutes INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future<void> insertProject(Project project) async {
@@ -50,5 +72,67 @@ class DatabaseHelper {
     final db = await instance.database;
     final maps = await db.query('projects');
     return maps.map((map) => Project.fromMap(map)).toList();
+  }
+
+  Future<void> updateProject(Project project) async {
+    final db = await instance.database;
+    await db.update(
+      'projects',
+      project.toMap(),
+      where: 'id = ?',
+      whereArgs: [project.id],
+    );
+  }
+
+  Future<void> insertTask(Task task) async {
+    final db = await instance.database;
+    await db.insert(
+      'tasks',
+      task.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateTask(Task task) async {
+    final db = await instance.database;
+    await db.update(
+      'tasks',
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    );
+  }
+
+  Future<List<Task>> getAllTasks() async {
+    final db = await instance.database;
+    final maps = await db.query('tasks');
+    return maps.map((map) => Task.fromMap(map)).toList();
+  }
+
+  Future<void> insertSession(Session session) async {
+    final db = await instance.database;
+    await db.insert(
+      'sessions',
+      session.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Session>> getAllSessions() async {
+    final db = await instance.database;
+    final maps = await db.query('sessions');
+    return maps.map((map) => Session.fromMap(map)).toList();
+  }
+
+  Future<List<Session>> getSessionsForDate(DateTime date) async {
+    final db = await instance.database;
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+    final maps = await db.query(
+      'sessions',
+      where: 'startTime >= ? AND startTime < ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
+    );
+    return maps.map((map) => Session.fromMap(map)).toList();
   }
 }

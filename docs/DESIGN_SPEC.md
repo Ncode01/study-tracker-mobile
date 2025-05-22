@@ -54,3 +54,14 @@
 - **Project Model:** Added `toMap` and `fromMap` methods to serialize/deserialize projects for the database. Used `uuid` for unique project IDs.
 - **Provider Integration:** Wrapped the app in a `MultiProvider` in `main.dart` and provided `ProjectProvider` globally. `ProjectsScreen` and `AddProjectScreen` now interact with the provider for all project data.
 - **UI Updates:** `ProjectsScreen` uses a `Consumer<ProjectProvider>` to display the current list of projects from the database. `AddProjectScreen` creates and saves new projects via the provider.
+
+## Design Decisions - Step 7
+
+- **Task Model:** Created `Task` model in `task_model.dart` with `toMap`/`fromMap` for SQLite serialization. Includes fields for id, projectId, title, description, dueDate, and isCompleted.
+- **Database Schema:** Updated `DatabaseHelper` to create a `tasks` table with a foreign key to `projects`. Added CRUD methods: `insertTask`, `updateTask`, `getAllTasks`.
+- **TaskProvider:** Implemented `TaskProvider` using `ChangeNotifier` for task state, fetching, adding, and toggling completion. Exposes open and completed task lists.
+- **Provider Integration:** Registered `TaskProvider` in `main.dart`'s `MultiProvider` for global access.
+- **AddTaskScreen:** Updated to save tasks via `TaskProvider`, use real project list for dropdown, and added a description field.
+- **TasksScreen UI:** Built a tabbed UI with `TabBar` for open/completed tasks, using `Consumer<TaskProvider>` and a new `TaskListItem` widget for display and toggling.
+- **Bugfixes:** Removed unused imports in `task_model.dart` and `database_helper.dart`.
+- **Documentation:** Updated `PROGRESS_LOG.md` and this file to reflect all changes in Step 7.
