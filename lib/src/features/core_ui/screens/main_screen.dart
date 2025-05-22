@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:study/src/features/add_item/screens/add_item_screen.dart';
+import 'package:study/src/features/add_item/widgets/add_options_modal_sheet.dart';
 import 'package:study/src/features/projects/screens/projects_screen.dart';
 import 'package:study/src/features/sessions/screens/sessions_screen.dart';
 import 'package:study/src/features/stats/screens/stats_screen.dart';
@@ -20,25 +20,25 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const ProjectsScreen(),
     const SessionsScreen(),
-    const AddItemScreen(), // Placeholder for Add functionality
     const TasksScreen(),
     const StatsScreen(),
   ];
 
   void _onTabTapped(int index) {
     if (index == 2) {
-      // Handle "Add" button tap - for now, just print or navigate to a placeholder
-      print("Add button tapped");
-      // You could also navigate to a modal or a different screen for adding items.
-      // For this example, we'll switch to the AddItemScreen placeholder.
-      setState(() {
-        _currentIndex = index;
-      });
-    } else {
-      setState(() {
-        _currentIndex = index;
-      });
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => const AddOptionsModalSheet(),
+      );
+      // Do not change _currentIndex for Add button
+      return;
     }
+    // Adjust index for screens since Add is not in _screens
+    setState(() {
+      _currentIndex = index > 2 ? index - 1 : index;
+    });
   }
 
   @override
@@ -50,7 +50,7 @@ class _MainScreenState extends State<MainScreen> {
         children: _screens,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
+        currentIndex: _currentIndex >= 2 ? _currentIndex + 1 : _currentIndex,
         onTap: _onTabTapped,
         items: const [
           BottomNavigationBarItem(
@@ -74,6 +74,7 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Stats',
           ),
         ],
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }

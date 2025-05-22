@@ -4,7 +4,7 @@ import 'package:study/src/constants/app_colors.dart';
 /// A horizontally scrolling date selector for the Projects screen.
 class HorizontalDateScroller extends StatelessWidget {
   /// Creates a [HorizontalDateScroller].
-  const HorizontalDateScroller({Key? key}) : super(key: key);
+  const HorizontalDateScroller({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +67,12 @@ class DateScrollerItem extends StatelessWidget {
 
   /// Creates a [DateScrollerItem].
   const DateScrollerItem({
-    Key? key,
+    super.key,
     required this.day,
     required this.date,
     this.time,
     this.selected = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -52,13 +52,11 @@ final ThemeData darkTheme = ThemeData(
   colorScheme: ColorScheme.fromSeed(
     seedColor: AppColors.primaryColor,
     brightness: Brightness.dark,
-    background: AppColors.backgroundColor,
     surface: AppColors.cardColor,
     primary: AppColors.primaryColor,
     secondary: AppColors.accentColor,
     onPrimary: AppColors.textColor,
     onSecondary: AppColors.textColor,
-    onBackground: AppColors.textColor,
     onSurface: AppColors.textColor,
     onError: Colors.red, // Example error color
   ),

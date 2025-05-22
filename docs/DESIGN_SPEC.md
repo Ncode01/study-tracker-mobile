@@ -15,3 +15,12 @@
 - **Filter Chips:** Used `ChoiceChip` widgets for "All" and "Due" filters, styled to match the dark theme. These are currently static but ready for future interactivity.
 - **Dummy Data:** Populated the project list with static `Project` instances for UI demonstration. No backend or state management yet.
 - **Duration Formatting:** Added a utility function to format minutes as "Xh YYm" for display in project progress.
+
+## Design Decisions - Step 3
+
+- **Add Button Modal:** The Add button in the BottomNavigationBar now opens a modal bottom sheet (`AddOptionsModalSheet`) instead of switching the main screen. This provides a modern, discoverable way to create new items.
+- **AddOptionsModalSheet Widget:** Created a dedicated widget for the modal, offering options for "Project" and "Task" creation, styled to match the dark theme.
+- **Navigation Flow:** Tapping an option in the modal closes the sheet and navigates to a new placeholder form screen for either a project or a task.
+- **Placeholder Form Screens:** Added `AddProjectScreen` and `AddTaskScreen` as stateless widgets with basic AppBars and placeholder form content, using `SingleChildScrollView` to prevent overflow on small screens.
+- **IndexedStack Management:** The Add button does not change the main screen's `IndexedStack` index, ensuring navigation state is preserved for other tabs.
+- **File Cleanup:** The old `AddItemScreen` is now obsolete and can be deleted.

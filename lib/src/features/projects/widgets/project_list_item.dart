@@ -9,7 +9,7 @@ class ProjectListItem extends StatelessWidget {
   final Project project;
 
   /// Creates a [ProjectListItem].
-  const ProjectListItem({Key? key, required this.project}) : super(key: key);
+  const ProjectListItem({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +27,9 @@ class ProjectListItem extends StatelessWidget {
           CircleAvatar(
             backgroundColor: project.color,
             radius: 22,
-            child: const Icon(Icons.play_arrow, color: Colors.white),
+            child: Icon(Icons.play_arrow, color: Colors.white),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -41,7 +41,7 @@ class ProjectListItem extends StatelessWidget {
                   color: AppColors.textColor,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 '${formatDuration(project.loggedMinutes)} / ${formatDuration(project.goalMinutes)}',
                 style: TextStyle(
@@ -63,8 +63,8 @@ class ProjectListItem extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Icon(
+              SizedBox(height: 4),
+              Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
                 color: AppColors.secondaryTextColor,
