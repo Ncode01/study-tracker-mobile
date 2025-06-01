@@ -126,48 +126,13 @@ class DatabaseHelper {
 
   Future<List<Session>> getSessionsForDate(DateTime date) async {
     final db = await instance.database;
-    final dateString = date.toIso8601String().substring(0, 10); // 'YYYY-MM-DD'
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
     final maps = await db.query(
       'sessions',
-      where: "strftime('%Y-%m-%d', startTime) = ?",
-      whereArgs: [dateString],
+      where: 'startTime >= ? AND startTime < ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
     );
     return maps.map((map) => Session.fromMap(map)).toList();
-  }
-
-  Future<Map<String, int>> getAggregatedTimePerDay(
-    DateTime startDate,
-    DateTime endDate,
-  ) async {
-    final db = await instance.database;
-    final result = await db.rawQuery(
-      '''SELECT strftime('%Y-%m-%d', startTime) as day, SUM(durationMinutes) as totalMinutes
-         FROM sessions
-         WHERE startTime BETWEEN ? AND ?
-         GROUP BY day''',
-      [startDate.toIso8601String(), endDate.toIso8601String()],
-    );
-    return {
-      for (var row in result)
-        row['day'] as String: (row['totalMinutes'] as int? ?? 0),
-    };
-  }
-
-  Future<Map<String, int>> getAggregatedTimePerProject(
-    DateTime startDate,
-    DateTime endDate,
-  ) async {
-    final db = await instance.database;
-    final result = await db.rawQuery(
-      '''SELECT projectName, SUM(durationMinutes) as totalMinutes
-         FROM sessions
-         WHERE startTime BETWEEN ? AND ?
-         GROUP BY projectName''',
-      [startDate.toIso8601String(), endDate.toIso8601String()],
-    );
-    return {
-      for (var row in result)
-        row['projectName'] as String: (row['totalMinutes'] as int? ?? 0),
-    };
   }
 }
