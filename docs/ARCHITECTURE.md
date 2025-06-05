@@ -492,13 +492,48 @@ showModalBottomSheet(
 );
 ```
 
-#### 3. Standard Navigation
+#### 3. Named Routes Navigation
 
 ```dart
-// Push navigation for forms
-Navigator.of(context).push(
-  MaterialPageRoute(builder: (_) => const AddProjectScreen()),
+// Named routes for consistent navigation and deep linking support
+Navigator.of(context).pushNamed('/projects/add');
+Navigator.of(context).pushNamed('/tasks/add');
+Navigator.of(context).pushNamed('/study-planner/add');
+
+// Named routes with arguments
+Navigator.of(context).pushNamed(
+  '/study-planner/add',
+  arguments: {
+    'initialDate': selectedDate,
+    'editingEntry': entry,
+  },
 );
+```
+
+**Benefits**:
+- Deep linking support
+- URL-based routing
+- Consistent navigation patterns
+- Better testability
+
+#### 4. Deep Linking Support
+
+```dart
+// URL patterns supported:
+// /study-planner/add?date=2024-01-15&entryId=uuid
+// /study-planner/date/2024-01-15
+// /projects/add
+// /tasks/add
+
+// Route generation with parameter parsing
+Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+  final uri = Uri.parse(settings.name ?? '');
+  final pathSegments = uri.pathSegments;
+  final queryParams = uri.queryParameters;
+  
+  // Handle dynamic routes...
+}
+```
 ```
 
 ---

@@ -17,10 +17,13 @@ class HorizontalDateScroller extends StatelessWidget {
       _DateScrollerItemData(day: 'Thu', date: '22', selected: true),
     ];
     return SizedBox(
-      height: 80,
+      height: 88, // Increased height to prevent overflow
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ), // Increased vertical padding
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
@@ -73,7 +76,6 @@ class DateScrollerItem extends StatelessWidget {
     this.time,
     this.selected = false,
   });
-
   @override
   Widget build(BuildContext context) {
     final Color bgColor =
@@ -81,32 +83,51 @@ class DateScrollerItem extends StatelessWidget {
     final Color textColor = selected ? Colors.white : AppColors.textColor;
     return Container(
       width: 56,
+      height: 56, // Increase height to accommodate content
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(day, style: TextStyle(color: textColor, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text(
-            date,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+          Flexible(
+            child: Text(
+              day,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 11,
+              ), // Reduced font size
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          const SizedBox(height: 1), // Reduced spacing
+          Flexible(
+            child: Text(
+              date,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16, // Reduced font size
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           if (time != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              time!,
-              style: TextStyle(
-                color: AppColors.secondaryTextColor,
-                fontSize: 12,
+            const SizedBox(height: 1), // Reduced spacing
+            Flexible(
+              child: Text(
+                time!,
+                style: TextStyle(
+                  color: AppColors.secondaryTextColor,
+                  fontSize: 10, // Reduced font size
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],

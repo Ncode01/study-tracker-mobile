@@ -462,9 +462,9 @@ class _FeatureFormState extends State<FeatureForm> {
 
 ## Navigation Patterns
 
-### Named Routes Pattern
+### Named Routes with Deep Linking Pattern
 ```dart
-// app.dart - Route definitions
+// app.dart - Route definitions with deep linking support
 class StudyTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -472,25 +472,68 @@ class StudyTrackerApp extends StatelessWidget {
       title: 'Study Tracker',
       initialRoute: '/',
       routes: {
-        '/': (context) => const HomeScreen(),
-        '/projects': (context) => const ProjectListScreen(),
+        '/': (context) => const MainScreen(),
         '/projects/add': (context) => const AddProjectScreen(),
-        '/projects/detail': (context) => const ProjectDetailScreen(),
-        '/tasks': (context) => const TaskListScreen(),
-        '/timer': (context) => const TimerScreen(),
+        '/tasks/add': (context) => const AddTaskScreen(),
+        '/study-planner': (context) => const DailyStudyPlannerScreen(),
       },
       onGenerateRoute: _onGenerateRoute,
+      onUnknownRoute: (settings) => MaterialPageRoute(
+        builder: (context) => const MainScreen(),
+      ),
     );
   }
   
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
-    // Handle dynamic routes with parameters
-    if (settings.name?.startsWith('/projects/') == true) {
-      final projectId = int.tryParse(settings.name!.split('/').last);
-      if (projectId != null) {
-        return MaterialPageRoute(
-          builder: (context) => ProjectDetailScreen(projectId: projectId),
-        );
+    final uri = Uri.parse(settings.name ?? '');
+    final pathSegments = uri.pathSegments;
+    final queryParams = uri.queryParameters;
+
+    // Handle study planner routes with deep linking
+    if (pathSegments.length >= 2 && pathSegments[0] == 'study-planner') {
+      switch (pathSegments[1]) {
+        case 'add':
+          // Support query parameters: ?date=2024-01-15&entryId=uuid
+          final dateParam = queryParams['date'];
+          final entryIdParam = queryParams['entryId'];
+          
+          DateTime initialDate = DateTime.now();
+          if (dateParam != null) {
+            try {
+              initialDate = DateTime.parse(dateParam);
+            } catch (e) {
+              // Use current date if parsing fails
+            }
+          }
+
+          return MaterialPageRoute(
+            builder: (context) => AddStudyPlanEntryScreen(
+              initialDate: initialDate,
+              editingEntryId: entryIdParam,
+            ),
+            settings: settings,
+          );
+
+        case 'date':
+          // Handle /study-planner/date/2024-01-15 routes
+          if (pathSegments.length >= 3) {
+            try {
+              final date = DateTime.parse(pathSegments[2]);
+              return MaterialPageRoute(
+                builder: (context) => DailyStudyPlannerScreen(
+                  initialDate: date,
+                ),
+                settings: settings,
+              );
+            } catch (e) {
+              // Invalid date format, fall back to today
+              return MaterialPageRoute(
+                builder: (context) => const DailyStudyPlannerScreen(),
+                settings: settings,
+              );
+            }
+          }
+          break;
       }
     }
     return null;
@@ -501,18 +544,49 @@ class StudyTrackerApp extends StatelessWidget {
 ### Navigation Helper Pattern
 ```dart
 class NavigationHelper {
-  static void navigateToProjectDetail(BuildContext context, int projectId) {
-    Navigator.of(context).pushNamed('/projects/$projectId');
-  }
-  
+  // Named route navigation
   static void navigateToAddProject(BuildContext context) {
     Navigator.of(context).pushNamed('/projects/add');
   }
   
-  static Future<T?> navigateToScreen<T>(BuildContext context, Widget screen) {
-    return Navigator.of(context).push<T>(
-      MaterialPageRoute(builder: (context) => screen),
+  static void navigateToAddTask(BuildContext context) {
+    Navigator.of(context).pushNamed('/tasks/add');
+  }
+  
+  static void navigateToStudyPlanner(BuildContext context) {
+    Navigator.of(context).pushNamed('/study-planner');
+  }
+  
+  // Navigation with arguments
+  static Future<bool?> navigateToAddStudyPlan(
+    BuildContext context, {
+    DateTime? initialDate,
+    StudyPlanEntry? editingEntry,
+  }) {
+    return Navigator.of(context).pushNamed<bool>(
+      '/study-planner/add',
+      arguments: {
+        'initialDate': initialDate ?? DateTime.now(),
+        if (editingEntry != null) 'editingEntry': editingEntry,
+      },
     );
+  }
+  
+  // Deep link navigation
+  static void navigateToStudyPlanDate(BuildContext context, DateTime date) {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    Navigator.of(context).pushNamed('/study-planner/date/$formattedDate');
+  }
+  
+  // URL-based deep linking
+  static void navigateToStudyPlanEntry(
+    BuildContext context, {
+    required DateTime date,
+    String? entryId,
+  }) {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    final query = entryId != null ? '?date=$formattedDate&entryId=$entryId' : '?date=$formattedDate';
+    Navigator.of(context).pushNamed('/study-planner/add$query');
   }
   
   static void navigateAndReplace(BuildContext context, String routeName) {

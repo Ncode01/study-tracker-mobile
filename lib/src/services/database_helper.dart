@@ -308,4 +308,21 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+
+  /// Retrieves a single study plan entry by ID.
+  Future<StudyPlanEntry?> getStudyPlanEntryById(String id) async {
+    final db = await instance.database;
+    final maps = await db.query(
+      'study_plan_entries',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return StudyPlanEntry.fromMap(maps.first);
+  }
 }

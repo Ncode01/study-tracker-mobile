@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:study/src/features/projects/screens/add_project_screen.dart';
-import 'package:study/src/features/tasks/screens/add_task_screen.dart';
 
 /// Modal bottom sheet for add options (Project, Task).
 class AddOptionsModalSheet extends StatelessWidget {
@@ -41,9 +39,18 @@ class AddOptionsModalSheet extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AddProjectScreen()),
-                );
+                Navigator.of(context).pushNamed('/projects/add');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event_note, color: Colors.white),
+              title: const Text(
+                'Study Plan',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).pushNamed('/study-planner/add');
               },
             ),
             ListTile(
@@ -54,9 +61,7 @@ class AddOptionsModalSheet extends StatelessWidget {
               title: const Text('Task', style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AddTaskScreen()),
-                );
+                Navigator.of(context).pushNamed('/tasks/add');
               },
             ),
           ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:study/src/features/add_item/widgets/add_options_modal_sheet.dart';
 import 'package:study/src/features/projects/screens/projects_screen.dart';
-import 'package:study/src/features/sessions/screens/sessions_screen.dart';
+import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
 import 'package:study/src/features/stats/screens/stats_screen.dart';
 import 'package:study/src/features/tasks/screens/tasks_screen.dart';
 
@@ -16,10 +16,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-
   final List<Widget> _screens = [
     const ProjectsScreen(),
-    const SessionsScreen(),
+    const DailyStudyPlannerScreen(),
     const TasksScreen(),
     const StatsScreen(),
   ];
@@ -59,7 +58,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
-            label: 'Sessions',
+            label: 'Planner',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle, size: 36), // Prominent Add button

@@ -581,7 +581,38 @@ MainScreen
 ├── SessionsScreen (Index 1)
 ├── AddOptionsModalSheet (Modal)
 ├── TasksScreen (Index 2)
-└── StatsScreen (Index 3)
+├── StatsScreen (Index 3)
+└── DailyStudyPlannerScreen (Named Route)
+```
+
+#### Named Routes System
+
+**Implementation**: `lib/src/app.dart`
+
+The app now uses a comprehensive named routes system for navigation with deep linking support:
+
+**Available Routes**:
+- `/` - MainScreen (Home)
+- `/projects/add` - AddProjectScreen
+- `/tasks/add` - AddTaskScreen
+- `/study-planner` - DailyStudyPlannerScreen
+- `/study-planner/add` - AddStudyPlanEntryScreen
+- `/study-planner/date/{date}` - DailyStudyPlannerScreen with specific date
+
+**Deep Linking Support**:
+- URL parameters: `/study-planner/add?date=2024-01-15&entryId=uuid`
+- Path segments: `/study-planner/date/2024-01-15`
+- Arguments passing: `Navigator.pushNamed('/route', arguments: {...})`
+
+**Route Generation**:
+```dart
+Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+  final uri = Uri.parse(settings.name ?? '');
+  final pathSegments = uri.pathSegments;
+  
+  // Dynamic route handling with parameter parsing
+  // Supports both query parameters and path segments
+}
 ```
 
 ---
@@ -594,6 +625,7 @@ MainScreen
 2. **Form Validation**: Form validation with user feedback
 3. **Provider State**: Loading states and error handling in providers
 4. **Navigation Guards**: Context mounting checks before navigation
+5. **Deep Link Validation**: Invalid route parameters fall back to default behavior
 
 ### Example Error Handling
 

@@ -15,28 +15,6 @@ Thank you for your interest in contributing to Study Tracker Mobile! This docume
 
 ---
 
-## 📜 Code of Conduct
-
-### Our Pledge
-
-We are committed to making participation in this project a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
-
-### Expected Behavior
-
-- Be respectful and inclusive
-- Exercise empathy and kindness
-- Focus on what is best for the community
-- Accept constructive criticism gracefully
-- Show courtesy and respect towards other community members
-
-### Unacceptable Behavior
-
-- Harassment, discrimination, or derogatory comments
-- Trolling, insulting, or inflammatory comments
-- Public or private harassment
-- Publishing others' private information without permission
-- Any conduct inappropriate in a professional setting
-
 ---
 
 ## 🚀 Getting Started
