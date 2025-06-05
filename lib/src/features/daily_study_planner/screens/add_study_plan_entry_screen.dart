@@ -32,8 +32,8 @@ class AddStudyPlanEntryScreen extends StatefulWidget {
 
 class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _subjectController;
-  late final TextEditingController _notesController;
+  late TextEditingController _subjectController;
+  late TextEditingController _notesController;
 
   late DateTime _selectedDate;
   DateTime? _startTime;
@@ -43,13 +43,22 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
   bool _isAllDay = false;
   bool _isLoading = false;
   bool _isInitialized = false;
-  @override
+  StudyPlanEntry?
+  _initialEntry; // Track the initial entry for comparison  @override
   void initState() {
     super.initState();
-    // Initialize with default values - will be updated in didChangeDependencies
+    // Initialize controllers once in initState
     _subjectController = TextEditingController();
     _notesController = TextEditingController();
     _selectedDate = widget.initialDate;
+
+    // Store initial entry for comparison
+    _initialEntry = widget.editingEntry;
+
+    // Initialize form data based on widget properties
+    if (widget.editingEntry != null) {
+      _populateControllersFromEntry(widget.editingEntry!);
+    }
   }
 
   @override
@@ -61,38 +70,58 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
     }
   }
 
+  @override
+  void didUpdateWidget(AddStudyPlanEntryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Handle widget updates - check if the editing entry has changed
+    if (widget.editingEntry != oldWidget.editingEntry) {
+      if (widget.editingEntry != null) {
+        // New entry to edit
+        _initialEntry = widget.editingEntry;
+        _populateControllersFromEntry(widget.editingEntry!);
+      } else if (oldWidget.editingEntry != null) {
+        // Switched from editing to creating new
+        _initialEntry = null;
+        _clearFormFields();
+      }
+    }
+
+    // Handle initial date changes for new entries
+    if (widget.initialDate != oldWidget.initialDate && _initialEntry == null) {
+      _selectedDate = widget.initialDate;
+    }
+  }
+
   void _initializeFields() {
-    // Check for named route arguments first
+    // Check for named route arguments first (for navigation-based initialization)
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) {
       final namedInitialDate = args['initialDate'] as DateTime?;
       final namedEditingEntry = args['editingEntry'] as StudyPlanEntry?;
 
-      if (namedEditingEntry != null) {
+      if (namedEditingEntry != null && namedEditingEntry != _initialEntry) {
         // Editing existing entry from named route
-        _initializeFromEntry(namedEditingEntry);
+        _initialEntry = namedEditingEntry;
+        _populateControllersFromEntry(namedEditingEntry);
         return;
-      } else if (namedInitialDate != null) {
+      } else if (namedInitialDate != null && _initialEntry == null) {
         // Creating new entry with date from named route
         _selectedDate = namedInitialDate;
         return;
       }
     }
 
-    // Fall back to constructor parameters (for backward compatibility)
-    if (widget.editingEntry != null) {
-      // Editing existing entry (direct entry object passed)
-      _initializeFromEntry(widget.editingEntry!);
-    } else if (widget.editingEntryId != null) {
-      // Editing existing entry (ID passed for deep linking)
+    // Handle deep linking with entry ID
+    if (widget.editingEntryId != null && _initialEntry == null) {
       _loadEntryById(widget.editingEntryId!);
     }
-    // Default case is already handled in initState
   }
 
-  void _initializeFromEntry(StudyPlanEntry entry) {
-    _subjectController = TextEditingController(text: entry.subjectName);
-    _notesController = TextEditingController(text: entry.notes ?? '');
+  /// Populates form controllers and state from an entry without re-initializing controllers
+  void _populateControllersFromEntry(StudyPlanEntry entry) {
+    _subjectController.text = entry.subjectName;
+    _notesController.text = entry.notes ?? '';
     _selectedDate = entry.date;
     _startTime = entry.startTime;
     _endTime = entry.endTime;
@@ -101,18 +130,26 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
     _isAllDay = entry.isAllDay;
   }
 
-  Future<void> _loadEntryById(String entryId) async {
-    // Initialize with defaults first
-    _subjectController = TextEditingController();
-    _notesController = TextEditingController();
+  /// Clears form fields to defaults for new entries
+  void _clearFormFields() {
+    _subjectController.clear();
+    _notesController.clear();
     _selectedDate = widget.initialDate;
+    _startTime = null;
+    _endTime = null;
+    _selectedProjectId = null;
+    _reminderDateTime = null;
+    _isAllDay = false;
+  }
 
+  Future<void> _loadEntryById(String entryId) async {
     try {
       final provider = context.read<StudyPlanProvider>();
       final entry = await provider.getStudyPlanEntryById(entryId);
 
       if (entry != null && mounted) {
-        _initializeFromEntry(entry);
+        _initialEntry = entry;
+        _populateControllersFromEntry(entry);
         setState(() {
           // Update UI with loaded data
         });
@@ -137,7 +174,11 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
     super.dispose();
   }
 
-  bool get _isEditing => widget.editingEntry != null;
+  /// Returns true if we're editing an existing entry (vs creating a new one)
+  bool get _isEditing =>
+      _initialEntry != null ||
+      widget.editingEntry != null ||
+      widget.editingEntryId != null;
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
