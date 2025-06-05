@@ -23,15 +23,10 @@ class StudyPlanCalendar extends StatefulWidget {
 
 class _StudyPlanCalendarState extends State<StudyPlanCalendar> {
   late PageController _pageController;
-  late DateTime _currentMonth;
 
   @override
   void initState() {
     super.initState();
-    _currentMonth = DateTime(
-      widget.selectedDate.year,
-      widget.selectedDate.month,
-    );
     _pageController = PageController(
       initialPage: _getInitialPage(),
       viewportFraction: 0.2, // Show 5 dates at once

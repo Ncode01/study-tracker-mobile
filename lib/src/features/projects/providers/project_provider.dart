@@ -9,13 +9,13 @@ class ProjectProvider extends ChangeNotifier {
   List<Project> get projects => _projects;
 
   ProjectProvider() {
-    fetchProjects();
+    Future.microtask(() => fetchProjects());
   }
 
   Future<void> fetchProjects() async {
     if (_disposed) return; // Prevent operations after disposal
     _projects = await DatabaseHelper.instance.getAllProjects();
-    if (!_disposed) notifyListeners();
+    if (!_disposed) Future.microtask(() => notifyListeners());
   }
 
   Future<void> addProject(Project project) async {
@@ -41,7 +41,7 @@ class ProjectProvider extends ChangeNotifier {
     );
     await DatabaseHelper.instance.updateProject(updated);
     _projects[index] = updated;
-    if (!_disposed) notifyListeners();
+    if (!_disposed) Future.microtask(() => notifyListeners());
   }
 
   @override

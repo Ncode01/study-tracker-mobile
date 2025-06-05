@@ -53,7 +53,7 @@ class _DailyStudyPlannerScreenState extends State<DailyStudyPlannerScreen> {
   }
 
   Future<void> _addNewEntry() async {
-    final result = await Navigator.of(context).pushNamed<bool>(
+    final result = await Navigator.of(context).pushNamed(
       '/study-planner/add',
       arguments: {'initialDate': _selectedDate},
     );
@@ -239,7 +239,7 @@ class _DailyStudyPlannerScreenState extends State<DailyStudyPlannerScreen> {
   }
 
   Future<void> _editEntry(entry) async {
-    final result = await Navigator.of(context).pushNamed<bool>(
+    final result = await Navigator.of(context).pushNamed(
       '/study-planner/add',
       arguments: {'initialDate': _selectedDate, 'editingEntry': entry},
     );

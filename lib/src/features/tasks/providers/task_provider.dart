@@ -13,10 +13,10 @@ class TaskProvider extends ChangeNotifier {
   Future<void> fetchTasks() async {
     if (_disposed) return; // Prevent operations after disposal
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!_disposed) Future.microtask(() => notifyListeners());
     _tasks = await DatabaseHelper.instance.getAllTasks();
     _isLoading = false;
-    if (!_disposed) notifyListeners();
+    if (!_disposed) Future.microtask(() => notifyListeners());
   }
 
   Future<void> addTask(Task task) async {

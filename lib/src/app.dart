@@ -5,6 +5,7 @@ import 'package:study/src/features/projects/screens/add_project_screen.dart';
 import 'package:study/src/features/tasks/screens/add_task_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/add_study_plan_entry_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
+import 'package:study/src/models/study_plan_entry_model.dart';
 
 /// The root widget of the application.
 class AppRoot extends StatelessWidget {
@@ -22,15 +23,63 @@ class AppRoot extends StatelessWidget {
         '/projects/add': (context) => const AddProjectScreen(),
         '/tasks/add': (context) => const AddTaskScreen(),
         '/study-planner': (context) => const DailyStudyPlannerScreen(),
-        '/study-planner/add':
-            (context) => AddStudyPlanEntryScreen(initialDate: DateTime.now()),
+        '/study-planner/add': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          final initialDate =
+              args?['initialDate'] as DateTime? ?? DateTime.now();
+          final editingEntry = args?['editingEntry'] as StudyPlanEntry?;
+          return AddStudyPlanEntryScreen(
+            initialDate: initialDate,
+            editingEntry: editingEntry,
+          );
+        },
       },
       onGenerateRoute: _onGenerateRoute,
+      onUnknownRoute:
+          (settings) => MaterialPageRoute<bool?>(
+            builder:
+                (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Page Not Found')),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Page Not Found',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Route not found: \\${settings.name}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed:
+                              () => Navigator.of(
+                                context,
+                              ).pushReplacementNamed('/'),
+                          child: const Text('Go Home'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            settings: settings,
+          ),
     );
   }
 
   /// Handles dynamic routes with parameters
-  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+  Route<bool?>? _onGenerateRoute(RouteSettings settings) {
     final uri = Uri.parse(settings.name ?? '');
     final pathSegments = uri.pathSegments;
 
@@ -50,9 +99,8 @@ class AppRoot extends StatelessWidget {
             } catch (e) {
               // Use current date if parsing fails
             }
-          } // For editing entries, we'll need to pass the entry ID
-          // and let the screen handle loading the entry data
-          return MaterialPageRoute<bool>(
+          }
+          return MaterialPageRoute<bool?>(
             builder:
                 (context) => AddStudyPlanEntryScreen(
                   initialDate: initialDate,
@@ -65,14 +113,14 @@ class AppRoot extends StatelessWidget {
           if (pathSegments.length >= 3) {
             try {
               final date = DateTime.parse(pathSegments[2]);
-              return MaterialPageRoute<bool>(
+              return MaterialPageRoute<bool?>(
                 builder:
                     (context) => DailyStudyPlannerScreen(initialDate: date),
                 settings: settings,
               );
             } catch (e) {
               // Invalid date format, fall back to today
-              return MaterialPageRoute<bool>(
+              return MaterialPageRoute<bool?>(
                 builder: (context) => const DailyStudyPlannerScreen(),
                 settings: settings,
               );
@@ -85,7 +133,7 @@ class AppRoot extends StatelessWidget {
     // Handle project routes
     if (pathSegments.isNotEmpty && pathSegments[0] == 'projects') {
       if (pathSegments.length == 2 && pathSegments[1] == 'add') {
-        return MaterialPageRoute(
+        return MaterialPageRoute<bool?>(
           builder: (context) => const AddProjectScreen(),
           settings: settings,
         );
@@ -95,7 +143,7 @@ class AppRoot extends StatelessWidget {
     // Handle task routes
     if (pathSegments.isNotEmpty && pathSegments[0] == 'tasks') {
       if (pathSegments.length == 2 && pathSegments[1] == 'add') {
-        return MaterialPageRoute(
+        return MaterialPageRoute<bool?>(
           builder: (context) => const AddTaskScreen(),
           settings: settings,
         );
