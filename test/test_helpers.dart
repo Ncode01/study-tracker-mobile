@@ -8,12 +8,13 @@ import 'package:study/src/features/tasks/providers/task_provider.dart';
 import 'package:study/src/features/timer/providers/timer_service_provider.dart';
 import 'package:study/src/features/sessions/providers/session_provider.dart';
 import 'package:study/src/features/daily_study_planner/providers/study_plan_provider.dart';
+import 'package:study/src/services/database_helper.dart';
 
 /// Sets up the test environment with proper database factory and platform channel mocking
 void setupTestEnvironment() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize sqflite_common_ffi for testing
+  // Initialize sqflite_common_ffi for testing with isolated databases
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
@@ -23,11 +24,11 @@ void setupTestEnvironment() {
   ).setMockMethodCallHandler((MethodCall methodCall) async {
     switch (methodCall.method) {
       case 'getApplicationDocumentsDirectory':
-        return '/tmp/test_documents';
+        return '/tmp/test_documents_${DateTime.now().millisecondsSinceEpoch}';
       case 'getApplicationSupportDirectory':
-        return '/tmp/test_support';
+        return '/tmp/test_support_${DateTime.now().millisecondsSinceEpoch}';
       case 'getTemporaryDirectory':
-        return '/tmp/test_temp';
+        return '/tmp/test_temp_${DateTime.now().millisecondsSinceEpoch}';
       default:
         return null;
     }
@@ -44,7 +45,22 @@ Widget createTestApp({required Widget child}) {
       ChangeNotifierProvider(create: (_) => SessionProvider()),
       ChangeNotifierProvider(create: (_) => StudyPlanProvider()),
     ],
-    child: MaterialApp(home: child),
+    child: MaterialApp(
+      home: child,
+      // Disable animations in tests to prevent timeouts
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          },
+        ),
+      ),
+    ),
   );
 }
 
@@ -90,4 +106,14 @@ void teardownTestEnvironment() {
   const MethodChannel(
     'plugins.flutter.io/path_provider',
   ).setMockMethodCallHandler(null);
+}
+
+/// Resets database state for individual tests
+Future<void> resetTestDatabase() async {
+  try {
+    // Reset database singleton state
+    await DatabaseHelper.resetDatabase();
+  } catch (e) {
+    // Ignore errors during test cleanup
+  }
 }

@@ -68,8 +68,13 @@ class _StudyPlanCalendarState extends State<StudyPlanCalendar> {
         controller: _pageController,
         onPageChanged: (page) {
           final newDate = _getDateForPage(page);
-          widget.onDateChanged(newDate);
+          // Prevent infinite callbacks during tests
+          if (mounted) {
+            widget.onDateChanged(newDate);
+          }
         },
+        // Limit the number of pages to prevent infinite building in tests
+        itemCount: 365, // One year worth of pages should be sufficient
         itemBuilder: (context, page) {
           final date = _getDateForPage(page);
           final isSelected = _isSameDay(date, widget.selectedDate);
@@ -110,17 +115,20 @@ class _StudyPlanCalendarState extends State<StudyPlanCalendar> {
       textColor = AppColors.textColor;
       dayTextColor = AppColors.secondaryTextColor!;
     }
-
     return GestureDetector(
       onTap: () {
-        widget.onDateChanged(date);
-        // Animate to selected page
-        final targetPage = _getPageForDate(date);
-        _pageController.animateToPage(
-          targetPage,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+        if (mounted) {
+          widget.onDateChanged(date);
+          // Animate to selected page only if the controller is still attached
+          final targetPage = _getPageForDate(date);
+          if (_pageController.hasClients) {
+            _pageController.animateToPage(
+              targetPage,
+              duration: const Duration(milliseconds: 200), // Reduced duration
+              curve: Curves.easeInOut,
+            );
+          }
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),

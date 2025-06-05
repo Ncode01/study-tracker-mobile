@@ -11,13 +11,28 @@ import 'package:study/src/models/study_plan_entry_model.dart';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
+  static final Completer<Database> _dbCompleter = Completer<Database>();
+  static bool _isInitialized = false;
 
   DatabaseHelper._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+
+    // Use completer to prevent multiple database initializations
+    if (!_isInitialized) {
+      _isInitialized = true;
+      try {
+        _database = await _initDatabase();
+        _dbCompleter.complete(_database!);
+      } catch (e) {
+        _isInitialized = false;
+        _dbCompleter.completeError(e);
+        rethrow;
+      }
+    }
+
+    return _dbCompleter.future;
   }
 
   Future<Database> _initDatabase() async {
@@ -322,7 +337,15 @@ class DatabaseHelper {
     if (maps.isEmpty) {
       return null;
     }
-
     return StudyPlanEntry.fromMap(maps.first);
+  }
+
+  /// Closes the database connection and resets the singleton state (for testing)
+  static Future<void> resetDatabase() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+      _isInitialized = false;
+    }
   }
 }

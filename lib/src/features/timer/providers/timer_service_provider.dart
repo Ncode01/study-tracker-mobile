@@ -12,12 +12,14 @@ class TimerServiceProvider extends ChangeNotifier {
   DateTime? _timerStartTime;
   Duration _elapsedTime = Duration.zero;
   Timer? _ticker;
+  bool _disposed = false;
 
   String? get activeProjectId => _activeProjectId;
   bool get isTimerRunning => _activeProjectId != null;
   Duration get elapsedTime => _elapsedTime;
 
   void startTimer(Project project, BuildContext context) {
+    if (_disposed) return;
     if (isTimerRunning) {
       stopTimer(context);
     }
@@ -26,6 +28,10 @@ class TimerServiceProvider extends ChangeNotifier {
     _elapsedTime = Duration.zero;
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_disposed) {
+        timer.cancel();
+        return;
+      }
       _elapsedTime = DateTime.now().difference(_timerStartTime!);
       notifyListeners();
     });
@@ -33,6 +39,7 @@ class TimerServiceProvider extends ChangeNotifier {
   }
 
   Future<void> stopTimer(BuildContext context) async {
+    if (_disposed) return;
     if (!isTimerRunning || _timerStartTime == null) return;
     _ticker?.cancel();
     final endTime = DateTime.now();
@@ -67,6 +74,7 @@ class TimerServiceProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ticker?.cancel();
     super.dispose();
   }

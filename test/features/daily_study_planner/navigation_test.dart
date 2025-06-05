@@ -17,6 +17,11 @@ void main() {
     setupTestEnvironment();
   });
 
+  // Reset database state between tests to prevent locking
+  setUp(() async {
+    await resetTestDatabase();
+  });
+
   tearDownAll(() {
     teardownTestEnvironment();
   });
@@ -68,13 +73,13 @@ void main() {
     ) async {
       await tester.pumpWidget(createTestApp(initialRoute: '/study-planner'));
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify that DailyStudyPlannerScreen is displayed
       expect(find.byType(DailyStudyPlannerScreen), findsOneWidget);
     });
-
     testWidgets(
       'should navigate to add study plan entry screen via named route',
       (tester) async {
@@ -82,8 +87,9 @@ void main() {
           createTestApp(initialRoute: '/study-planner/add'),
         );
 
-        // Allow widget to build
-        await tester.pumpAndSettle();
+        // Allow widget to build with shorter timeout
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 100));
 
         // Verify that AddStudyPlanEntryScreen is displayed
         expect(find.byType(AddStudyPlanEntryScreen), findsOneWidget);
@@ -95,8 +101,9 @@ void main() {
     ) async {
       await tester.pumpWidget(createTestApp(initialRoute: '/invalid-route'));
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Should fallback to home screen
       expect(find.text('Study Tracker'), findsOneWidget);

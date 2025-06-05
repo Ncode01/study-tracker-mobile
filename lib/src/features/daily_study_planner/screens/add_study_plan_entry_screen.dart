@@ -141,7 +141,13 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _buildAppBar(), body: _buildBody());
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(false); // Return false if user uses back
+        return false;
+      },
+      child: Scaffold(appBar: _buildAppBar(), body: _buildBody()),
+    );
   }
 
   PreferredSizeWidget _buildAppBar() {

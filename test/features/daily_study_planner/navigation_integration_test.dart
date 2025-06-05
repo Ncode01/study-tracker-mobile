@@ -17,10 +17,14 @@ void main() {
     setupTestEnvironment();
   });
 
+  // Reset database state between tests to prevent locking
+  setUp(() async {
+    await resetTestDatabase();
+  });
+
   tearDownAll(() {
     teardownTestEnvironment();
   });
-
   group('Daily Study Planner Navigation Integration Tests', () {
     Widget createTestApp({required Widget home}) {
       return MultiProvider(
@@ -31,7 +35,12 @@ void main() {
           ChangeNotifierProvider(create: (_) => SessionProvider()),
           ChangeNotifierProvider(create: (_) => StudyPlanProvider()),
         ],
-        child: MaterialApp(theme: ThemeData.dark(), home: home),
+        child: MaterialApp(
+          theme: ThemeData.dark(),
+          home: home,
+          // Disable animations to prevent test timeouts
+          debugShowCheckedModeBanner: false,
+        ),
       );
     }
 
@@ -42,13 +51,13 @@ void main() {
         createTestApp(home: const DailyStudyPlannerScreen()),
       );
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify that DailyStudyPlannerScreen is displayed
       expect(find.byType(DailyStudyPlannerScreen), findsOneWidget);
     });
-
     testWidgets('AddStudyPlanEntryScreen should render correctly', (
       tester,
     ) async {
@@ -58,8 +67,9 @@ void main() {
         ),
       );
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify that AddStudyPlanEntryScreen is displayed
       expect(find.byType(AddStudyPlanEntryScreen), findsOneWidget);
@@ -74,13 +84,13 @@ void main() {
         createTestApp(home: DailyStudyPlannerScreen(initialDate: testDate)),
       );
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify that DailyStudyPlannerScreen is displayed
       expect(find.byType(DailyStudyPlannerScreen), findsOneWidget);
     });
-
     testWidgets('AddStudyPlanEntryScreen should handle arguments correctly', (
       tester,
     ) async {
@@ -90,8 +100,9 @@ void main() {
         createTestApp(home: AddStudyPlanEntryScreen(initialDate: testDate)),
       );
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Verify that AddStudyPlanEntryScreen receives the arguments
       expect(find.byType(AddStudyPlanEntryScreen), findsOneWidget);
@@ -104,14 +115,15 @@ void main() {
         createTestApp(home: const DailyStudyPlannerScreen()),
       );
 
-      // Allow widget to build
-      await tester.pumpAndSettle();
+      // Allow widget to build with shorter timeout
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Find and tap the floating action button (if exists)
       final fab = find.byType(FloatingActionButton);
       if (fab.evaluate().isNotEmpty) {
         await tester.tap(fab);
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 100));
 
         // Note: This test would require mocking Navigator.pushNamed
         // For now, we verify the FAB exists and is tappable

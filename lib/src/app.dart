@@ -50,11 +50,9 @@ class AppRoot extends StatelessWidget {
             } catch (e) {
               // Use current date if parsing fails
             }
-          }
-
-          // For editing entries, we'll need to pass the entry ID
+          } // For editing entries, we'll need to pass the entry ID
           // and let the screen handle loading the entry data
-          return MaterialPageRoute(
+          return MaterialPageRoute<bool>(
             builder:
                 (context) => AddStudyPlanEntryScreen(
                   initialDate: initialDate,
@@ -62,20 +60,19 @@ class AppRoot extends StatelessWidget {
                 ),
             settings: settings,
           );
-
         case 'date':
           // Handle /study-planner/date/2024-01-15 routes
           if (pathSegments.length >= 3) {
             try {
               final date = DateTime.parse(pathSegments[2]);
-              return MaterialPageRoute(
+              return MaterialPageRoute<bool>(
                 builder:
                     (context) => DailyStudyPlannerScreen(initialDate: date),
                 settings: settings,
               );
             } catch (e) {
               // Invalid date format, fall back to today
-              return MaterialPageRoute(
+              return MaterialPageRoute<bool>(
                 builder: (context) => const DailyStudyPlannerScreen(),
                 settings: settings,
               );

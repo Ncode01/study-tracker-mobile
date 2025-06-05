@@ -20,6 +20,7 @@ class StudyPlanProvider extends ChangeNotifier {
   List<StudyPlanEntry> _studyPlanEntries = [];
   bool _isLoading = false;
   String? _error;
+  bool _disposed = false; // Track disposal state
 
   // Public getters (immutable access)
   List<StudyPlanEntry> get studyPlanEntries =>
@@ -287,16 +288,16 @@ class StudyPlanProvider extends ChangeNotifier {
     return await addStudyPlanEntry(duplicatedEntry);
   }
 
-  // ==================== Error Handling & State Management ====================
-
-  /// Sets the loading state and notifies listeners.
+  // ==================== Error Handling & State Management ====================  /// Sets the loading state and notifies listeners.
   void _setLoading(bool loading) {
+    if (_disposed) return; // Prevent notifications after disposal
     _isLoading = loading;
     notifyListeners();
   }
 
   /// Sets an error message and notifies listeners.
   void _setError(String error) {
+    if (_disposed) return; // Prevent notifications after disposal
     _error = error;
     notifyListeners();
   }
@@ -319,15 +320,10 @@ class StudyPlanProvider extends ChangeNotifier {
   // ==================== Resource Management ====================
 
   /// Disposes of resources when the provider is no longer needed.
-  @override
-  void dispose() {
-    // Clean up any resources if needed
-    super.dispose();
-  }
+  // (Removed duplicate dispose method.)
 
   /// Gets a study plan entry by ID.
-  ///
-  /// [entryId] The ID of the entry to retrieve
+  ///  /// [entryId] The ID of the entry to retrieve
   /// Returns the StudyPlanEntry if found, null otherwise
   Future<StudyPlanEntry?> getStudyPlanEntryById(String entryId) async {
     _clearError();
@@ -338,5 +334,11 @@ class StudyPlanProvider extends ChangeNotifier {
       _setError('Failed to get study plan entry: $e');
       return null;
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
