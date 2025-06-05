@@ -180,7 +180,6 @@ class _DailyStudyPlannerScreenState extends State<DailyStudyPlannerScreen> {
         return a.createdAt.compareTo(b.createdAt);
       }
     });
-
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: entries.length,
@@ -189,6 +188,7 @@ class _DailyStudyPlannerScreenState extends State<DailyStudyPlannerScreen> {
           entry: entries[index],
           onTap: () => _editEntry(entries[index]),
           onToggleCompleted: () => _toggleEntryCompleted(entries[index]),
+          onDelete: () => _deleteEntry(entries[index]),
         );
       },
     );
@@ -252,6 +252,38 @@ class _DailyStudyPlannerScreenState extends State<DailyStudyPlannerScreen> {
 
   Future<void> _toggleEntryCompleted(entry) async {
     await context.read<StudyPlanProvider>().toggleEntryCompleted(entry);
+  }
+
+  Future<void> _deleteEntry(entry) async {
+    try {
+      await context.read<StudyPlanProvider>().deleteStudyPlanEntry(entry.id);
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${entry.subjectName} deleted'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Undo',
+              textColor: Colors.white,
+              onPressed: () {
+                // Implement undo functionality if needed
+                // This would require storing the deleted entry temporarily
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting study plan: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _showFullCalendar() async {

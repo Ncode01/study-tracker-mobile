@@ -16,47 +16,59 @@ class StudyPlanEntryListItem extends StatelessWidget {
   /// Callback when the completion status is toggled.
   final VoidCallback? onToggleCompleted;
 
+  /// Callback when the entry is deleted.
+  final VoidCallback? onDelete;
+
   /// Creates a [StudyPlanEntryListItem].
   const StudyPlanEntryListItem({
     super.key,
     required this.entry,
     this.onTap,
     this.onToggleCompleted,
+    this.onDelete,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getBorderColor(), width: 1.5),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 8),
-              _buildSubjectAndProject(context),
-              if (entry.notes != null && entry.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                _buildNotes(),
-              ],
-              if (_shouldShowTimeInfo()) ...[
-                const SizedBox(height: 8),
-                _buildTimeInfo(),
-              ],
-              if (entry.reminderDateTime != null) ...[
-                const SizedBox(height: 8),
-                _buildReminderInfo(),
-              ],
-            ],
+      child: Dismissible(
+        key: Key('study_plan_entry_${entry.id}'),
+        direction: DismissDirection.endToStart,
+        background: _buildDeleteBackground(),
+        confirmDismiss: (direction) => _confirmDelete(context),
+        onDismissed: (direction) => onDelete?.call(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _getBorderColor(), width: 1.5),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 8),
+                  _buildSubjectAndProject(context),
+                  if (entry.notes != null && entry.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildNotes(),
+                  ],
+                  if (_shouldShowTimeInfo()) ...[
+                    const SizedBox(height: 8),
+                    _buildTimeInfo(),
+                  ],
+                  if (entry.reminderDateTime != null) ...[
+                    const SizedBox(height: 8),
+                    _buildReminderInfo(),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -347,5 +359,67 @@ class StudyPlanEntryListItem extends StatelessWidget {
     } else {
       return Colors.transparent;
     }
+  }
+
+  /// Builds the red delete background shown when swiping
+  Widget _buildDeleteBackground() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.redAccent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.delete, color: Colors.white, size: 28),
+          SizedBox(height: 4),
+          Text(
+            'Delete',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows a confirmation dialog before deleting the entry
+  Future<bool?> _confirmDelete(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.cardColor,
+          title: const Text(
+            'Delete Study Plan',
+            style: TextStyle(color: AppColors.textColor),
+          ),
+          content: Text(
+            'Are you sure you want to delete "${entry.subjectName}"? This action cannot be undone.',
+            style: TextStyle(color: AppColors.secondaryTextColor),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.secondaryTextColor),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
