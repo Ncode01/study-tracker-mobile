@@ -138,7 +138,6 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
   }
 
   bool get _isEditing => widget.editingEntry != null;
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -146,7 +145,11 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
         Navigator.of(context).pop(false); // Return false if user uses back
         return false;
       },
-      child: Scaffold(appBar: _buildAppBar(), body: _buildBody()),
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: _buildBody(),
+        resizeToAvoidBottomInset: true,
+      ),
     );
   }
 
@@ -167,12 +170,14 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
   Widget _buildBody() {
     return SafeArea(
       child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildSubjectField(),
                 const SizedBox(height: 16),
@@ -227,6 +232,7 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
           ),
           style: const TextStyle(color: AppColors.textColor),
           dropdownColor: AppColors.cardColor,
+          isExpanded: true, // Fix for unbounded width constraints
           items: [
             const DropdownMenuItem<String>(
               value: null,
@@ -236,10 +242,16 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
               (project) => DropdownMenuItem<String>(
                 value: project.id,
                 child: Row(
+                  mainAxisSize: MainAxisSize.min, // Fix for unbounded width
                   children: [
                     CircleAvatar(backgroundColor: project.color, radius: 8),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(project.name)),
+                    Flexible(
+                      child: Text(
+                        project.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ),
