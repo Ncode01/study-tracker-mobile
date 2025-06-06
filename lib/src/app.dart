@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:study/src/constants/journey_map_theme.dart';
+import 'package:study/src/constants/app_theme.dart';
 import 'package:study/src/features/core_ui/screens/main_screen.dart';
 import 'package:study/src/features/tasks/screens/add_task_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/add_study_plan_entry_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
 import 'package:study/src/features/journey_map/screens/journey_map_screen.dart';
+import 'package:study/src/features/goals/screens/study_goals_screen.dart';
 import 'package:study/src/models/study_plan_entry_model.dart';
 
 /// The root widget of the application.
@@ -16,13 +17,14 @@ class AppRoot extends StatelessWidget {
     return MaterialApp(
       title: 'Study Tracker',
       debugShowCheckedModeBanner: false,
-      theme: journeyMapTheme, // Apply the new Journey Map theme
+      theme: appTheme, // Apply the new Study Goals theme
       initialRoute: '/',
       routes: {
         '/': (context) => const MainScreen(),
         '/tasks/add': (context) => const AddTaskScreen(),
         '/study-planner': (context) => const DailyStudyPlannerScreen(),
         '/journey-map': (context) => const JourneyMapScreen(),
+        '/goals': (context) => const StudyGoalsScreen(),
         '/study-planner/add': (context) {
           final args =
               ModalRoute.of(context)?.settings.arguments

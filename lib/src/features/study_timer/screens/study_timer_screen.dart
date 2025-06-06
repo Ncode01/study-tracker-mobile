@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../constants/journey_map_colors.dart';
+import '../../../constants/app_theme.dart';
 import '../providers/timer_provider.dart';
 
 /// StudyTimerScreen: A dynamic, animated study timer UI connected to TimerProvider.
@@ -39,36 +39,18 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
     final hours = duration.inHours.toString().padLeft(2, '0');
     final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-    final borderColor = const Color(0xFFD2B48C);
-    final timerBgColor = const Color(0xFFF0E6DB);
-    final startButtonColor = const Color(0xFFD2E2F3);
     final isRunning = timerProvider.status == TimerStatus.running;
     final isPaused = timerProvider.status == TimerStatus.paused;
     final isStopped = timerProvider.status == TimerStatus.stopped;
 
     return Scaffold(
-      backgroundColor: JourneyMapColors.background,
+      backgroundColor: appTheme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: JourneyMapColors.background,
+        backgroundColor: appTheme.appBarTheme.backgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.close,
-            color: JourneyMapColors.primaryText,
-            size: 28,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        iconTheme: appTheme.appBarTheme.iconTheme,
+        title: Text('Study Timer', style: appTheme.appBarTheme.titleTextStyle),
         centerTitle: true,
-        title: const Text(
-          'Study Timer',
-          style: TextStyle(
-            fontFamily: 'Caveat',
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: JourneyMapColors.primaryText,
-          ),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -84,25 +66,22 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                     _TimerSection(
                       value: hours,
                       label: 'Hours',
-                      bgColor: timerBgColor,
-                      borderColor: borderColor,
-                      fontFamily: 'Caveat',
+                      bgColor: appTheme.cardColor,
+                      borderColor: appTheme.primaryColor,
                     ),
                     const SizedBox(width: 16),
                     _TimerSection(
                       value: minutes,
                       label: 'Minutes',
-                      bgColor: timerBgColor,
-                      borderColor: borderColor,
-                      fontFamily: 'Caveat',
+                      bgColor: appTheme.cardColor,
+                      borderColor: appTheme.primaryColor,
                     ),
                     const SizedBox(width: 16),
                     _TimerSection(
                       value: seconds,
                       label: 'Seconds',
-                      bgColor: timerBgColor,
-                      borderColor: borderColor,
-                      fontFamily: 'Caveat',
+                      bgColor: appTheme.cardColor,
+                      borderColor: appTheme.primaryColor,
                     ),
                   ],
                 ),
@@ -116,16 +95,13 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                   child: Text(
                     timerProvider.isBreak ? 'Break Time' : 'Focus Time',
                     key: ValueKey<bool>(timerProvider.isBreak),
-                    style: const TextStyle(
-                      fontFamily: 'Caveat',
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: null, // color set below
-                    ).copyWith(
                       color:
                           timerProvider.isBreak
                               ? Colors.green
-                              : JourneyMapColors.accent,
+                              : appTheme.primaryColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -142,20 +118,20 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                       color:
                           timerProvider.isBreak
                               ? Colors.green.withOpacity(0.12)
-                              : JourneyMapColors.accent.withOpacity(0.10),
+                              : appTheme.primaryColor.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(32),
                       border: Border.all(
                         color:
                             timerProvider.isBreak
                                 ? Colors.green
-                                : JourneyMapColors.accent,
+                                : appTheme.primaryColor,
                         width: 4,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: (timerProvider.isBreak
                                   ? Colors.green
-                                  : JourneyMapColors.accent)
+                                  : appTheme.primaryColor)
                               .withOpacity(0.18),
                           blurRadius: 18,
                           offset: const Offset(0, 8),
@@ -177,7 +153,7 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                               color:
                                   timerProvider.isBreak
                                       ? Colors.green
-                                      : JourneyMapColors.accent,
+                                      : appTheme.primaryColor,
                               size: 64,
                             ),
                           );
@@ -206,7 +182,7 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                                             .startTimer()
                                     : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: startButtonColor,
+                              backgroundColor: appTheme.primaryColor,
                               foregroundColor: Colors.black,
                               elevation: 4,
                               shadowColor: Colors.black.withOpacity(0.15),
@@ -218,7 +194,6 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                             child: Text(
                               isPaused ? 'Resume' : 'Start',
                               style: const TextStyle(
-                                fontFamily: 'Caveat',
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -242,7 +217,7 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                                             .pauseTimer()
                                     : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: timerBgColor,
+                              backgroundColor: appTheme.cardColor,
                               foregroundColor: Colors.black,
                               elevation: 4,
                               shadowColor: Colors.black.withOpacity(0.10),
@@ -254,7 +229,6 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                             child: const Text(
                               'Pause',
                               style: TextStyle(
-                                fontFamily: 'Caveat',
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -278,7 +252,7 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                                             .resetTimer()
                                     : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: timerBgColor,
+                              backgroundColor: appTheme.cardColor,
                               foregroundColor: Colors.black,
                               elevation: 4,
                               shadowColor: Colors.black.withOpacity(0.10),
@@ -290,7 +264,6 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                             child: const Text(
                               'Reset',
                               style: TextStyle(
-                                fontFamily: 'Caveat',
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -308,7 +281,6 @@ class _StudyTimerScreenState extends State<StudyTimerScreen>
                     child: Text(
                       '+${timerProvider.overtime!.inMinutes.toString().padLeft(2, '0')}:${(timerProvider.overtime!.inSeconds % 60).toString().padLeft(2, '0')} overtime',
                       style: const TextStyle(
-                        fontFamily: 'Caveat',
                         fontSize: 20,
                         color: Colors.redAccent,
                         fontWeight: FontWeight.bold,
@@ -329,13 +301,11 @@ class _TimerSection extends StatelessWidget {
   final String label;
   final Color bgColor;
   final Color borderColor;
-  final String fontFamily;
   const _TimerSection({
     required this.value,
     required this.label,
     required this.bgColor,
     required this.borderColor,
-    this.fontFamily = 'Caveat',
   });
   @override
   Widget build(BuildContext context) {
@@ -353,10 +323,9 @@ class _TimerSection extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontFamily: fontFamily,
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: JourneyMapColors.primaryText,
+              color: appTheme.textTheme.bodyLarge?.color,
             ),
           ),
         ),
@@ -364,9 +333,8 @@ class _TimerSection extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontFamily: fontFamily,
             fontSize: 16,
-            color: JourneyMapColors.secondaryText,
+            color: appTheme.textTheme.bodyMedium?.color?.withOpacity(0.7),
           ),
         ),
       ],

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../constants/journey_map_colors.dart';
+import '../../../constants/app_theme.dart';
 import '../widgets/itinerary_list_item.dart';
-import '../widgets/hand_drawn_border_card.dart';
 import '../../daily_study_planner/providers/study_plan_provider.dart';
 import '../../sessions/providers/session_provider.dart';
 import '../../tasks/providers/task_provider.dart';
 import '../../../providers/project_provider.dart';
 import '../../../models/study_plan_entry_model.dart';
 import '../../study_timer/screens/study_timer_screen.dart';
+import '../widgets/journey_day_tile.dart';
+import '../widgets/journey_path_painter.dart';
 
 /// The main Journey Map screen that displays the user's learning journey.
 /// This is a dynamic implementation that connects to live study plan data.
@@ -48,35 +49,23 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: JourneyMapColors.background,
+      backgroundColor: appTheme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: appTheme.appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back,
-            color: JourneyMapColors.primaryText,
+            color: appTheme.appBarTheme.iconTheme?.color,
             size: 24,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          'Journey Map',
-          style: TextStyle(
-            fontFamily: 'Caveat',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: JourneyMapColors.primaryText,
-          ),
-        ),
+        title: Text('Journey Map', style: appTheme.appBarTheme.titleTextStyle),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.timer,
-              color: JourneyMapColors.primaryText,
-              size: 26,
-            ),
+            icon: const Icon(Icons.timer, size: 26),
             tooltip: 'Study Timer',
             onPressed: () {
               Navigator.of(context).push(
@@ -89,55 +78,52 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Tab Bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: JourneyMapColors.primaryText,
-              unselectedLabelColor: JourneyMapColors.tabInactive,
-              labelStyle: const TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              indicator: UnderlineTabIndicator(
-                borderSide: BorderSide(
-                  color: JourneyMapColors.tabIndicator,
-                  width: 4.0,
+      body: Container(
+        decoration: BoxDecoration(
+          color: appTheme.scaffoldBackgroundColor,
+          // Optionally add pencil-texture background here if using PNG
+        ),
+        child: Column(
+          children: [
+            // Tab Bar
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              child: TabBar(
+                controller: _tabController,
+                labelColor: appTheme.textTheme.titleLarge?.color,
+                unselectedLabelColor: appTheme.textTheme.bodyMedium?.color
+                    ?.withOpacity(0.5),
+                labelStyle: appTheme.textTheme.titleMedium,
+                unselectedLabelStyle: appTheme.textTheme.titleMedium,
+                indicator: UnderlineTabIndicator(
+                  borderSide: BorderSide(
+                    color: appTheme.primaryColor,
+                    width: 4.0,
+                  ),
                 ),
+                indicatorSize: TabBarIndicatorSize.label,
+                dividerHeight: 0,
+                tabs: const [
+                  Tab(text: "Today's Quest"),
+                  Tab(text: 'Journey Progress'),
+                  Tab(text: 'Achievements'),
+                ],
               ),
-              indicatorSize: TabBarIndicatorSize.label,
-              dividerHeight: 0,
-              tabs: const [
-                Tab(text: "Today's Quest"),
-                Tab(text: 'Journey Progress'),
-                Tab(text: 'Achievements'),
-              ],
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Content Area
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDayView(),
-                _buildJourneyProgressView(),
-                _buildAchievementsView(),
-              ],
+            const SizedBox(height: 20),
+            // Content Area
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildDayView(),
+                  _buildJourneyProgressView(),
+                  _buildAchievementsView(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -210,7 +196,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Container(
               decoration: BoxDecoration(
-                color: JourneyMapColors.cardBackground,
+                color: appTheme.cardColor,
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(
                   color: const Color(0xFFa0aec0).withOpacity(0.6),
@@ -233,16 +219,13 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                     Icon(
                       Icons.map,
                       size: 60,
-                      color: JourneyMapColors.secondaryText,
+                      color: appTheme.secondaryHeaderColor,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Journey Map Visualization',
-                      style: TextStyle(
-                        fontFamily: 'Caveat',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: JourneyMapColors.secondaryText,
+                      style: appTheme.textTheme.titleMedium?.copyWith(
+                        color: appTheme.secondaryHeaderColor,
                       ),
                     ),
                   ],
@@ -260,11 +243,8 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
               alignment: Alignment.centerLeft,
               child: Text(
                 "Today's Itinerary",
-                style: TextStyle(
-                  fontFamily: 'Caveat',
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: JourneyMapColors.primaryText,
+                style: appTheme.textTheme.headlineMedium?.copyWith(
+                  color: appTheme.primaryColor,
                 ),
               ),
             ),
@@ -290,15 +270,13 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                       Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: JourneyMapColors.secondaryText,
+                        color: appTheme.secondaryHeaderColor,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Failed to load today\'s quests',
-                        style: TextStyle(
-                          fontFamily: 'Caveat',
-                          fontSize: 18,
-                          color: JourneyMapColors.secondaryText,
+                        style: appTheme.textTheme.titleMedium?.copyWith(
+                          color: appTheme.secondaryHeaderColor,
                         ),
                       ),
                     ],
@@ -316,25 +294,20 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                       Icon(
                         Icons.calendar_today,
                         size: 64,
-                        color: JourneyMapColors.secondaryText,
+                        color: appTheme.secondaryHeaderColor,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'No quests for today!',
-                        style: TextStyle(
-                          fontFamily: 'Caveat',
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: JourneyMapColors.primaryText,
+                        style: appTheme.textTheme.headlineSmall?.copyWith(
+                          color: appTheme.primaryColor,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Add one to start your learning journey',
-                        style: TextStyle(
-                          fontFamily: 'Caveat',
-                          fontSize: 18,
-                          color: JourneyMapColors.secondaryText,
+                        style: appTheme.textTheme.bodyMedium?.copyWith(
+                          color: appTheme.secondaryHeaderColor,
                         ),
                       ),
                     ],
@@ -382,8 +355,8 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
               child: ElevatedButton(
                 onPressed: () => _addNewQuest(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: JourneyMapColors.buttonBackground,
-                  foregroundColor: JourneyMapColors.buttonText,
+                  backgroundColor: appTheme.primaryColor,
+                  foregroundColor: appTheme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 20,
@@ -391,10 +364,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                   elevation: 4.0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(50),
-                    side: BorderSide(
-                      color: JourneyMapColors.buttonBorder,
-                      width: 2.5,
-                    ),
+                    side: BorderSide(color: appTheme.primaryColor, width: 2.5),
                   ),
                 ),
                 child: Row(
@@ -402,14 +372,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                   children: [
                     const Icon(Icons.add, size: 28),
                     const SizedBox(width: 12),
-                    Text(
-                      'Add New Stop',
-                      style: const TextStyle(
-                        fontFamily: 'Caveat',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Add New Stop', style: appTheme.textTheme.titleMedium),
                   ],
                 ),
               ),
@@ -428,38 +391,47 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
     required String value,
     required String subtitle,
   }) {
-    return HandDrawnBorderCard(
+    return Container(
       margin: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        color: appTheme.cardColor,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: const Color(0xFFa0aec0).withOpacity(0.6),
+          width: 2.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             Text(
               title,
-              style: TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 14,
+              style: appTheme.textTheme.bodyMedium?.copyWith(
+                color: appTheme.secondaryHeaderColor,
                 fontWeight: FontWeight.bold,
-                color: JourneyMapColors.secondaryText,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 20,
+              style: appTheme.textTheme.headlineSmall?.copyWith(
+                color: appTheme.primaryColor,
                 fontWeight: FontWeight.bold,
-                color: JourneyMapColors.primaryText,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 12,
-                color: JourneyMapColors.secondaryText,
+              style: appTheme.textTheme.bodySmall?.copyWith(
+                color: appTheme.secondaryHeaderColor,
               ),
             ),
           ],
@@ -494,22 +466,98 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
 
   /// Journey Progress placeholder view
   Widget _buildJourneyProgressView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.timeline, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Journey Progress',
-            style: TextStyle(
-              fontFamily: 'Caveat',
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+    return Consumer2<SessionProvider, StudyPlanProvider>(
+      builder: (context, sessionProvider, studyPlanProvider, child) {
+        final isLoading =
+            sessionProvider.sessions.isEmpty && studyPlanProvider.isLoading;
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (sessionProvider.journeyDays.isEmpty) {
+          return Center(
+            child: Text(
+              'No journey data yet!',
+              style: appTheme.textTheme.titleMedium?.copyWith(
+                color: appTheme.secondaryHeaderColor,
+              ),
             ),
-          ),
-        ],
-      ),
+          );
+        }
+        return Column(
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(painter: JourneyPathPainter()),
+                  ),
+                  ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 32,
+                      horizontal: 16,
+                    ),
+                    itemCount: sessionProvider.journeyDays.length,
+                    itemBuilder: (context, index) {
+                      return JourneyDayTile(
+                        journeyDay: sessionProvider.journeyDays[index],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 16.0,
+                horizontal: 24,
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    "You've journeyed for " +
+                        sessionProvider.consecutiveDays.toString() +
+                        " consecutive days...",
+                    style: appTheme.textTheme.titleMedium?.copyWith(
+                      color: appTheme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: appTheme.primaryColor,
+                        foregroundColor: appTheme.colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        elevation: 4,
+                      ),
+                      onPressed: () {
+                        // Navigate to StudyTimerScreen or Today's Quest tab
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (context) => const StudyTimerScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Continue Your Journey!',
+                        style: appTheme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -520,24 +568,10 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
-              'Your Achievements',
-              style: TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Journey Stats',
-              style: TextStyle(
-                fontFamily: 'Caveat',
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+          children: [
+            Text('Your Achievements', style: appTheme.textTheme.titleLarge),
+            const SizedBox(height: 16),
+            Text('Journey Stats', style: appTheme.textTheme.titleMedium),
           ],
         ),
       ),

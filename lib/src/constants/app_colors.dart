@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Defines the color palette for the application.
+// This file is now the single source of truth for the app's colors. All color references should use app_colors.dart.
 class AppColors {
   /// The primary color of the application.
   static const Color primaryColor = Colors.teal;

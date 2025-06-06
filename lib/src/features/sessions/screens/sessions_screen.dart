@@ -11,18 +11,24 @@ class SessionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sessions')),
+      appBar: AppBar(
+        title: const Text('Sessions'),
+        backgroundColor: appTheme.appBarTheme.backgroundColor,
+      ),
       body: Consumer<SessionProvider>(
         builder: (context, provider, _) {
           return FutureBuilder(
             future: provider.fetchSessions(),
             builder: (context, snapshot) {
               if (provider.sessions.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
                     'No sessions recorded yet.',
-                    style: TextStyle(color: Colors.white70),
+                    style: appTheme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white70,
+                    ),
                   ),
                 );
               }

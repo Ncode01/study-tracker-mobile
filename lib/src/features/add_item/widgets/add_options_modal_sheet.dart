@@ -7,10 +7,11 @@ class AddOptionsModalSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: appTheme.colorScheme.background,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: SafeArea(
@@ -23,16 +24,21 @@ class AddOptionsModalSheet extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
                 'Create New',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: Colors.white),
+                style: appTheme.textTheme.titleLarge?.copyWith(
+                  color: appTheme.colorScheme.onBackground,
+                ),
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.event_note, color: Colors.white),
-              title: const Text(
+              leading: Icon(
+                Icons.event_note,
+                color: appTheme.colorScheme.primary,
+              ),
+              title: Text(
                 'Study Plan',
-                style: TextStyle(color: Colors.white),
+                style: appTheme.textTheme.bodyLarge?.copyWith(
+                  color: appTheme.colorScheme.onBackground,
+                ),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -40,11 +46,16 @@ class AddOptionsModalSheet extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.check_circle_outline,
-                color: Colors.white,
+                color: appTheme.colorScheme.primary,
               ),
-              title: const Text('Task', style: TextStyle(color: Colors.white)),
+              title: Text(
+                'Task',
+                style: appTheme.textTheme.bodyLarge?.copyWith(
+                  color: appTheme.colorScheme.onBackground,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).pushNamed('/tasks/add');

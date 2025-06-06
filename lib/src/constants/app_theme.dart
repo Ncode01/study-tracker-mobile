@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:study/src/constants/app_colors.dart';
 
 /// The dark theme for the application.
-final ThemeData darkTheme = ThemeData(
+final ThemeData appTheme = ThemeData(
   brightness: Brightness.dark,
   primaryColor: AppColors.primaryColor,
   scaffoldBackgroundColor: AppColors.backgroundColor,
@@ -61,3 +61,5 @@ final ThemeData darkTheme = ThemeData(
     onError: Colors.red, // Example error color
   ),
 );
+
+// This file is now the single source of truth for the app's theme. All theme references should use app_theme.dart.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:study/src/features/add_item/widgets/add_options_modal_sheet.dart';
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
+import 'package:study/src/features/goals/screens/study_goals_screen.dart';
 import 'package:study/src/features/journey_map/screens/journey_map_screen.dart';
-import 'package:study/src/features/tasks/screens/tasks_screen.dart';
 
 /// The main screen of the application, hosting the bottom navigation bar.
 class MainScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final List<Widget> _screens = [
     const DailyStudyPlannerScreen(),
-    const TasksScreen(),
+    const StudyGoalsScreen(), // Replaces TasksScreen
     const JourneyMapScreen(),
   ];
 
@@ -59,8 +59,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Add',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline),
-            label: 'Tasks',
+            icon: Icon(Icons.emoji_events_outlined),
+            label: 'Goals',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map_outlined),

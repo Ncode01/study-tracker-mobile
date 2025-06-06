@@ -39,7 +39,7 @@ class TestAppSetup {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: darkTheme,
+        theme: appTheme, // Changed from darkTheme to appTheme
         initialRoute: initialRoute,
         home: initialRoute == null ? home : null,
         routes: initialRoute == null && home != null ? {} : routes,

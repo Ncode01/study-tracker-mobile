@@ -18,15 +18,19 @@ class TaskListItem extends StatelessWidget {
             listen: false,
           ).toggleTaskCompleted(task);
         },
+        activeColor: Theme.of(context).colorScheme.secondary,
+        checkColor: Theme.of(context).colorScheme.onPrimary,
       ),
       title: Text(
         task.title,
         style: TextStyle(
           decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+          color: Theme.of(context).textTheme.titleLarge?.color,
         ),
       ),
       subtitle: Text(
         'Due: 	${task.dueDate.year}-${task.dueDate.month.toString().padLeft(2, '0')}-${task.dueDate.day.toString().padLeft(2, '0')}',
+        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
       ),
     );
   }

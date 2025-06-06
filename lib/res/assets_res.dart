@@ -8,4 +8,5 @@ class AssetsRes {
 
   static const String PROJECT_NAME = 'study';
   static const String PROJECT_VERSION = '1.0.0+1';
+  static const String PENCIL_TEXTURE = 'assets/images/pencil_texture.svg';
 }
