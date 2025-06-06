@@ -50,14 +50,19 @@ void main() async {
             projectProvider,
             previous,
           ) {
-            previous ??= GoalProvider(
-              sessionProvider,
-              taskProvider,
-              projectProvider,
-            );
-            previous.sessionProvider = sessionProvider;
-            previous.taskProvider = taskProvider;
-            previous.projectProvider = projectProvider;
+            if (previous == null) {
+              previous = GoalProvider(
+                sessionProvider,
+                taskProvider,
+                projectProvider,
+              );
+            } else {
+              previous.sessionProvider = sessionProvider;
+              previous.taskProvider = taskProvider;
+              previous.projectProvider = projectProvider;
+            }
+            // Ensure goal progress is updated when dependent providers change.
+            previous.updateGoalProgress();
             return previous;
           },
         ),
@@ -73,8 +78,17 @@ void main() async {
                 Provider.of<SettingsProvider>(context, listen: false),
               ),
           update: (context, settingsProvider, sessionProvider, previous) {
-            return previous ??
-                AnalyticsProvider(DatabaseHelper.instance, settingsProvider);
+            if (previous == null) {
+              return AnalyticsProvider(
+                DatabaseHelper.instance,
+                settingsProvider,
+              );
+            }
+            // When SessionProvider or SettingsProvider changes, refresh analytics.
+            // AnalyticsProvider internally listens to settingsProvider for changes.
+            // For SessionProvider changes, we explicitly call refreshAnalytics.
+            previous.refreshAnalytics();
+            return previous;
           },
         ),
       ],

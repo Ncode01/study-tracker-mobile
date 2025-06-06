@@ -6,6 +6,7 @@ import 'package:study/src/models/project_model.dart';
 import 'package:study/src/models/session_model.dart';
 import 'package:study/src/services/database_helper.dart';
 import 'package:study/src/providers/project_provider.dart';
+import 'package:study/src/features/sessions/providers/session_provider.dart';
 
 class TimerServiceProvider extends ChangeNotifier {
   String? _activeProjectId;
@@ -66,6 +67,8 @@ class TimerServiceProvider extends ChangeNotifier {
       durationMinutes: durationMinutes,
     );
     await DatabaseHelper.instance.insertSession(session);
+    // Immediately refresh sessions in provider so analytics and goals update live
+    await Provider.of<SessionProvider>(context, listen: false).fetchSessions();
     _activeProjectId = null;
     _timerStartTime = null;
     _elapsedTime = Duration.zero;

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../../models/session_model.dart';
 import '../../../services/database_helper.dart';
 import '../../settings/providers/settings_provider.dart';
@@ -11,6 +12,10 @@ class AnalyticsProvider with ChangeNotifier {
   StudyAverages? _studyAverages;
   bool _isLoading = false;
   String? _error;
+  List<Session> _weeklySessions = [];
+  List<Session> _monthlySessions = [];
+  List<Session> _termlySessions = [];
+
   AnalyticsProvider(this._databaseHelper, this._settingsProvider) {
     _settingsProvider.addListener(_onSettingsChanged);
     _loadAnalytics();
@@ -19,6 +24,7 @@ class AnalyticsProvider with ChangeNotifier {
   StudyAverages? get studyAverages => _studyAverages;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  StudyAverages? get studyAveragesWithSessions => _studyAverages;
 
   void _onSettingsChanged() {
     // Recalculate analytics when settings change
@@ -32,6 +38,9 @@ class AnalyticsProvider with ChangeNotifier {
     try {
       final sessions = await _databaseHelper.getAllSessions();
       final dailyTarget = _settingsProvider.dailyStudyTarget;
+      _weeklySessions = _filterSessionsByDays(sessions, 7);
+      _monthlySessions = _filterSessionsByDays(sessions, 30);
+      _termlySessions = _filterSessionsByDays(sessions, 90);
       _studyAverages = _calculateStudyAverages(sessions, dailyTarget);
     } catch (e) {
       _error = 'Failed to load analytics: $e';
@@ -160,7 +169,9 @@ class AnalyticsProvider with ChangeNotifier {
   Map<String, double> getSubjectBreakdown(int periodDays) {
     if (_studyAverages == null) return {};
 
-    final sessions = _getSessionsForPeriod(periodDays);
+    final sessions = getSessionsForPeriod(
+      periodDays,
+    ); // FIXED: use public method
     final breakdown = <String, double>{};
     for (final session in sessions) {
       final subject = session.projectName;
@@ -171,10 +182,48 @@ class AnalyticsProvider with ChangeNotifier {
     return breakdown;
   }
 
-  List<Session> _getSessionsForPeriod(int days) {
-    // This would typically fetch from database, but for now return empty
-    // In a real implementation, you'd store the filtered sessions
-    return [];
+  List<Session> getSessionsForPeriod(int days) {
+    switch (days) {
+      case 7:
+        return _weeklySessions;
+      case 30:
+        return _monthlySessions;
+      case 90:
+        return _termlySessions;
+      default:
+        return [];
+    }
+  }
+
+  /// Returns a list of [FlSpot] objects representing hours studied per day over the last [days] days.
+  List<FlSpot> getSpotsForPeriod(int days) {
+    final sessions = getSessionsForPeriod(days);
+    final now = DateTime.now();
+    final spots = <FlSpot>[];
+    for (int i = 0; i < days; i++) {
+      final date = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: days - 1 - i));
+      final daySessions = sessions.where((s) {
+        final d = DateTime(
+          s.startTime.year,
+          s.startTime.month,
+          s.startTime.day,
+        );
+        return d.year == date.year &&
+            d.month == date.month &&
+            d.day == date.day;
+      });
+      final totalMinutes = daySessions.fold<int>(
+        0,
+        (sum, s) => sum + s.durationMinutes,
+      );
+      final hours = totalMinutes / 60.0;
+      spots.add(FlSpot(i.toDouble(), hours));
+    }
+    return spots;
   }
 
   @override

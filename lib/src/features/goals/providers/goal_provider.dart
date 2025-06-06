@@ -20,6 +20,9 @@ class GoalProvider extends ChangeNotifier {
   List<StudyGoal> get longTermGoals => _longTermGoals;
   List<StudyGoal> get dynamicShortTermGoals => _dynamicShortTermGoals;
 
+  // Long-term goal templates
+  List<GoalTemplate> get longTermGoalTemplates => kLongTermGoalTemplates;
+
   Future<void> fetchGoals() async {
     // TODO: Load from database. For now, add a default goal for demo.
     if (_shortTermGoals.isEmpty && _longTermGoals.isEmpty) {
@@ -36,15 +39,22 @@ class GoalProvider extends ChangeNotifier {
 
   Future<void> updateGoalProgress() async {
     final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday % 7));
-    for (final goal in _shortTermGoals) {
+    final weekStart = now.subtract(
+      Duration(days: now.weekday % 7),
+    ); // Assuming Sunday is the first day (0)
+
+    final allGoals = [..._shortTermGoals, ..._longTermGoals];
+
+    for (final goal in allGoals) {
       switch (goal.goalType) {
         case GoalType.weeklyHours:
           final whg = goal as WeeklyHoursGoal;
           final sessions = sessionProvider.sessions.where(
             (s) =>
                 s.startTime.isAfter(weekStart) &&
-                s.startTime.isBefore(now.add(const Duration(days: 1))),
+                s.startTime.isBefore(
+                  now.add(const Duration(days: 1)),
+                ), // up to end of current day
           );
           final totalMinutes = sessions.fold<int>(
             0,
@@ -54,30 +64,29 @@ class GoalProvider extends ChangeNotifier {
           break;
         case GoalType.chapterCompletion:
           final ccg = goal as ChapterCompletionGoal;
-          final project = projectProvider.projects.firstWhere(
-            (p) => p.id == ccg.projectId,
-            orElse:
-                () => Project(
-                  id: '',
-                  name: '',
-                  color: Colors.grey,
-                  loggedMinutes: 0,
-                  goalMinutes: 0,
-                ),
-          );
-          ccg.completedSections = project.completedTaskCount;
-          ccg.targetSections = project.totalTaskCount;
+          final projectTasks =
+              taskProvider.tasks
+                  .where((t) => t.projectId == ccg.projectId)
+                  .toList();
+          ccg.completedSections =
+              projectTasks.where((t) => t.isCompleted).length;
+          // If targetSections wasn't set on the goal, try to get it from the project's total tasks, or default.
+          ccg.targetSections =
+              ccg.targetSections > 0
+                  ? ccg.targetSections
+                  : (projectTasks.isNotEmpty ? projectTasks.length : 1);
           break;
         case GoalType.semesterGPA:
-          // No auto update; user sets currentGPA manually
+          // final sgag = goal as SemesterGPAGoal;
+          // No auto update for GPA based on sessions/tasks; user sets currentGPA manually.
           break;
         case GoalType.unlockDestination:
           final udg = goal as UnlockDestinationGoal;
-          final totalMinutes = projectProvider.projects.fold<int>(
+          final totalProjectMinutes = projectProvider.projects.fold<int>(
             0,
             (sum, p) => sum + p.loggedMinutes,
           );
-          udg.hoursGoal.currentHours = totalMinutes / 60.0;
+          udg.hoursGoal.currentHours = totalProjectMinutes / 60.0;
           break;
       }
     }
@@ -150,6 +159,51 @@ class GoalProvider extends ChangeNotifier {
         ),
       );
     }
+    notifyListeners();
+  }
+
+  /// Create and add a new long-term goal from a template
+  void addGoalFromTemplate(GoalTemplate template) {
+    StudyGoal newGoal;
+    switch (template.goalType) {
+      case GoalType.weeklyHours:
+        newGoal = WeeklyHoursGoal(
+          title: template.title,
+          description: template.description,
+          targetHours: template.presetData['targetHours'] ?? 10,
+        );
+        break;
+      case GoalType.chapterCompletion:
+        newGoal = ChapterCompletionGoal(
+          title: template.title,
+          description: template.description,
+          projectId: template.presetData['projectId'] ?? '',
+          targetSections: template.presetData['targetSections'] ?? 10,
+          completedSections: 0,
+        );
+        break;
+      case GoalType.semesterGPA:
+        newGoal = SemesterGPAGoal(
+          title: template.title,
+          description: template.description,
+          targetGPA: template.presetData['targetGPA'] ?? 4.0,
+        );
+        break;
+      case GoalType.unlockDestination:
+        newGoal = UnlockDestinationGoal(
+          title: template.title,
+          description: template.description,
+          destinationName:
+              template.presetData['destinationName'] ?? template.title,
+          hoursGoal: WeeklyHoursGoal(
+            title: 'Milestone Hours',
+            description: 'Complete milestone hours for this destination',
+            targetHours: template.presetData['targetHours'] ?? 20,
+          ),
+        );
+        break;
+    }
+    _longTermGoals.add(newGoal);
     notifyListeners();
   }
 }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../../constants/app_colors.dart';
 import '../providers/analytics_provider.dart';
 import '../models/study_averages.dart';
 
 /// Detailed analytics screen showing comprehensive study statistics and charts.
 class DetailedAnalyticsScreen extends StatefulWidget {
-  const DetailedAnalyticsScreen({super.key});
+  final int initialTabIndex;
+  const DetailedAnalyticsScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<DetailedAnalyticsScreen> createState() =>
@@ -20,7 +22,11 @@ class _DetailedAnalyticsScreenState extends State<DetailedAnalyticsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
   }
 
   @override
@@ -172,11 +178,73 @@ class _DetailedAnalyticsScreenState extends State<DetailedAnalyticsScreen>
         children: [
           _buildOverviewCard(period, periodName),
           const SizedBox(height: 16),
+          // Trend chart
+          _buildTrendChart(periodName),
+          const SizedBox(height: 16),
+          _buildSubjectBreakdownChart(periodName),
+          const SizedBox(height: 16),
           _buildProgressCard(period),
           const SizedBox(height: 16),
           _buildActivityCard(period),
           const SizedBox(height: 16),
           _buildStreakCard(period),
+        ],
+      ),
+    );
+  }
+
+  // Chart showing study hours over time
+  Widget _buildTrendChart(String periodName) {
+    final provider = context.read<AnalyticsProvider>();
+    final days =
+        periodName == 'Weekly'
+            ? 7
+            : periodName == 'Monthly'
+            ? 30
+            : 90;
+    final spots = provider.getSpotsForPeriod(days);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primaryColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$periodName Trend',
+            style: TextStyle(
+              color: AppColors.textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(show: false),
+                titlesData: FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: AppColors.primaryColor,
+                    barWidth: 3,
+                    dotData: FlDotData(show: false),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -516,6 +584,84 @@ class _DetailedAnalyticsScreenState extends State<DetailedAnalyticsScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSubjectBreakdownChart(String periodName) {
+    final provider = context.read<AnalyticsProvider>();
+    final days =
+        periodName == 'Weekly'
+            ? 7
+            : periodName == 'Monthly'
+            ? 30
+            : 90;
+    final breakdown = provider.getSubjectBreakdown(days);
+    if (breakdown.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Text(
+            'No subject data',
+            style: TextStyle(color: AppColors.secondaryTextColor),
+          ),
+        ),
+      );
+    }
+    final total = breakdown.values.fold(0.0, (a, b) => a + b);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primaryColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$periodName Subject Breakdown',
+            style: TextStyle(
+              color: AppColors.textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 180,
+            child: PieChart(
+              PieChartData(
+                sections:
+                    breakdown.entries.map((e) {
+                      final percent = (e.value / total * 100).clamp(0, 100);
+                      return PieChartSectionData(
+                        color: AppColors.primaryColor.withOpacity(
+                          0.7 -
+                              0.3 *
+                                  breakdown.keys.toList().indexOf(e.key) /
+                                  breakdown.length,
+                        ),
+                        value: e.value,
+                        title: '${e.key}\n${percent.toStringAsFixed(0)}%',
+                        radius: 60,
+                        titleStyle: TextStyle(
+                          color: AppColors.textColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }).toList(),
+                sectionsSpace: 2,
+                centerSpaceRadius: 24,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

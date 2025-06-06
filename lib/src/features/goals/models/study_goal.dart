@@ -187,3 +187,48 @@ class UnlockDestinationGoal extends StudyGoal {
         hoursGoal: WeeklyHoursGoal.fromMap(map['hoursGoal']),
       );
 }
+
+/// Template for long-term goal creation
+class GoalTemplate {
+  final String title;
+  final String description;
+  final GoalType goalType;
+  final Map<String, dynamic> presetData;
+  final String? iconAsset;
+
+  const GoalTemplate({
+    required this.title,
+    required this.description,
+    required this.goalType,
+    this.presetData = const {},
+    this.iconAsset,
+  });
+}
+
+/// Predefined creative goal templates
+const List<GoalTemplate> kLongTermGoalTemplates = [
+  GoalTemplate(
+    title: 'Publish a Research Paper',
+    description: 'Complete all steps to publish a paper in your field.',
+    goalType: GoalType.unlockDestination,
+    iconAsset: 'assets/images/paper_icon.png',
+  ),
+  GoalTemplate(
+    title: 'Complete Certification',
+    description: 'Finish all modules and pass the final exam.',
+    goalType: GoalType.unlockDestination,
+    iconAsset: 'assets/images/certificate_icon.png',
+  ),
+  GoalTemplate(
+    title: 'Achieve 4.0 GPA',
+    description: 'Maintain a perfect GPA this semester.',
+    goalType: GoalType.semesterGPA,
+    iconAsset: 'assets/images/gpa_icon.png',
+  ),
+  GoalTemplate(
+    title: 'Finish All Textbook Chapters',
+    description: 'Read and complete every chapter in your main textbook.',
+    goalType: GoalType.chapterCompletion,
+    iconAsset: 'assets/images/book_icon.png',
+  ),
+];

@@ -137,6 +137,39 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
                               : null,
                 ),
               const SizedBox(height: 24),
+              // Show templates for long-term goals
+              if (widget.isLongTerm) ...[
+                Text(
+                  'Select a Template',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 100,
+                  child: Consumer<GoalProvider>(
+                    builder: (context, provider, _) {
+                      return ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: provider.longTermGoalTemplates.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, idx) {
+                          final template = provider.longTermGoalTemplates[idx];
+                          return _buildTemplateCard(
+                            title: template.title,
+                            description: template.description,
+                            iconAsset: template.iconAsset,
+                            onTap: () {
+                              provider.addGoalFromTemplate(template);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               ElevatedButton(
                 onPressed: _saveGoal,
                 child: Text(
@@ -213,5 +246,55 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
       provider.addGoal(newGoal, longTerm: widget.isLongTerm);
     }
     Navigator.pop(context);
+  }
+
+  // Below Form but before save button
+  Widget _buildTemplateCard({
+    required String title,
+    required String description,
+    String? iconAsset,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 180,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            if (iconAsset != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Image.asset(iconAsset, width: 32, height: 32),
+              ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(description, style: const TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
