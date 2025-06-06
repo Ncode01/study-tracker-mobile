@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:study/src/features/add_item/widgets/add_options_modal_sheet.dart';
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
 import 'package:study/src/features/goals/screens/study_goals_screen.dart';
 import 'package:study/src/features/journey_map/screens/journey_map_screen.dart';
+import 'package:study/src/features/study_timer/screens/study_timer_screen.dart';
 
 /// The main screen of the application, hosting the bottom navigation bar.
 class MainScreen extends StatefulWidget {
@@ -17,24 +17,14 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final List<Widget> _screens = [
     const DailyStudyPlannerScreen(),
-    const StudyGoalsScreen(), // Replaces TasksScreen
+    const StudyTimerScreen(),
+    const StudyGoalsScreen(),
     const JourneyMapScreen(),
   ];
 
   void _onTabTapped(int index) {
-    if (index == 1) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => const AddOptionsModalSheet(),
-      );
-      // Do not change _currentIndex for Add button
-      return;
-    }
-    // Adjust index for screens since Add is not in _screens
     setState(() {
-      _currentIndex = index > 1 ? index - 1 : index;
+      _currentIndex = index;
     });
   }
 
@@ -47,7 +37,7 @@ class _MainScreenState extends State<MainScreen> {
         children: _screens,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex >= 1 ? _currentIndex + 1 : _currentIndex,
+        currentIndex: _currentIndex,
         onTap: _onTabTapped,
         items: const [
           BottomNavigationBarItem(
@@ -55,8 +45,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Planner',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle, size: 36), // Prominent Add button
-            label: 'Add',
+            icon: Icon(Icons.timer_outlined),
+            label: 'Timer',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.emoji_events_outlined),

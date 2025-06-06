@@ -10,6 +10,7 @@ import '../../../models/study_plan_entry_model.dart';
 import '../../study_timer/screens/study_timer_screen.dart';
 import '../widgets/journey_day_tile.dart';
 import '../widgets/journey_path_painter.dart';
+import '../../analytics/widgets/horizontal_averages_widget.dart';
 
 /// The main Journey Map screen that displays the user's learning journey.
 /// This is a dynamic implementation that connects to live study plan data.
@@ -233,6 +234,11 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
               ),
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // Study Averages Section
+          const HorizontalAveragesWidget(),
 
           const SizedBox(height: 24),
 

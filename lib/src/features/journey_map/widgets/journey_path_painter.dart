@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../constants/journey_map_colors.dart';
 
 /// CustomPainter for the winding, whimsical path in the Daily Study Path UI.
 class JourneyPathPainter extends CustomPainter {
@@ -7,7 +6,7 @@ class JourneyPathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint =
         Paint()
-          ..color = JourneyMapColors.secondaryText.withOpacity(0.18)
+          ..color = Colors.grey.withOpacity(0.18)
           ..strokeWidth = 10.0
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;

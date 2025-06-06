@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study/src/constants/app_theme.dart';
 import 'package:study/src/features/goals/widgets/goal_card.dart';
-import 'package:study/src/features/goals/widgets/destination_card.dart';
+import 'package:study/src/features/goals/widgets/dynamic_goal_card.dart';
 import 'package:study/src/features/goals/providers/goal_provider.dart';
-import 'package:study/src/features/goals/models/study_goal.dart';
+import 'package:study/src/features/goals/screens/add_edit_goal_screen.dart';
+import 'package:study/src/features/settings/screens/settings_screen.dart';
 
 class StudyGoalsScreen extends StatefulWidget {
   const StudyGoalsScreen({super.key});
@@ -32,7 +33,6 @@ class _StudyGoalsScreenState extends State<StudyGoalsScreen> {
           child: SafeArea(
             child: Consumer<GoalProvider>(
               builder: (context, goalProvider, _) {
-                final shortTermGoals = goalProvider.shortTermGoals;
                 final longTermGoals = goalProvider.longTermGoals;
                 return SingleChildScrollView(
                   child: Padding(
@@ -81,13 +81,24 @@ class _StudyGoalsScreenState extends State<StudyGoalsScreen> {
                                       context,
                                     ).appBarTheme.titleTextStyle,
                               ),
-                              const Spacer(flex: 2),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.settings),
+                                onPressed:
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const SettingsScreen(),
+                                      ),
+                                    ),
+                              ),
                             ],
                           ),
                         ),
-                        // Short-Term Goals
+                        const SizedBox(height: 24),
+                        // Personal Goals
                         Text(
-                          'Short-Term Goals',
+                          'Personal Goals',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 8),
@@ -115,104 +126,65 @@ class _StudyGoalsScreenState extends State<StudyGoalsScreen> {
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             children: [
-                              ...shortTermGoals.map((goal) {
-                                if (goal is WeeklyHoursGoal) {
-                                  return GoalCard(
-                                    icon: Icons.access_time,
-                                    title: goal.title,
-                                    description: goal.description,
-                                    progress: goal.progress,
-                                    progressLabel:
-                                        '${goal.currentHours.toStringAsFixed(1)} / ${goal.targetHours} hrs',
-                                  );
-                                } else if (goal is ChapterCompletionGoal) {
-                                  return GoalCard(
-                                    icon: Icons.menu_book,
-                                    title: goal.title,
-                                    description: goal.description,
-                                    progress: goal.progress,
-                                    progressLabel:
-                                        '${goal.completedSections} / ${goal.targetSections} sections',
-                                  );
-                                } else {
-                                  return const SizedBox.shrink();
-                                }
-                              }),
-                              const Divider(
-                                height: 24,
-                                color: Colors.transparent,
-                              ),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Add Short-Term Goal'),
-                                  onPressed: null, // Placeholder for now
+                              ...longTermGoals.map(
+                                (goal) => GoalCard(
+                                  goal: goal,
+                                  onTap:
+                                      () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => AddEditGoalScreen(
+                                                editingGoal: goal,
+                                                isLongTerm: true,
+                                              ),
+                                        ),
+                                      ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        // Long-Term Goals
-                        Text(
-                          'Long-Term Goals',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardTheme.color,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color:
-                                  Theme.of(context).cardTheme.shadowColor ??
-                                  Colors.grey.shade300,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    Theme.of(context).cardTheme.shadowColor
-                                        ?.withOpacity(0.10) ??
-                                    Colors.grey.shade200,
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add Personal Goal'),
+                                onPressed:
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => const AddEditGoalScreen(
+                                              isLongTerm: true,
+                                            ),
+                                      ),
+                                    ),
                               ),
                             ],
                           ),
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            children: [
-                              ...longTermGoals.map((goal) {
-                                if (goal is SemesterGPAGoal) {
-                                  return GoalCard(
-                                    icon: Icons.school,
-                                    title: goal.title,
-                                    description: goal.description,
-                                    progress: goal.progress,
-                                    progressLabel:
-                                        'Current: ${goal.currentGPA.toStringAsFixed(2)} GPA',
-                                  );
-                                } else if (goal is UnlockDestinationGoal) {
-                                  return DestinationCard(
-                                    title: goal.title,
-                                    description: goal.description,
-                                    progress: goal.hoursGoal.progress,
-                                    progressLabel:
-                                        '${goal.hoursGoal.currentHours.toStringAsFixed(1)} / ${goal.hoursGoal.targetHours} hrs',
-                                    destinationName: goal.destinationName,
-                                    journeyMilestones:
-                                        goalProvider.journeyMilestones,
-                                    achievements: goalProvider.achievements,
-                                  );
-                                } else {
-                                  return const SizedBox.shrink();
-                                }
-                              }),
-                            ],
-                          ),
                         ),
+                        const SizedBox(height: 24),
+                        // Short-term Goals
+                        Text(
+                          'Dynamic Short-term Goals',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        if (goalProvider.dynamicShortTermGoals.isEmpty)
+                          Container(
+                            height: 120,
+                            alignment: Alignment.center,
+                            child: Text(
+                              'No dynamic goals at the moment! 🎉',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: Colors.grey[600]),
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                        else
+                          Column(
+                            children:
+                                goalProvider.dynamicShortTermGoals
+                                    .map((goal) => DynamicGoalCard(goal: goal))
+                                    .toList(),
+                          ),
                       ],
                     ),
                   ),

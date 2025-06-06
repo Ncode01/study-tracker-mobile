@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:study/src/constants/app_theme.dart';
 
 class ProgressBar extends StatelessWidget {
   final double progress; // 0.0 to 1.0
@@ -16,10 +15,6 @@ class ProgressBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: Theme.of(context).dividerColor,
-              width: 1.5,
-            ),
           ),
           child: Stack(
             children: [

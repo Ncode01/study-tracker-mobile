@@ -54,4 +54,6 @@ class Task {
       isCompleted: map['isCompleted'] == 1,
     );
   }
+
+  bool get isOverdue => !isCompleted && dueDate.isBefore(DateTime.now());
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../constants/journey_map_colors.dart';
 
 /// A custom card widget with a hand-drawn border aesthetic.
 ///
 /// This widget provides a consistent card layout with the journey map
 /// theme styling, including rounded corners, custom colors, and elevation
 /// that matches the whimsical hand-drawn design.
+@deprecated
 class HandDrawnBorderCard extends StatelessWidget {
   /// The child widget to display inside the card.
   final Widget child;
@@ -49,15 +49,15 @@ class HandDrawnBorderCard extends StatelessWidget {
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: backgroundColor ?? JourneyMapColors.cardBackground,
+        color: backgroundColor ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(borderRadius ?? 16.0),
         border: Border.all(
-          color: borderColor ?? JourneyMapColors.cardBorder,
+          color: borderColor ?? Theme.of(context).dividerColor,
           width: borderWidth ?? 2.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: JourneyMapColors.cardBorder.withOpacity(0.3),
+            color: Theme.of(context).dividerColor.withOpacity(0.3),
             blurRadius: elevation ?? 4.0,
             offset: const Offset(2, 2),
           ),

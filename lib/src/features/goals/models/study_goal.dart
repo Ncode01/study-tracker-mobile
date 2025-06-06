@@ -63,13 +63,15 @@ class WeeklyHoursGoal extends StudyGoal {
 }
 
 class ChapterCompletionGoal extends StudyGoal {
-  final int targetSections;
+  final String projectId;
+  int targetSections;
   int completedSections;
 
   ChapterCompletionGoal({
     String? id,
     required String title,
     required String description,
+    required this.projectId,
     required this.targetSections,
     this.completedSections = 0,
   }) : super(
@@ -80,7 +82,10 @@ class ChapterCompletionGoal extends StudyGoal {
        );
 
   @override
-  double get progress => (completedSections / targetSections).clamp(0.0, 1.0);
+  double get progress =>
+      (targetSections == 0)
+          ? 0.0
+          : (completedSections / targetSections).clamp(0.0, 1.0);
 
   @override
   Map<String, dynamic> toMap() => {
@@ -88,6 +93,7 @@ class ChapterCompletionGoal extends StudyGoal {
     'title': title,
     'description': description,
     'goalType': goalType.index,
+    'projectId': projectId,
     'targetSections': targetSections,
     'completedSections': completedSections,
   };
@@ -97,6 +103,7 @@ class ChapterCompletionGoal extends StudyGoal {
         id: map['id'],
         title: map['title'],
         description: map['description'],
+        projectId: map['projectId'],
         targetSections: map['targetSections'],
         completedSections: map['completedSections'],
       );

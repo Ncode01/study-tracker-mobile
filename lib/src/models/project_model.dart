@@ -56,4 +56,8 @@ class Project {
               : null,
     );
   }
+
+  // Add computed properties for goal progress
+  int get completedTaskCount => 0; // TODO: Implement with real task data
+  int get totalTaskCount => 0; // TODO: Implement with real task data
 }

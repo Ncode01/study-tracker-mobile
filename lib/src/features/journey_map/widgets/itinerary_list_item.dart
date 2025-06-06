@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../../constants/journey_map_colors.dart';
 import '../../../models/study_plan_entry_model.dart';
 import '../../../providers/project_provider.dart';
-import 'hand_drawn_border_card.dart';
 
 /// A list item widget for displaying study plan entries in the journey map.
 ///
@@ -30,20 +28,18 @@ class ItineraryListItem extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    return HandDrawnBorderCard(
+    return Card(
       margin: margin ?? const EdgeInsets.symmetric(vertical: 4.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12.0),
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
           decoration: BoxDecoration(
-            color: JourneyMapColors.cardBackground,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(
-              color: const Color(0xFFa0aec0).withOpacity(0.6),
-              width: 2.5,
-            ),
+            border: Border.all(color: Colors.grey.withOpacity(0.6), width: 2.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -61,12 +57,12 @@ class ItineraryListItem extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: JourneyMapColors.cardIconBackground,
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: Icon(
                     _getIconForSubject(entry.subjectName),
-                    color: _getIconColor(),
+                    color: _getIconColor(context),
                     size: 24,
                   ),
                 ),
@@ -80,13 +76,14 @@ class ItineraryListItem extends StatelessWidget {
                       Text(
                         entry.subjectName,
                         style: TextStyle(
-                          fontFamily: 'Caveat',
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color:
                               entry.isCompleted
-                                  ? JourneyMapColors.secondaryText
-                                  : JourneyMapColors.primaryText,
+                                  ? Theme.of(context).disabledColor
+                                  : Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color,
                           decoration:
                               entry.isCompleted
                                   ? TextDecoration.lineThrough
@@ -99,7 +96,7 @@ class ItineraryListItem extends StatelessWidget {
                   ),
                 ),
                 // Trailing section
-                _buildTrailingSection(),
+                _buildTrailingSection(context),
               ],
             ),
           ),
@@ -121,15 +118,14 @@ class ItineraryListItem extends StatelessWidget {
               Icon(
                 entry.isAllDay ? Icons.event : Icons.access_time,
                 size: 14,
-                color: JourneyMapColors.accent,
+                color: Theme.of(context).colorScheme.secondary,
               ),
               const SizedBox(width: 4),
               Text(
                 timeText,
                 style: TextStyle(
                   fontSize: 12,
-                  color: JourneyMapColors.accent,
-                  fontFamily: 'Caveat',
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             ],
@@ -152,8 +148,7 @@ class ItineraryListItem extends StatelessWidget {
                     project.name,
                     style: TextStyle(
                       fontSize: 12,
-                      color: JourneyMapColors.secondaryText,
-                      fontFamily: 'Caveat',
+                      color: Theme.of(context).disabledColor,
                     ),
                   ),
                 ],
@@ -165,7 +160,7 @@ class ItineraryListItem extends StatelessWidget {
   }
 
   /// Builds the trailing section with completion status
-  Widget _buildTrailingSection() {
+  Widget _buildTrailingSection(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -183,7 +178,6 @@ class ItineraryListItem extends StatelessWidget {
                 color: Colors.green,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Caveat',
               ),
             ),
           )
@@ -201,7 +195,6 @@ class ItineraryListItem extends StatelessWidget {
                 color: Colors.redAccent,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Caveat',
               ),
             ),
           )
@@ -209,22 +202,24 @@ class ItineraryListItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: JourneyMapColors.accent.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: JourneyMapColors.accent, width: 1),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.secondary,
+                width: 1,
+              ),
             ),
             child: Text(
               'TODAY',
               style: TextStyle(
-                color: JourneyMapColors.accent,
+                color: Theme.of(context).colorScheme.secondary,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'Caveat',
               ),
             ),
           ),
         const SizedBox(height: 4),
-        Icon(Icons.edit, size: 16, color: JourneyMapColors.secondaryText),
+        Icon(Icons.edit, size: 16, color: Theme.of(context).disabledColor),
       ],
     );
   }
@@ -287,28 +282,16 @@ class ItineraryListItem extends StatelessWidget {
     return Icons.school;
   }
 
-  /// Gets the background color for the icon
-  Color _getIconBackgroundColor() {
-    if (entry.isCompleted) {
-      return Colors.green.withOpacity(0.1);
-    } else if (entry.isOverdue) {
-      return Colors.redAccent.withOpacity(0.1);
-    } else if (entry.isToday) {
-      return JourneyMapColors.accent.withOpacity(0.1);
-    }
-    return JourneyMapColors.cardIconBackground;
-  }
-
   /// Gets the color for the icon
-  Color _getIconColor() {
+  Color _getIconColor(BuildContext context) {
     if (entry.isCompleted) {
       return Colors.green;
     } else if (entry.isOverdue) {
       return Colors.redAccent;
     } else if (entry.isToday) {
-      return JourneyMapColors.accent;
+      return Theme.of(context).colorScheme.secondary;
     }
-    return JourneyMapColors.accent;
+    return Theme.of(context).colorScheme.secondary;
   }
 
   /// Gets the formatted time text for the entry
