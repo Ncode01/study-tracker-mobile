@@ -283,6 +283,53 @@ await timerProvider.stopTimer(context);
 
 ---
 
+### TimerProvider
+
+**File**: `lib/src/features/study_timer/providers/timer_provider.dart`
+
+A provider that manages the state and logic for the Study Timer, including timer countdown, mode switching, and animated state updates.
+
+```dart
+class TimerProvider extends ChangeNotifier {
+  // ...state and logic for timer...
+}
+```
+
+#### Public API
+- `Duration get duration` — The current time remaining on the timer.
+- `TimerMode get mode` — The current timer mode (focus, short break, long break).
+- `TimerStatus get status` — The current running status (stopped, running, paused).
+- `void startTimer()` — Starts or resumes the timer.
+- `void pauseTimer()` — Pauses the timer.
+- `void resetTimer()` — Resets the timer to the initial duration for the current mode and stops it.
+- `void selectMode(TimerMode newMode)` — Selects a new timer mode and resets the timer.
+
+#### Usage Example
+```dart
+final timerProvider = context.watch<TimerProvider>();
+Text(timerProvider.duration.toString());
+```
+
+---
+
+### StudyTimerScreen
+
+**File**: `lib/src/features/study_timer/screens/study_timer_screen.dart`
+
+A fully dynamic, animated study timer UI that connects to `TimerProvider` for state and control. Features live timer display, animated mode switching, pulse effect, and smooth button transitions.
+
+#### Usage Example
+```dart
+Navigator.of(context).push(
+  MaterialPageRoute(
+    fullscreenDialog: true,
+    builder: (context) => const StudyTimerScreen(),
+  ),
+);
+```
+
+---
+
 ### SessionProvider
 
 **File**: `lib/src/features/sessions/providers/session_provider.dart`

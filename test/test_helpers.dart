@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 import 'package:study/src/features/tasks/providers/task_provider.dart';
 import 'package:study/src/features/timer/providers/timer_service_provider.dart';
 import 'package:study/src/features/sessions/providers/session_provider.dart';

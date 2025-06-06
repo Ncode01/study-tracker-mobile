@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:study/src/constants/app_colors.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 import 'package:study/src/models/study_plan_entry_model.dart';
 
 /// A widget that displays a single study plan entry in the list.

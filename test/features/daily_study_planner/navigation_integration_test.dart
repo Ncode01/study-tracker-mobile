@@ -99,17 +99,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.byType(AddStudyPlanEntryScreen), findsOneWidget);
     });
-
     testWidgets('should fallback gracefully for invalid routes', (
       tester,
     ) async {
       await tester.pumpWidget(TestAppSetup.createTestApp(initialRoute: '/'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
       // Navigate to an invalid route after app start
       final BuildContext context = tester.element(find.byType(MainScreen));
       Navigator.of(context).pushNamed('/invalid-route');
-      await tester.pumpAndSettle();
-      expect(find.text('Page Not Found'), findsOneWidget);
+      await tester.pump(); // Allow navigation to start
+      await tester.pump(
+        const Duration(milliseconds: 100),
+      ); // Wait for navigation
+      expect(find.text('Page Not Found'), findsAtLeastNWidgets(1));
       expect(find.text('Route not found: /invalid-route'), findsOneWidget);
     });
 

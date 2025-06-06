@@ -990,3 +990,46 @@ class DatabaseConstants {
 ```
 
 These patterns should be followed consistently throughout the codebase to maintain readability, maintainability, and consistency across the Study Tracker Mobile application.
+
+## UI Animation Patterns (Study Timer)
+
+### Animated Study Timer Example
+
+The Study Timer feature demonstrates several creative animation patterns for a modern, engaging user experience:
+
+- **Pulse Animation**: The central timer image pulses using `AnimatedContainer` and an `AnimationController` when the timer is running.
+- **AnimatedSwitcher**: The mode label (Focus/Short Break/Long Break) uses `AnimatedSwitcher` for smooth cross-fade transitions on mode change.
+- **AnimatedOpacity**: Control buttons (Start/Resume, Pause, Reset) use `AnimatedOpacity` for smooth enable/disable transitions.
+- **Button Highlighting**: Mode selection buttons highlight the active mode with animated color and border changes.
+
+#### Example Usage
+```dart
+// Pulse animation for timer image
+AnimatedContainer(
+  duration: const Duration(milliseconds: 400),
+  curve: Curves.easeInOut,
+  transform: Matrix4.identity()..scale(pulse, pulse),
+  child: ...,
+)
+
+// AnimatedSwitcher for mode label
+AnimatedSwitcher(
+  duration: const Duration(milliseconds: 500),
+  transitionBuilder: (child, animation) =>
+      FadeTransition(opacity: animation, child: child),
+  child: Text(
+    getModeText(timerProvider.mode),
+    key: ValueKey<TimerMode>(timerProvider.mode),
+    ...
+  ),
+)
+
+// AnimatedOpacity for button enable/disable
+AnimatedOpacity(
+  duration: const Duration(milliseconds: 300),
+  opacity: isRunning ? 1.0 : 0.0,
+  child: ElevatedButton(...),
+)
+```
+
+These patterns are used in `study_timer_screen.dart` and can be adapted for other animated UI features.

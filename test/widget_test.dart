@@ -44,15 +44,21 @@ void main() {
         child: Scaffold(
           body: Center(child: Text('Study Tracker')),
           bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
             items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.book),
-                label: 'Projects',
-              ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_today),
                 label: 'Planner',
               ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.add_circle_outline),
+                label: 'Add',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.task_alt),
+                label: 'Tasks',
+              ),
+              BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Journey'),
             ],
           ),
         ),

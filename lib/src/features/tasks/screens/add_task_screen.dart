@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:study/src/constants/app_colors.dart';
 import 'package:study/src/features/tasks/providers/task_provider.dart';
 import 'package:study/src/models/task_model.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 
 /// Form screen for creating a new task.
 class AddTaskScreen extends StatefulWidget {

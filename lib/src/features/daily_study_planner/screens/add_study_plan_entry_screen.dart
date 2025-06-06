@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:study/src/constants/app_colors.dart';
 import 'package:study/src/features/daily_study_planner/providers/study_plan_provider.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 import 'package:study/src/models/study_plan_entry_model.dart';
 
 /// Screen for adding or editing a study plan entry.

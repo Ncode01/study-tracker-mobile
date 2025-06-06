@@ -29,20 +29,6 @@ class AddOptionsModalSheet extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: const Icon(
-                Icons.folder_copy_outlined,
-                color: Colors.white,
-              ),
-              title: const Text(
-                'Project',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).pushNamed('/projects/add');
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.event_note, color: Colors.white),
               title: const Text(
                 'Study Plan',

@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 import 'package:study/src/models/project_model.dart';
 import 'package:study/src/models/session_model.dart';
 import 'package:study/src/services/database_helper.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 
 class TimerServiceProvider extends ChangeNotifier {
   String? _activeProjectId;

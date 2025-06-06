@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study/src/constants/app_theme.dart';
 import 'package:study/src/features/core_ui/screens/main_screen.dart';
-import 'package:study/src/features/projects/screens/add_project_screen.dart';
 import 'package:study/src/features/tasks/screens/add_task_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/add_study_plan_entry_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 import 'package:study/src/features/tasks/providers/task_provider.dart';
 import 'package:study/src/features/timer/providers/timer_service_provider.dart';
 import 'package:study/src/features/sessions/providers/session_provider.dart';
@@ -17,7 +16,6 @@ class TestAppSetup {
   static Widget createTestApp({Widget? home, String? initialRoute}) {
     final routes = {
       '/': (context) => const MainScreen(),
-      '/projects/add': (context) => const AddProjectScreen(),
       '/tasks/add': (context) => const AddTaskScreen(),
       '/study-planner': (context) => const DailyStudyPlannerScreen(),
       '/study-planner/add': (context) {
@@ -93,14 +91,6 @@ class TestAppSetup {
           break;
       }
     }
-    if (pathSegments.isNotEmpty && pathSegments[0] == 'projects') {
-      if (pathSegments.length == 2 && pathSegments[1] == 'add') {
-        return MaterialPageRoute<bool?>(
-          builder: (context) => const AddProjectScreen(),
-          settings: settings,
-        );
-      }
-    }
     if (pathSegments.isNotEmpty && pathSegments[0] == 'tasks') {
       if (pathSegments.length == 2 && pathSegments[1] == 'add') {
         return MaterialPageRoute<bool?>(
@@ -126,7 +116,7 @@ class TestAppSetup {
                   const Text('Page Not Found', style: TextStyle(fontSize: 24)),
                   const SizedBox(height: 8),
                   Text(
-                    'Route not found: \\${settings.name}',
+                    'Route not found: ${settings.name}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),

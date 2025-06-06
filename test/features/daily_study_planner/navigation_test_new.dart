@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:study/src/features/daily_study_planner/providers/study_plan_provider.dart';
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
 import 'package:study/src/features/daily_study_planner/screens/add_study_plan_entry_screen.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
+import 'package:study/src/providers/project_provider.dart';
 import 'package:study/src/features/tasks/providers/task_provider.dart';
 import 'package:study/src/features/sessions/providers/session_provider.dart';
 
