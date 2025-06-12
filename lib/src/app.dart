@@ -6,6 +6,8 @@ import 'package:study/src/features/daily_study_planner/screens/add_study_plan_en
 import 'package:study/src/features/daily_study_planner/screens/daily_study_planner_screen.dart';
 import 'package:study/src/features/journey_map/screens/journey_map_screen.dart';
 import 'package:study/src/features/goals/screens/study_goals_screen.dart';
+import 'package:study/src/features/projects/widgets/project_detail_wrapper.dart';
+import 'package:study/src/features/projects/screens/add_project_screen.dart';
 import 'package:study/src/models/study_plan_entry_model.dart';
 
 /// The root widget of the application.
@@ -22,6 +24,7 @@ class AppRoot extends StatelessWidget {
       routes: {
         '/': (context) => const MainScreen(),
         '/tasks/add': (context) => const AddTaskScreen(),
+        '/projects/add': (context) => const AddProjectScreen(),
         '/study-planner': (context) => const DailyStudyPlannerScreen(),
         '/journey-map': (context) => const JourneyMapScreen(),
         '/goals': (context) => const StudyGoalsScreen(),
@@ -83,7 +86,19 @@ class AppRoot extends StatelessWidget {
   /// Handles dynamic routes with parameters
   Route<bool?>? _onGenerateRoute(RouteSettings settings) {
     final uri = Uri.parse(settings.name ?? '');
-    final pathSegments = uri.pathSegments;
+    final pathSegments = uri.pathSegments; // Handle project routes
+    if (pathSegments.isNotEmpty && pathSegments[0] == 'projects') {
+      if (pathSegments.length >= 2) {
+        // Handle /projects/:projectId route
+        final projectId = pathSegments[1];
+        if (projectId != 'add') {
+          return MaterialPageRoute<bool?>(
+            builder: (context) => ProjectDetailWrapper(projectId: projectId),
+            settings: settings,
+          );
+        }
+      }
+    }
 
     // Handle study planner routes with parameters
     if (pathSegments.length >= 2 && pathSegments[0] == 'study-planner') {

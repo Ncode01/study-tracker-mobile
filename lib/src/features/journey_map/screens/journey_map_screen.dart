@@ -7,7 +7,7 @@ import '../../sessions/providers/session_provider.dart';
 import '../../tasks/providers/task_provider.dart';
 import '../../../providers/project_provider.dart';
 import '../../../models/study_plan_entry_model.dart';
-import '../../study_timer/screens/study_timer_screen.dart';
+import 'package:study/src/features/timer/screens/study_timer_screen.dart';
 import '../widgets/journey_day_tile.dart';
 import '../widgets/journey_path_painter.dart';
 import '../../analytics/widgets/horizontal_averages_widget.dart';
@@ -69,10 +69,17 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
             icon: const Icon(Icons.timer, size: 26),
             tooltip: 'Study Timer',
             onPressed: () {
+              final project =
+                  Provider.of<ProjectProvider>(
+                    context,
+                    listen: false,
+                  ).projects.first;
               Navigator.of(context).push(
                 MaterialPageRoute(
                   fullscreenDialog: true,
-                  builder: (context) => const StudyTimerScreen(),
+                  builder: (context) {
+                    return StudyTimerScreen(project: project);
+                  },
                 ),
               );
             },
@@ -93,7 +100,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                 controller: _tabController,
                 labelColor: appTheme.textTheme.titleLarge?.color,
                 unselectedLabelColor: appTheme.textTheme.bodyMedium?.color
-                    ?.withOpacity(0.5),
+                    ?.withAlpha((0.5 * 255).round()),
                 labelStyle: appTheme.textTheme.titleMedium,
                 unselectedLabelStyle: appTheme.textTheme.titleMedium,
                 indicator: UnderlineTabIndicator(
@@ -200,12 +207,12 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                 color: appTheme.cardColor,
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(
-                  color: const Color(0xFFa0aec0).withOpacity(0.6),
+                  color: const Color(0xFFa0aec0).withAlpha((0.6 * 255).round()),
                   width: 2.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withAlpha((0.1 * 255).round()),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -403,12 +410,12 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
         color: appTheme.cardColor,
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: const Color(0xFFa0aec0).withOpacity(0.6),
+          color: const Color(0xFFa0aec0).withAlpha((0.6 * 255).round()),
           width: 2.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha((0.1 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -546,7 +553,14 @@ class _JourneyMapScreenState extends State<JourneyMapScreen>
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             fullscreenDialog: true,
-                            builder: (context) => const StudyTimerScreen(),
+                            builder: (context) {
+                              final project =
+                                  Provider.of<ProjectProvider>(
+                                    context,
+                                    listen: false,
+                                  ).projects.first;
+                              return StudyTimerScreen(project: project);
+                            },
                           ),
                         );
                       },

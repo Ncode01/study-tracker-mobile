@@ -19,9 +19,8 @@ void setupTestEnvironment() {
   databaseFactory = databaseFactoryFfi;
 
   // Setup platform channel mocking for path_provider
-  const MethodChannel(
-    'plugins.flutter.io/path_provider',
-  ).setMockMethodCallHandler((MethodCall methodCall) async {
+  final channel = const MethodChannel('plugins.flutter.io/path_provider');
+  channel.setMockMethodCallHandler((MethodCall methodCall) async {
     switch (methodCall.method) {
       case 'getApplicationDocumentsDirectory':
         return '/tmp/test_documents_${DateTime.now().millisecondsSinceEpoch}';

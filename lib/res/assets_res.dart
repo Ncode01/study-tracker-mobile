@@ -9,4 +9,7 @@ class AssetsRes {
   static const String PROJECT_NAME = 'study';
   static const String PROJECT_VERSION = '1.0.0+1';
   static const String PENCIL_TEXTURE = 'assets/images/pencil_texture.svg';
+  static const String TIMER_COFFEE = 'assets/images/timer_coffee.jpg';
+  static const String TIMER_LIBRARY = 'assets/images/timer_library.jpg';
+  static const String TIMER_PARK = 'assets/images/timer_park.jpg';
 }

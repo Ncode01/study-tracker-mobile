@@ -181,10 +181,12 @@ class _AddStudyPlanEntryScreenState extends State<AddStudyPlanEntryScreen> {
       widget.editingEntryId != null;
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.of(context).pop(false); // Return false if user uses back
-        return false;
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          Navigator.of(context).pop(false);
+        }
       },
       child: Scaffold(
         appBar: _buildAppBar(),
