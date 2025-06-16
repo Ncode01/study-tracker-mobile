@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/auth_state.dart';
 import '../../theme/app_colors.dart';
 import 'login_screen.dart';
 
@@ -9,45 +8,18 @@ import 'login_screen.dart';
 /// Acts as the gatekeeper between authenticated and unauthenticated screens
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authData = ref.watch(authProvider);
+    final authState = ref.watch(authProvider);
 
-    // Watch auth state changes to keep in sync with Firebase
-    ref.listen(authStateChangesProvider, (previous, next) {
-      // This ensures our app stays in sync with Firebase auth changes
-      // The authSyncProvider handles the actual synchronization logic
-      ref.read(authSyncProvider);
-    });
-
-    // Handle different authentication states
-    switch (authData.state) {
-      case AuthState.initial:
-        // Show loading screen while checking auth status
-        return _buildLoadingScreen(context);
-
-      case AuthState.loading:
-        // Show loading screen during auth operations
-        return _buildLoadingScreen(context);
-
-      case AuthState.authenticated:
-        // User is authenticated, show the main app
-        if (authData.user != null) {
-          return _buildHomeScreen(context, authData.user!.displayName);
-        } else {
-          // Edge case: authenticated but no user data
-          return _buildErrorScreen(context, 'User data not available');
-        }
-
-      case AuthState.unauthenticated:
-        // User is not authenticated, show login screen
-        return const LoginScreen();
-
-      case AuthState.error:
-        // Authentication error occurred
-        return _buildErrorScreen(context, authData.errorMessage);
-    }
+    // Handle different authentication states using freezed union methods
+    return authState.when(
+      initial: () => _buildLoadingScreen(context),
+      loading: () => _buildLoadingScreen(context),
+      authenticated: (user) => _buildHomeScreen(context, user.displayName),
+      unauthenticated: () => const LoginScreen(),
+      error: (message) => _buildErrorScreen(context, message),
+    );
   }
 
   /// Loading screen with traveler's diary aesthetic
@@ -68,7 +40,7 @@ class AuthWrapper extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.fadeGray.withOpacity(0.3),
+                    color: AppColors.fadeGray.withAlpha((255 * 0.3).round()),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -82,15 +54,14 @@ class AuthWrapper extends ConsumerWidget {
                     height: 80,
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
-                        colors: [
-                          AppColors.primaryGold,
-                          AppColors.primaryBrown,
-                        ],
+                        colors: [AppColors.primaryGold, AppColors.primaryBrown],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryBrown.withOpacity(0.3),
+                          color: AppColors.primaryBrown.withAlpha(
+                            (255 * 0.3).round(),
+                          ),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -129,8 +100,9 @@ class AuthWrapper extends ConsumerWidget {
 
                   // Loading indicator
                   CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.primaryGold),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primaryGold,
+                    ),
                     strokeWidth: 3,
                   ),
 
@@ -169,10 +141,10 @@ class AuthWrapper extends ConsumerWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.errorRed.withOpacity(0.1),
+                    color: AppColors.errorRed.withAlpha((255 * 0.1).round()),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.errorRed.withOpacity(0.3),
+                      color: AppColors.errorRed.withAlpha((255 * 0.3).round()),
                       width: 2,
                     ),
                   ),
@@ -215,7 +187,8 @@ class AuthWrapper extends ConsumerWidget {
                     // Restart the app by forcing a rebuild
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                          builder: (context) => const AuthWrapper()),
+                        builder: (context) => const AuthWrapper(),
+                      ),
                       (route) => false,
                     );
                   },
@@ -223,7 +196,9 @@ class AuthWrapper extends ConsumerWidget {
                     backgroundColor: AppColors.primaryBrown,
                     foregroundColor: AppColors.parchmentWhite,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -289,15 +264,14 @@ class AuthWrapper extends ConsumerWidget {
                 height: 100,
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryGold,
-                      AppColors.primaryBrown,
-                    ],
+                    colors: [AppColors.primaryGold, AppColors.primaryBrown],
                   ),
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryBrown.withOpacity(0.3),
+                      color: AppColors.primaryBrown.withAlpha(
+                        (255 * 0.3).round(),
+                      ),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -342,12 +316,12 @@ class AuthWrapper extends ConsumerWidget {
                   color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.primaryGold.withOpacity(0.3),
+                    color: AppColors.primaryGold.withAlpha((255 * 0.3).round()),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.fadeGray.withOpacity(0.1),
+                      color: AppColors.fadeGray.withAlpha((255 * 0.1).round()),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
