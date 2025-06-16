@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:study/src/app.dart';
-import 'package:study/src/features/projects/providers/project_provider.dart';
-import 'package:study/src/features/tasks/providers/task_provider.dart';
-import 'package:study/src/features/timer/providers/timer_service_provider.dart';
-import 'package:study/src/features/sessions/providers/session_provider.dart';
-import 'package:study/src/features/daily_study_planner/providers/study_plan_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'app.dart';
+import 'widgets/common/firebase_error_widget.dart';
+import 'firebase_options.dart';
+import 'utils/app_logger.dart';
 
+/// Main entry point for Project Atlas
+/// Initializes Firebase and sets up the app with Riverpod state management
 void main() async {
-  // Ensure Flutter bindings are initialized before accessing platform channels
+  // Ensure widgets binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ProjectProvider()),
-        ChangeNotifierProvider(create: (_) => TaskProvider()),
-        ChangeNotifierProvider(create: (_) => TimerServiceProvider()),
-        ChangeNotifierProvider(create: (_) => SessionProvider()),
-        ChangeNotifierProvider(create: (_) => StudyPlanProvider()),
-      ],
-      child: const AppRoot(),
-    ),
-  );
+  // Initialize our custom logger first
+  AppLogger.initialize();
+
+  try {
+    // Initialize Firebase with secure configuration
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    AppLogger.firebase('Firebase initialized successfully');
+
+    // Run the main app with Riverpod
+    runApp(const ProviderScope(child: ProjectAtlasApp()));  } catch (e) {
+    AppLogger.fatal(
+      'Firebase initialization failed',
+      e,
+    ); // Show Firebase error app
+    runApp(FirebaseErrorApp(error: e));
+  }
 }

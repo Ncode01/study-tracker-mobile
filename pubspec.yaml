@@ -34,12 +34,27 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  provider: ^6.1.5
-  sqflite: ^2.4.2
-  path_provider: ^2.1.5
-  path: ^1.9.1
-  uuid: ^4.5.1
-  intl: ^0.20.2
+  
+  # Firebase dependencies
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.3
+  
+  # State management
+  flutter_riverpod: ^2.6.1
+  
+  # Fonts
+  google_fonts: ^6.2.1
+  
+  # Code generation for immutable data classes
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  
+  # Professional logging
+  logger: ^2.4.0
+  
+  # Declarative form validation
+  form_validator: ^1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -51,7 +66,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  sqflite_common_ffi: ^2.3.5
+  
+  # Code generation dependencies
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
