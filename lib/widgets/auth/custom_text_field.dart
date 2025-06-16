@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:form_validator/form_validator.dart';
 import '../../theme/app_colors.dart';
 
 /// Custom text field with traveler's diary aesthetic
@@ -99,29 +98,28 @@ class _CustomTextFieldState extends State<CustomTextField>
               colors: [
                 AppColors.parchmentWhite,
                 AppColors.surfaceLight,
-                AppColors.parchmentWhite.withAlpha((255 * 0.95).round()),
+                AppColors.parchmentWhite.withOpacity(0.95),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
             // Soft shadow for depth
             boxShadow: [
               BoxShadow(
-                color: AppColors.fadeGray.withAlpha((255 * 0.15).round()),
+                color: AppColors.fadeGray.withOpacity(0.15),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ), // Subtle depth shadow
               BoxShadow(
-                color: AppColors.lightGray.withAlpha((255 * 0.2).round()),
+                color: AppColors.lightGray.withOpacity(0.2),
                 blurRadius: 1,
                 offset: const Offset(0, 1),
               ),
             ],
             // Border that changes with focus
             border: Border.all(
-              color:
-                  _isFocused
-                      ? AppColors.primaryBrown.withAlpha((255 * 0.8).round())
-                      : AppColors.lightGray.withAlpha((255 * 0.6).round()),
+              color: _isFocused
+                  ? AppColors.primaryBrown.withOpacity(0.8)
+                  : AppColors.lightGray.withOpacity(0.6),
               width: _isFocused ? 2.0 : 1.0,
             ),
           ),
@@ -147,20 +145,18 @@ class _CustomTextFieldState extends State<CustomTextField>
                 color: AppColors.fadeGray,
                 fontStyle: FontStyle.italic,
               ),
-              prefixIcon:
-                  widget.prefixIcon != null
-                      ? Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: widget.prefixIcon,
-                      )
-                      : null,
-              suffixIcon:
-                  widget.suffixIcon != null
-                      ? Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: widget.suffixIcon,
-                      )
-                      : null,
+              prefixIcon: widget.prefixIcon != null
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: widget.prefixIcon,
+                    )
+                  : null,
+              suffixIcon: widget.suffixIcon != null
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: widget.suffixIcon,
+                    )
+                  : null,
               // Remove default borders since we're using container decoration
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
@@ -242,11 +238,18 @@ class EmailTextField extends StatelessWidget {
       ),
     );
   }
+
   String? _defaultEmailValidator(String? value) {
-    return ValidationBuilder()
-        .required('Every explorer needs an email address')
-        .email('Please enter a valid email address')
-        .build()(value);
+    if (value == null || value.isEmpty) {
+      return 'Every explorer needs an email address';
+    }
+
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email address';
+    }
+
+    return null;
   }
 }
 
@@ -308,12 +311,16 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       ),
     );
   }
+
   String? _defaultPasswordValidator(String? value) {
-    return ValidationBuilder()
-        .required('A password is required for your journey')
-        .minLength(6, 'Password must be at least 6 characters long')
-        .regExp(RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)'), 
-                'Password should contain both letters and numbers')
-        .build()(value);
+    if (value == null || value.isEmpty) {
+      return 'A password is required for your journey';
+    }
+
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+
+    return null;
   }
 }

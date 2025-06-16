@@ -41,9 +41,13 @@ class _LoadingOverlayState extends State<LoadingOverlay>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
 
     if (widget.isVisible) {
       _showLoading();
@@ -97,8 +101,10 @@ class _LoadingOverlayState extends State<LoadingOverlay>
             return Opacity(
               opacity: _fadeAnimation.value,
               child: Container(
-                color: AppColors.inkBlack.withAlpha((255 * 0.7).round()),
-                child: Center(child: _buildLoadingContent(context)),
+                color: AppColors.inkBlack.withOpacity(0.7),
+                child: Center(
+                  child: _buildLoadingContent(context),
+                ),
               ),
             );
           },
@@ -117,7 +123,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.inkBlack.withAlpha((255 * 0.3).round()),
+            color: AppColors.inkBlack.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -172,14 +178,14 @@ class _LoadingOverlayState extends State<LoadingOverlay>
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            AppColors.primaryGold.withAlpha((255 * 0.8).round()),
+            AppColors.primaryGold.withOpacity(0.8),
             AppColors.primaryBrown,
-            AppColors.primaryBrown.withAlpha((255 * 0.7).round()),
+            AppColors.primaryBrown.withOpacity(0.7),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBrown.withAlpha((255 * 0.3).round()),
+            color: AppColors.primaryBrown.withOpacity(0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -195,7 +201,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.parchmentWhite.withAlpha((255 * 0.8).round()),
+                color: AppColors.parchmentWhite.withOpacity(0.8),
                 width: 2,
               ),
             ),
@@ -227,14 +233,13 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 4,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: AppColors.parchmentWhite.withAlpha(
-                          (255 * 0.6).round(),
-                        ),
+                        color: AppColors.parchmentWhite.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                ), // East marker
+                ),
+                // East marker
                 Positioned(
                   right: 2,
                   top: 0,
@@ -244,14 +249,13 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 8,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.parchmentWhite.withAlpha(
-                          (255 * 0.6).round(),
-                        ),
+                        color: AppColors.parchmentWhite.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                ), // West marker
+                ),
+                // West marker
                 Positioned(
                   left: 2,
                   top: 0,
@@ -261,9 +265,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 8,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.parchmentWhite.withAlpha(
-                          (255 * 0.6).round(),
-                        ),
+                        color: AppColors.parchmentWhite.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -282,7 +284,10 @@ class _LoadingOverlayState extends State<LoadingOverlay>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [AppColors.compassRed, AppColors.parchmentWhite],
+                colors: [
+                  AppColors.compassRed,
+                  AppColors.parchmentWhite,
+                ],
               ),
             ),
           ),
@@ -294,7 +299,10 @@ class _LoadingOverlayState extends State<LoadingOverlay>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.parchmentWhite,
-              border: Border.all(color: AppColors.primaryBrown, width: 1),
+              border: Border.all(
+                color: AppColors.primaryBrown,
+                width: 1,
+              ),
             ),
           ),
         ],
@@ -308,7 +316,11 @@ class SimpleLoadingOverlay extends StatelessWidget {
   final bool isVisible;
   final Widget? child;
 
-  const SimpleLoadingOverlay({super.key, required this.isVisible, this.child});
+  const SimpleLoadingOverlay({
+    super.key,
+    required this.isVisible,
+    this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -317,12 +329,11 @@ class SimpleLoadingOverlay extends StatelessWidget {
         if (child != null) child!,
         if (isVisible)
           Container(
-            color: AppColors.inkBlack.withAlpha((255 * 0.5).round()),
+            color: AppColors.inkBlack.withOpacity(0.5),
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.primaryGold,
-                ),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppColors.primaryGold),
                 strokeWidth: 3,
               ),
             ),
@@ -357,10 +368,9 @@ class LoadingButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSecondary ? AppColors.surfaceLight : AppColors.primaryBrown,
         borderRadius: BorderRadius.circular(16),
-        border:
-            isSecondary
-                ? Border.all(color: AppColors.primaryBrown, width: 2)
-                : null,
+        border: isSecondary
+            ? Border.all(color: AppColors.primaryBrown, width: 2)
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -368,48 +378,45 @@ class LoadingButton extends StatelessWidget {
           onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(16),
           child: Center(
-            child:
-                isLoading
-                    ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isSecondary
-                                  ? AppColors.primaryBrown
-                                  : AppColors.parchmentWhite,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          loadingText,
-                          style: TextStyle(
-                            color:
-                                isSecondary
-                                    ? AppColors.primaryBrown
-                                    : AppColors.parchmentWhite,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    )
-                    : Text(
-                      text,
-                      style: TextStyle(
-                        color:
+            child: isLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
                             isSecondary
                                 ? AppColors.primaryBrown
                                 : AppColors.parchmentWhite,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Text(
+                        loadingText,
+                        style: TextStyle(
+                          color: isSecondary
+                              ? AppColors.primaryBrown
+                              : AppColors.parchmentWhite,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    text,
+                    style: TextStyle(
+                      color: isSecondary
+                          ? AppColors.primaryBrown
+                          : AppColors.parchmentWhite,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
+                  ),
           ),
         ),
       ),

@@ -39,9 +39,13 @@ class _AuthButtonState extends State<AuthButton>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
@@ -93,96 +97,75 @@ class _AuthButtonState extends State<AuthButton>
               height: 56,
               decoration: BoxDecoration(
                 // Parchment-like gradient for secondary, solid for primary
-                gradient:
-                    widget.isSecondary
-                        ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.parchmentWhite,
-                            AppColors.surfaceLight,
-                            AppColors.parchmentWhite.withAlpha(
-                              (255 * 0.9).round(),
-                            ),
-                          ],
-                        )
-                        : LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            backgroundColor.withAlpha((255 * 0.9).round()),
-                            backgroundColor,
-                            backgroundColor.withAlpha((255 * 0.8).round()),
-                          ],
-                        ),
+                gradient: widget.isSecondary
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.parchmentWhite,
+                          AppColors.surfaceLight,
+                          AppColors.parchmentWhite.withOpacity(0.9),
+                        ],
+                      )
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          backgroundColor.withOpacity(0.9),
+                          backgroundColor,
+                          backgroundColor.withOpacity(0.8),
+                        ],
+                      ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color:
-                      isEnabled
-                          ? borderColor.withAlpha(
-                            (255 * (widget.isSecondary ? 0.8 : 0.0)).round(),
-                          )
-                          : AppColors.lightGray.withAlpha((255 * 0.5).round()),
+                  color: isEnabled
+                      ? borderColor.withOpacity(widget.isSecondary ? 0.8 : 0.0)
+                      : AppColors.lightGray.withOpacity(0.5),
                   width: widget.isSecondary ? 2.0 : 0.0,
                 ),
                 // Physical button effect with multiple shadows
-                boxShadow:
-                    isEnabled
-                        ? [
-                          // Main shadow for depth
-                          BoxShadow(
-                            color: AppColors.fadeGray.withAlpha(
-                              (255 * 0.3).round(),
-                            ),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                          // Subtle highlight on top
-                          BoxShadow(
-                            color: Colors.white.withAlpha((255 * 0.5).round()),
-                            blurRadius: 1,
-                            offset: const Offset(0, -1),
-                          ),
-                          // Side shadow for dimensionality
-                          BoxShadow(
-                            color: AppColors.fadeGray.withAlpha(
-                              (255 * 0.15).round(),
-                            ),
-                            blurRadius: 4,
-                            offset: const Offset(2, 0),
-                          ),
-                        ]
-                        : [
-                          BoxShadow(
-                            color: AppColors.lightGray.withAlpha(
-                              (255 * 0.2).round(),
-                            ),
-                            blurRadius: 2,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
+                boxShadow: isEnabled
+                    ? [
+                        // Main shadow for depth
+                        BoxShadow(
+                          color: AppColors.fadeGray.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                        // Subtle highlight on top
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.5),
+                          blurRadius: 1,
+                          offset: const Offset(0, -1),
+                        ),
+                        // Side shadow for dimensionality
+                        BoxShadow(
+                          color: AppColors.fadeGray.withOpacity(0.15),
+                          blurRadius: 4,
+                          offset: const Offset(2, 0),
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: AppColors.lightGray.withOpacity(0.2),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: isEnabled ? widget.onPressed : null,
                   borderRadius: BorderRadius.circular(16),
-                  splashColor: foregroundColor.withAlpha((255 * 0.1).round()),
-                  highlightColor: foregroundColor.withAlpha(
-                    (255 * 0.05).round(),
-                  ),
+                  splashColor: foregroundColor.withOpacity(0.1),
+                  highlightColor: foregroundColor.withOpacity(0.05),
                   child: Container(
-                    padding:
-                        widget.padding ??
+                    padding: widget.padding ??
                         const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                    child: _buildButtonContent(
-                      theme,
-                      foregroundColor,
-                      isEnabled,
-                    ),
+                            horizontal: 24, vertical: 16),
+                    child:
+                        _buildButtonContent(theme, foregroundColor, isEnabled),
                   ),
                 ),
               ),
@@ -194,10 +177,7 @@ class _AuthButtonState extends State<AuthButton>
   }
 
   Widget _buildButtonContent(
-    ThemeData theme,
-    Color foregroundColor,
-    bool isEnabled,
-  ) {
+      ThemeData theme, Color foregroundColor, bool isEnabled) {
     final textStyle = theme.textTheme.labelLarge?.copyWith(
       color: isEnabled ? foregroundColor : AppColors.fadeGray,
       fontWeight: FontWeight.w600,
@@ -237,7 +217,9 @@ class _AuthButtonState extends State<AuthButton>
       );
     }
 
-    return Center(child: Text(widget.text, style: textStyle));
+    return Center(
+      child: Text(widget.text, style: textStyle),
+    );
   }
 }
 

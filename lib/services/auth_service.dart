@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
-import '../utils/firebase_error_translator.dart';
 
 /// Authentication service that wraps Firebase Auth operations
 /// This is a clean abstraction layer between Firebase and our app logic
@@ -48,9 +47,10 @@ class AuthService {
       );
 
       await _createUserProfile(userModel);
+
       return userModel;
     } on FirebaseAuthException catch (e) {
-      throw Exception(FirebaseErrorTranslator.translateAuthError(e));
+      throw _handleAuthException(e);
     } catch (e) {
       throw Exception('Sign up failed: ${e.toString()}');
     }
@@ -76,9 +76,10 @@ class AuthService {
       final userModel = await getUserProfile(user.uid);
       final updatedUser = userModel.updateLastActive();
       await _updateUserProfile(updatedUser);
+
       return updatedUser;
     } on FirebaseAuthException catch (e) {
-      throw Exception(FirebaseErrorTranslator.translateAuthError(e));
+      throw _handleAuthException(e);
     } catch (e) {
       throw Exception('Sign in failed: ${e.toString()}');
     }
@@ -98,7 +99,7 @@ class AuthService {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      throw Exception(FirebaseErrorTranslator.translateAuthError(e));
+      throw _handleAuthException(e);
     } catch (e) {
       throw Exception('Password reset failed: ${e.toString()}');
     }
@@ -139,6 +140,32 @@ class AuthService {
       await _firestore.collection('users').doc(user.uid).update(user.toJson());
     } catch (e) {
       throw Exception('Failed to update user profile: ${e.toString()}');
+    }
+  }
+
+  /// Convert Firebase Auth exceptions to user-friendly messages
+  String _handleAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'No explorer found with this email. Ready to start a new journey?';
+      case 'wrong-password':
+        return 'Incorrect password. Check your credentials and try again.';
+      case 'email-already-in-use':
+        return 'An explorer with this email already exists. Try signing in instead.';
+      case 'weak-password':
+        return 'Password is too weak. Choose a stronger password for your journey.';
+      case 'invalid-email':
+        return 'Invalid email address. Please enter a valid email.';
+      case 'user-disabled':
+        return 'This explorer account has been disabled. Contact support.';
+      case 'too-many-requests':
+        return 'Too many attempts. Take a break and try again later.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      case 'invalid-credential':
+        return 'Invalid credentials. Please check your email and password.';
+      default:
+        return 'Authentication failed: ${e.message ?? 'Unknown error'}';
     }
   }
 

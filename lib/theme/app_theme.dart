@@ -11,17 +11,19 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness:
-          Brightness
-              .light, // Color scheme based on our traveler's diary palette
+      brightness: Brightness.light,
+
+      // Color scheme based on our traveler's diary palette
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryBrown,
         secondary: AppColors.primaryGold,
-        surface: AppColors.backgroundLight, // Was background
-        onSurface: AppColors.textPrimary, // Was onBackground
+        surface: AppColors.surfaceLight,
+        background: AppColors.backgroundLight,
         error: AppColors.errorRed,
         onPrimary: AppColors.textOnPrimary,
         onSecondary: AppColors.textOnSecondary,
+        onSurface: AppColors.textPrimary,
+        onBackground: AppColors.textPrimary,
         onError: AppColors.parchmentWhite,
       ),
 
@@ -186,18 +188,20 @@ class AppTheme {
           color: AppColors.textSecondary,
           fontWeight: FontWeight.w500,
         ),
-        hintStyle: GoogleFonts.nunitoSans(color: AppColors.fadeGray),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
+        hintStyle: GoogleFonts.nunitoSans(
+          color: AppColors.fadeGray,
         ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
 
       // Card theme
       cardTheme: CardTheme(
         color: AppColors.surfaceLight,
         elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
@@ -211,8 +215,8 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryGold,
         secondary: AppColors.primaryBrown,
-        surface:
-            AppColors.backgroundDark, // Was background - using surface instead
+        surface: AppColors.surfaceDark,
+        background: AppColors.backgroundDark,
       ),
     );
   }

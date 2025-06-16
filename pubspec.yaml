@@ -45,16 +45,6 @@ dependencies:
   
   # Fonts
   google_fonts: ^6.2.1
-  
-  # Code generation for immutable data classes
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
-  
-  # Professional logging
-  logger: ^2.4.0
-  
-  # Declarative form validation
-  form_validator: ^1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -66,11 +56,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  
-  # Code generation dependencies
-  build_runner: ^2.4.13
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

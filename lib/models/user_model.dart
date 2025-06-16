@@ -1,27 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'user_model.freezed.dart';
-part 'user_model.g.dart';
 
 /// User model representing the explorer's profile in Project Atlas
 /// Matches the Firestore 'users' collection structure
-/// 
-/// This model uses freezed for immutable data classes with automatic
-/// code generation for copyWith, equality, hashCode, and JSON serialization.
-@freezed
-class UserModel with _$UserModel {
-  const UserModel._(); // Private constructor for custom methods
+class UserModel {
+  final String uid;
+  final String email;
+  final String displayName;
+  final int level;
+  final int xp;
+  final DateTime createdAt;
+  final DateTime lastActiveAt;
 
-  const factory UserModel({
-    required String uid,
-    required String email,
-    required String displayName,
-    required int level,
-    required int xp,
-    @TimestampConverter() required DateTime createdAt,
-    @TimestampConverter() required DateTime lastActiveAt,
-  }) = _UserModel;
+  const UserModel({
+    required this.uid,
+    required this.email,
+    required this.displayName,
+    required this.level,
+    required this.xp,
+    required this.createdAt,
+    required this.lastActiveAt,
+  });
 
   /// Create a new UserModel with default values for a new explorer
   factory UserModel.newUser({
@@ -42,7 +40,51 @@ class UserModel with _$UserModel {
   }
 
   /// Create UserModel from Firestore document
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      uid: json['uid'] as String,
+      email: json['email'] as String,
+      displayName: json['displayName'] as String,
+      level: (json['level'] as num).toInt(),
+      xp: (json['xp'] as num).toInt(),
+      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      lastActiveAt: (json['lastActiveAt'] as Timestamp).toDate(),
+    );
+  }
+
+  /// Convert UserModel to JSON for Firestore
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'email': email,
+      'displayName': displayName,
+      'level': level,
+      'xp': xp,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'lastActiveAt': Timestamp.fromDate(lastActiveAt),
+    };
+  }
+
+  /// Create a copy of this UserModel with updated values
+  UserModel copyWith({
+    String? uid,
+    String? email,
+    String? displayName,
+    int? level,
+    int? xp,
+    DateTime? createdAt,
+    DateTime? lastActiveAt,
+  }) {
+    return UserModel(
+      uid: uid ?? this.uid,
+      email: email ?? this.email,
+      displayName: displayName ?? this.displayName,
+      level: level ?? this.level,
+      xp: xp ?? this.xp,
+      createdAt: createdAt ?? this.createdAt,
+      lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+    );
+  }
 
   /// Update last active timestamp
   UserModel updateLastActive() {
@@ -83,26 +125,35 @@ class UserModel with _$UserModel {
     if (level >= 5) return 'Apprentice Traveler';
     return 'Novice Explorer';
   }
-}
-
-/// Custom JSON converter for Firestore Timestamps
-class TimestampConverter implements JsonConverter<DateTime, Object> {
-  const TimestampConverter();
 
   @override
-  DateTime fromJson(Object json) {
-    if (json is Timestamp) {
-      return json.toDate();
-    }
-    if (json is String) {
-      return DateTime.parse(json);
-    }
-    if (json is int) {
-      return DateTime.fromMillisecondsSinceEpoch(json);
-    }
-    throw ArgumentError('Cannot convert $json to DateTime');
+  String toString() {
+    return 'UserModel(uid: $uid, displayName: $displayName, level: $level, xp: $xp)';
   }
 
   @override
-  Object toJson(DateTime dateTime) => Timestamp.fromDate(dateTime);
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is UserModel &&
+        other.uid == uid &&
+        other.email == email &&
+        other.displayName == displayName &&
+        other.level == level &&
+        other.xp == xp &&
+        other.createdAt == createdAt &&
+        other.lastActiveAt == lastActiveAt;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      uid,
+      email,
+      displayName,
+      level,
+      xp,
+      createdAt,
+      lastActiveAt,
+    );
+  }
 }
