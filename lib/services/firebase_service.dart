@@ -9,10 +9,22 @@ class FirebaseService {
   static Future<bool> initializeFirebase() async {
     try {
       await Firebase.initializeApp();
+
+      print('Firebase initialized successfully');
       return true;
     } catch (e) {
       // Log error in production, you might want to use a logging service
       print('Firebase initialization failed: $e');
+      print('App will continue without Firebase features');
+      return false;
+    }
+  }
+
+  /// Check if Firebase is available and initialized
+  static bool get isFirebaseAvailable {
+    try {
+      return Firebase.apps.isNotEmpty;
+    } catch (e) {
       return false;
     }
   }

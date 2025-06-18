@@ -42,10 +42,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
+    );
 
     // Fade animation for elements
     _fadeController = AnimationController(
@@ -56,10 +55,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeIn,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeIn));
 
     // Start animations
     _slideController.forward();
@@ -82,7 +78,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
       return;
     }
 
-    await ref.read(authProvider.notifier).signUpWithEmail(
+    await ref
+        .read(authProvider.notifier)
+        .signUpWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
           displayName: _nameController.text.trim(),
@@ -112,10 +110,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: AppColors.primaryBrown,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: AppColors.primaryBrown),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -199,9 +194,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                         // Email field
                         EmailTextField(
                           controller: _emailController,
-                          errorText: authState.state.hasError
-                              ? authState.errorMessage
-                              : null,
+                          errorText:
+                              authState.state.hasError
+                                  ? authState.errorMessage
+                                  : null,
                         ),
 
                         const SizedBox(height: 24),
@@ -218,8 +214,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                             if (value.length < 6) {
                               return 'Password must be at least 6 characters';
                             }
-                            if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)')
-                                .hasMatch(value)) {
+                            if (!RegExp(
+                              r'^(?=.*[a-zA-Z])(?=.*\d)',
+                            ).hasMatch(value)) {
                               return 'Password should contain letters and numbers';
                             }
                             return null;
@@ -236,16 +233,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                           validator: _validateConfirmPassword,
                         ),
 
-                        const SizedBox(height: 32),
-
-                        // Terms and conditions
+                        const SizedBox(height: 32), // Terms and conditions
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceLight.withOpacity(0.7),
+                            color: AppColors.surfaceLight.withValues(
+                              alpha: 0.7,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.primaryGold.withOpacity(0.3),
+                              color: AppColors.primaryGold.withValues(
+                                alpha: 0.3,
+                              ),
                               width: 1,
                             ),
                           ),
@@ -314,10 +313,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withOpacity(0.7),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primaryGold.withOpacity(0.3),
+                          color: AppColors.primaryGold.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),

@@ -1,4 +1,4 @@
-// This is a basic Flutter widget test.
+// This is a basic Flutter widget test for Project Atlas.
 //
 // To perform an interaction with a widget in your test, use the WidgetTester
 // utility in the flutter_test package. For example, you can send tap and scroll
@@ -8,23 +8,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:study/main.dart';
+import 'package:study/widgets/auth/custom_text_field.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('CustomTextField renders correctly', (WidgetTester tester) async {
+    final controller = TextEditingController();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Build the CustomTextField widget
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CustomTextField(
+            controller: controller,
+            label: 'Email',
+            hint: 'Enter your email address',
+            keyboardType: TextInputType.emailAddress,
+          ),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Allow time for the widget to render
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the label and hint are displayed
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Enter your email address'), findsOneWidget);
+
+    // Verify the text field is present
+    expect(find.byType(TextFormField), findsOneWidget);
+
+    // Test typing in the field
+    await tester.enterText(find.byType(TextFormField), 'test@example.com');
+    expect(controller.text, 'test@example.com');
   });
 }

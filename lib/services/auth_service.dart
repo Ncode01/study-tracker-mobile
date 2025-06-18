@@ -8,6 +8,28 @@ class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Hardcoded test accounts for development
+  static const Map<String, Map<String, String>> _testAccounts = {
+    'test@example.com': {
+      'password': 'password123',
+      'displayName': 'Test User',
+      'uid': 'test_user_001',
+    },
+    'admin@example.com': {
+      'password': 'admin123',
+      'displayName': 'Admin User',
+      'uid': 'admin_user_001',
+    },
+    'student@example.com': {
+      'password': 'student123',
+      'displayName': 'Student User',
+      'uid': 'student_user_001',
+    },
+  };
+
+  /// Check if using hardcoded test mode
+  static const bool _useTestMode = true; // Set to false to use Firebase
+
   /// Get the current Firebase user
   User? get currentUser => _firebaseAuth.currentUser;
 
@@ -25,6 +47,24 @@ class AuthService {
     required String displayName,
   }) async {
     try {
+      // Check for hardcoded test accounts
+      if (_useTestMode && _testAccounts.containsKey(email)) {
+        final testAccount = _testAccounts[email]!;
+        if (testAccount['password'] == password) {
+          print('Using hardcoded test account: $email');
+          return UserModel.newUser(
+            uid: testAccount['uid']!,
+            email: email,
+            displayName:
+                displayName.isNotEmpty
+                    ? displayName
+                    : testAccount['displayName']!,
+          );
+        } else {
+          throw Exception('Invalid password for test account');
+        }
+      }
+
       // Create Firebase Auth user
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
@@ -62,6 +102,21 @@ class AuthService {
     required String password,
   }) async {
     try {
+      // Check for hardcoded test accounts
+      if (_useTestMode && _testAccounts.containsKey(email)) {
+        final testAccount = _testAccounts[email]!;
+        if (testAccount['password'] == password) {
+          print('Signing in with hardcoded test account: $email');
+          return UserModel.newUser(
+            uid: testAccount['uid']!,
+            email: email,
+            displayName: testAccount['displayName']!,
+          );
+        } else {
+          throw Exception('Invalid password for test account');
+        }
+      }
+
       final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,

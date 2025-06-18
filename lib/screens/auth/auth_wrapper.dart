@@ -68,7 +68,7 @@ class AuthWrapper extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.fadeGray.withOpacity(0.3),
+                    color: AppColors.fadeGray.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -82,15 +82,12 @@ class AuthWrapper extends ConsumerWidget {
                     height: 80,
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
-                        colors: [
-                          AppColors.primaryGold,
-                          AppColors.primaryBrown,
-                        ],
+                        colors: [AppColors.primaryGold, AppColors.primaryBrown],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryBrown.withOpacity(0.3),
+                          color: AppColors.primaryBrown.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -129,8 +126,9 @@ class AuthWrapper extends ConsumerWidget {
 
                   // Loading indicator
                   CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.primaryGold),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primaryGold,
+                    ),
                     strokeWidth: 3,
                   ),
 
@@ -169,10 +167,10 @@ class AuthWrapper extends ConsumerWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.errorRed.withOpacity(0.1),
+                    color: AppColors.errorRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.errorRed.withOpacity(0.3),
+                      color: AppColors.errorRed.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -215,7 +213,8 @@ class AuthWrapper extends ConsumerWidget {
                     // Restart the app by forcing a rebuild
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                          builder: (context) => const AuthWrapper()),
+                        builder: (context) => const AuthWrapper(),
+                      ),
                       (route) => false,
                     );
                   },
@@ -223,7 +222,9 @@ class AuthWrapper extends ConsumerWidget {
                     backgroundColor: AppColors.primaryBrown,
                     foregroundColor: AppColors.parchmentWhite,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -289,15 +290,12 @@ class AuthWrapper extends ConsumerWidget {
                 height: 100,
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryGold,
-                      AppColors.primaryBrown,
-                    ],
+                    colors: [AppColors.primaryGold, AppColors.primaryBrown],
                   ),
                   borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryBrown.withOpacity(0.3),
+                      color: AppColors.primaryBrown.withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -342,12 +340,12 @@ class AuthWrapper extends ConsumerWidget {
                   color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.primaryGold.withOpacity(0.3),
+                    color: AppColors.primaryGold.withValues(alpha: 0.3),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.fadeGray.withOpacity(0.1),
+                      color: AppColors.fadeGray.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

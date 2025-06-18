@@ -9,22 +9,18 @@ import 'screens/auth/auth_wrapper.dart';
 void main() async {
   // Ensure widgets binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase
+
+  // Initialize Firebase (but continue even if it fails)
   final firebaseInitialized = await FirebaseService.initializeFirebase();
-  
-  if (!firebaseInitialized) {
-    // If Firebase fails to initialize, show error and exit
-    runApp(const FirebaseErrorApp());
-    return;
+
+  if (firebaseInitialized) {
+    print('Firebase initialized successfully');
+  } else {
+    print('App running without Firebase features');
   }
-  
+
   // Run the main app with Riverpod
-  runApp(
-    const ProviderScope(
-      child: ProjectAtlasApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: ProjectAtlasApp()));
 }
 
 /// Main Project Atlas application
@@ -36,21 +32,22 @@ class ProjectAtlasApp extends StatelessWidget {
     return MaterialApp(
       title: 'Project Atlas',
       debugShowCheckedModeBanner: false,
-      
+
       // Use our custom traveler's diary theme
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light, // Start with light theme
-      
       // Set the AuthWrapper as home - it will handle routing based on auth state
       home: const AuthWrapper(),
-      
+
       // Custom app-wide error handling
       builder: (context, child) {
         return MediaQuery(
           // Ensure text scaling doesn't break our UI
           data: MediaQuery.of(context).copyWith(
-            textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
+            textScaler: TextScaler.linear(
+              MediaQuery.of(context).textScaler.scale(1.0).clamp(0.8, 1.2),
+            ),
           ),
           child: child ?? const SizedBox.shrink(),
         );
@@ -81,7 +78,7 @@ class FirebaseErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: Colors.red.shade50,
       body: SafeArea(
@@ -98,10 +95,7 @@ class FirebaseErrorScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.red.shade100,
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(
-                      color: Colors.red.shade300,
-                      width: 3,
-                    ),
+                    border: Border.all(color: Colors.red.shade300, width: 3),
                   ),
                   child: Icon(
                     Icons.error_outline_rounded,
@@ -109,9 +103,9 @@ class FirebaseErrorScreen extends StatelessWidget {
                     color: Colors.red.shade600,
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Error title
                 Text(
                   'Initialization Failed',
@@ -121,9 +115,9 @@ class FirebaseErrorScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Error description
                 Text(
                   'Project Atlas failed to initialize properly. This usually happens when Firebase configuration is missing or invalid.',
@@ -133,18 +127,16 @@ class FirebaseErrorScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Technical details
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.red.shade100,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.red.shade300,
-                    ),
+                    border: Border.all(color: Colors.red.shade300),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,9 +162,9 @@ class FirebaseErrorScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Retry button
                 ElevatedButton(
                   onPressed: () {
@@ -197,9 +189,7 @@ class FirebaseErrorScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'Retry Initialization',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),

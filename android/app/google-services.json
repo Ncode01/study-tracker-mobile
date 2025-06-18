@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1001014195663",
+    "project_id": "study-tracker-abdb2",
+    "storage_bucket": "study-tracker-abdb2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001014195663:android:60b319fb90aaf29f75ceba",
+        "android_client_info": {
+          "package_name": "com.example.study"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5L4ZRsrf9rc6MeBXXoyeNI-kh_OmFcgo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

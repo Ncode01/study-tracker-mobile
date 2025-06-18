@@ -41,10 +41,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
+    );
 
     // Fade animation for elements
     _fadeController = AnimationController(
@@ -55,10 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeIn,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeIn));
 
     // Start animations
     _slideController.forward();
@@ -79,7 +75,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       return;
     }
 
-    await ref.read(authProvider.notifier).signInWithEmail(
+    await ref
+        .read(authProvider.notifier)
+        .signInWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -94,10 +92,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             position: Tween<Offset>(
               begin: const Offset(1.0, 0.0),
               end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOut,
-            )),
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+            ),
             child: child,
           );
         },
@@ -107,10 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   void _showForgotPasswordDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => _ForgotPasswordDialog(),
-    );
+    showDialog(context: context, builder: (context) => _ForgotPasswordDialog());
   }
 
   @override
@@ -176,17 +170,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         // Email field
                         EmailTextField(
                           controller: _emailController,
-                          errorText: authState.state.hasError
-                              ? authState.errorMessage
-                              : null,
+                          errorText:
+                              authState.state.hasError
+                                  ? authState.errorMessage
+                                  : null,
                         ),
 
                         const SizedBox(height: 24),
 
                         // Password field
-                        PasswordTextField(
-                          controller: _passwordController,
-                        ),
+                        PasswordTextField(controller: _passwordController),
 
                         const SizedBox(height: 16),
 
@@ -222,8 +215,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               child: Divider(color: AppColors.lightGray),
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 'or',
                                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -262,10 +256,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withOpacity(0.7),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primaryGold.withOpacity(0.3),
+                          color: AppColors.primaryGold.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -325,9 +319,9 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
     }
 
     try {
-      await ref.read(authProvider.notifier).resetPassword(
-            _emailController.text.trim(),
-          );
+      await ref
+          .read(authProvider.notifier)
+          .resetPassword(_emailController.text.trim());
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -370,9 +364,7 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
 
     return AlertDialog(
       backgroundColor: AppColors.parchmentWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         'Reset Your Password',
         style: theme.textTheme.titleLarge?.copyWith(
@@ -392,9 +384,7 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
               ),
             ),
             const SizedBox(height: 20),
-            EmailTextField(
-              controller: _emailController,
-            ),
+            EmailTextField(controller: _emailController),
           ],
         ),
       ),
@@ -404,10 +394,7 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
           onPressed: () => Navigator.of(context).pop(),
           color: AppColors.fadeGray,
         ),
-        PrimaryButton(
-          text: 'Send Reset Email',
-          onPressed: _sendResetEmail,
-        ),
+        PrimaryButton(text: 'Send Reset Email', onPressed: _sendResetEmail),
       ],
     );
   }

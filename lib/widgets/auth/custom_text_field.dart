@@ -86,9 +86,7 @@ class _CustomTextFieldState extends State<CustomTextField>
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-
-        // Parchment-style container
+          ), // Parchment-style container
         Container(
           decoration: BoxDecoration(
             // Subtle parchment-like gradient
@@ -98,28 +96,29 @@ class _CustomTextFieldState extends State<CustomTextField>
               colors: [
                 AppColors.parchmentWhite,
                 AppColors.surfaceLight,
-                AppColors.parchmentWhite.withOpacity(0.95),
+                AppColors.parchmentWhite.withValues(alpha: 0.95),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
             // Soft shadow for depth
             boxShadow: [
               BoxShadow(
-                color: AppColors.fadeGray.withOpacity(0.15),
+                color: AppColors.fadeGray.withValues(alpha: 0.15),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ), // Subtle depth shadow
               BoxShadow(
-                color: AppColors.lightGray.withOpacity(0.2),
+                color: AppColors.lightGray.withValues(alpha: 0.2),
                 blurRadius: 1,
                 offset: const Offset(0, 1),
               ),
             ],
             // Border that changes with focus
             border: Border.all(
-              color: _isFocused
-                  ? AppColors.primaryBrown.withOpacity(0.8)
-                  : AppColors.lightGray.withOpacity(0.6),
+              color:
+                  _isFocused
+                      ? AppColors.primaryBrown.withValues(alpha: 0.8)
+                      : AppColors.lightGray.withValues(alpha: 0.6),
               width: _isFocused ? 2.0 : 1.0,
             ),
           ),
@@ -145,18 +144,20 @@ class _CustomTextFieldState extends State<CustomTextField>
                 color: AppColors.fadeGray,
                 fontStyle: FontStyle.italic,
               ),
-              prefixIcon: widget.prefixIcon != null
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: widget.prefixIcon,
-                    )
-                  : null,
-              suffixIcon: widget.suffixIcon != null
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: widget.suffixIcon,
-                    )
-                  : null,
+              prefixIcon:
+                  widget.prefixIcon != null
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: widget.prefixIcon,
+                      )
+                      : null,
+              suffixIcon:
+                  widget.suffixIcon != null
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: widget.suffixIcon,
+                      )
+                      : null,
               // Remove default borders since we're using container decoration
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
