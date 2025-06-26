@@ -26,9 +26,7 @@ mixin _$UserModel {
   String get displayName => throw _privateConstructorUsedError;
   int get level => throw _privateConstructorUsedError;
   int get xp => throw _privateConstructorUsedError;
-  @TimestampConverter()
   DateTime get createdAt => throw _privateConstructorUsedError;
-  @TimestampConverter()
   DateTime get lastActiveAt => throw _privateConstructorUsedError;
 
   /// Serializes this UserModel to a JSON map.
@@ -52,8 +50,8 @@ abstract class $UserModelCopyWith<$Res> {
     String displayName,
     int level,
     int xp,
-    @TimestampConverter() DateTime createdAt,
-    @TimestampConverter() DateTime lastActiveAt,
+    DateTime createdAt,
+    DateTime lastActiveAt,
   });
 }
 
@@ -138,8 +136,8 @@ abstract class _$$UserModelImplCopyWith<$Res>
     String displayName,
     int level,
     int xp,
-    @TimestampConverter() DateTime createdAt,
-    @TimestampConverter() DateTime lastActiveAt,
+    DateTime createdAt,
+    DateTime lastActiveAt,
   });
 }
 
@@ -216,8 +214,8 @@ class _$UserModelImpl implements _UserModel {
     required this.displayName,
     required this.level,
     required this.xp,
-    @TimestampConverter() required this.createdAt,
-    @TimestampConverter() required this.lastActiveAt,
+    required this.createdAt,
+    required this.lastActiveAt,
   });
 
   factory _$UserModelImpl.fromJson(Map<String, dynamic> json) =>
@@ -234,10 +232,8 @@ class _$UserModelImpl implements _UserModel {
   @override
   final int xp;
   @override
-  @TimestampConverter()
   final DateTime createdAt;
   @override
-  @TimestampConverter()
   final DateTime lastActiveAt;
 
   @override
@@ -296,8 +292,8 @@ abstract class _UserModel implements UserModel {
     required final String displayName,
     required final int level,
     required final int xp,
-    @TimestampConverter() required final DateTime createdAt,
-    @TimestampConverter() required final DateTime lastActiveAt,
+    required final DateTime createdAt,
+    required final DateTime lastActiveAt,
   }) = _$UserModelImpl;
 
   factory _UserModel.fromJson(Map<String, dynamic> json) =
@@ -314,10 +310,8 @@ abstract class _UserModel implements UserModel {
   @override
   int get xp;
   @override
-  @TimestampConverter()
   DateTime get createdAt;
   @override
-  @TimestampConverter()
   DateTime get lastActiveAt;
 
   /// Create a copy of UserModel

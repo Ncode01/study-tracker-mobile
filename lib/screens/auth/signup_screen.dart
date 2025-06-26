@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_validator/form_validator.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/custom_text_field.dart';
 import '../../widgets/auth/auth_button.dart';
@@ -139,7 +140,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_rounded, color: AppColors.primaryBrown),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.go('/login'),
         ),
       ),
       body: LoadingOverlay(

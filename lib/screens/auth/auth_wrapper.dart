@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import 'login_screen.dart';
@@ -8,24 +9,21 @@ import 'login_screen.dart';
 /// Acts as the gatekeeper between authenticated and unauthenticated screens
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authData = ref.watch(authProvider);
 
-    // Watch auth state changes to keep in sync with Firebase
-    ref.listen(
-      authStateChangesProvider,
-      (previous, next) {
-        // This ensures our app stays in sync with Firebase auth changes
-        // The authSyncProvider handles the actual synchronization logic
-        ref.read(authSyncProvider);
-      },
-    ); // Handle different authentication states using the freezed union pattern
+    // Handle different authentication states using the freezed union pattern
     return authData.when(
       initial: () => _buildLoadingScreen(context),
       loading: () => _buildLoadingScreen(context),
-      authenticated: (user) => _buildHomeScreen(context, user.displayName),
+      authenticated: (user) {
+        // This should not happen due to router redirect, but just in case
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.go('/profile');
+        });
+        return _buildLoadingScreen(context);
+      },
       unauthenticated: () => const LoginScreen(),
       error: (message, exception) => _buildErrorScreen(context, message),
     );
@@ -221,145 +219,6 @@ class AuthWrapper extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Placeholder home screen for authenticated users
-  Widget _buildHomeScreen(BuildContext context, String displayName) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Text(
-          'Welcome, $displayName!',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: AppColors.parchmentWhite,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: AppColors.primaryBrown,
-        elevation: 2,
-        actions: [
-          Consumer(
-            builder: (context, ref, child) {
-              return IconButton(
-                icon: Icon(
-                  Icons.logout_rounded,
-                  color: AppColors.parchmentWhite,
-                ),
-                onPressed: () async {
-                  await ref.read(authProvider.notifier).signOut();
-                },
-              );
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Success icon
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [AppColors.primaryGold, AppColors.primaryBrown],
-                  ),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryBrown.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.celebration_rounded,
-                  size: 50,
-                  color: AppColors.parchmentWhite,
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Welcome message
-              Text(
-                'Welcome to Project Atlas!',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: AppColors.primaryBrown,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 16),
-
-              Text(
-                'Your authentication is working perfectly! 🎉\n\nThis is a placeholder for the main app. The study tracking features will be built next.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: AppColors.fadeGray,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 32),
-
-              // Feature coming soon card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.primaryGold.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.fadeGray.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.construction_rounded,
-                      size: 32,
-                      color: AppColors.primaryGold,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Study Features Coming Soon',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: AppColors.primaryBrown,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Subject creation, study timer, XP system, and progress tracking will be added in the next phase.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.fadeGray,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ),

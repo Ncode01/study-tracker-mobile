@@ -209,7 +209,23 @@ Login Screen
 └── "Forgot Password" → Reset Dialog → Email Sent → Return to Login
 ```
 
-## Planned vs Implemented Features
+## Core Features
+
+### 👤 Profile Screen
+**Location:** `lib/features/profile/presentation/screens/profile_screen.dart`
+**Function:** Displays user profile information, stats, and provides navigation to settings.
+**Key Components:**
+- User avatar, display name, and explorer title.
+- Stats section for level and XP.
+- Action buttons for settings and sign-out.
+
+### ⚙️ Settings Screen
+**Location:** `lib/features/settings/presentation/screens/settings_screen.dart`
+**Function:** Allows users to manage their account and app settings.
+**Key Components:**
+- Navigation back to the profile screen.
+- Options for editing profile, privacy, and theme (coming soon).
+- Secure account deletion with confirmation dialog.
 
 ### ✅ Fully Implemented
 - [x] User Authentication (Email/Password)
@@ -221,6 +237,8 @@ Login Screen
 - [x] Loading States and Animations
 - [x] Firebase Integration
 - [x] User Profile Model with Gamification
+- [x] Profile Screen with User Stats
+- [x] Settings Screen with Account Management
 
 ### 🚧 Partially Implemented
 - [⚠️] Home Screen (Placeholder only)

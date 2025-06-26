@@ -40,7 +40,7 @@ Project Atlas is a comprehensive study tracking mobile application built with Fl
 - Email/password registration and login
 - Password reset functionality
 - User profile management
-- Account deletion/deactivation
+- Secure account deletion with confirmation
 - Social authentication (Google, Apple) - Future enhancement
 
 **Acceptance Criteria**:
