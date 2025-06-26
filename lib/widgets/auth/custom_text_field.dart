@@ -220,7 +220,6 @@ class EmailTextField extends StatelessWidget {
     this.onChanged,
     this.errorText,
   });
-
   @override
   Widget build(BuildContext context) {
     return CustomTextField(
@@ -229,7 +228,7 @@ class EmailTextField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.emailAddress,
       textCapitalization: TextCapitalization.none,
-      validator: validator ?? _defaultEmailValidator,
+      validator: validator,
       onChanged: onChanged,
       errorText: errorText,
       prefixIcon: Icon(
@@ -238,19 +237,6 @@ class EmailTextField extends StatelessWidget {
         size: 20,
       ),
     );
-  }
-
-  String? _defaultEmailValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Every explorer needs an email address';
-    }
-
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-
-    return null;
   }
 }
 
@@ -288,7 +274,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       controller: widget.controller,
       obscureText: _obscureText,
       keyboardType: TextInputType.visiblePassword,
-      validator: widget.validator ?? _defaultPasswordValidator,
+      validator: widget.validator,
       onChanged: widget.onChanged,
       errorText: widget.errorText,
       prefixIcon: Icon(
@@ -311,17 +297,5 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
         },
       ),
     );
-  }
-
-  String? _defaultPasswordValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'A password is required for your journey';
-    }
-
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
-
-    return null;
   }
 }

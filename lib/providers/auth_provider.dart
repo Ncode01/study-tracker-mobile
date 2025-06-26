@@ -3,69 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/auth_state.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../utils/app_logger.dart';
 
-/// Authentication data class that holds both state and user information
-class AuthData {
-  final AuthState state;
-  final UserModel? user;
-  final String? errorMessage;
-
-  const AuthData({
-    required this.state,
-    this.user,
-    this.errorMessage,
-  });
-
-  /// Create AuthData with initial state
-  const AuthData.initial()
-      : state = AuthState.initial,
-        user = null,
-        errorMessage = null;
-
-  /// Create AuthData with loading state
-  const AuthData.loading()
-      : state = AuthState.loading,
-        user = null,
-        errorMessage = null;
-
-  /// Create AuthData with authenticated state
-  const AuthData.authenticated(UserModel user)
-      : state = AuthState.authenticated,
-        user = user,
-        errorMessage = null;
-
-  /// Create AuthData with unauthenticated state
-  const AuthData.unauthenticated()
-      : state = AuthState.unauthenticated,
-        user = null,
-        errorMessage = null;
-
-  /// Create AuthData with error state
-  const AuthData.error(String message)
-      : state = AuthState.error,
-        user = null,
-        errorMessage = message;
-
-  /// Create a copy with updated values
-  AuthData copyWith({
-    AuthState? state,
-    UserModel? user,
-    String? errorMessage,
-  }) {
-    return AuthData(
-      state: state ?? this.state,
-      user: user ?? this.user,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'AuthData(state: $state, user: ${user?.displayName}, error: $errorMessage)';
-  }
-}
-
-/// Authentication notifier that manages the authentication state
+/// Authentication notifier that manages the authentication state using freezed union types
 class AuthNotifier extends StateNotifier<AuthData> {
   final AuthService _authService;
 
@@ -76,18 +16,23 @@ class AuthNotifier extends StateNotifier<AuthData> {
   /// Initialize authentication state by checking current user
   Future<void> _initialize() async {
     try {
+      AppLogger.info('Initializing authentication state');
       final currentUser = _authService.currentUser;
       if (currentUser != null) {
         // User is signed in, get their profile
         final userProfile = await _authService.getUserProfile(currentUser.uid);
         state = AuthData.authenticated(userProfile);
+        AppLogger.info('User authenticated: ${userProfile.displayName}');
       } else {
         // No user signed in
         state = const AuthData.unauthenticated();
+        AppLogger.info('No user authenticated');
       }
     } catch (e) {
+      AppLogger.error('Failed to initialize authentication', e);
       state = AuthData.error(
-          'Failed to initialize authentication: ${e.toString()}');
+        'Failed to initialize authentication: ${e.toString()}',
+      );
     }
   }
 
@@ -97,11 +42,13 @@ class AuthNotifier extends StateNotifier<AuthData> {
     required String password,
     required String displayName,
   }) async {
-    if (state.state.isLoading) return; // Prevent multiple simultaneous requests
+    // Prevent multiple simultaneous requests
+    if (state.maybeWhen(loading: () => true, orElse: () => false)) return;
 
     state = const AuthData.loading();
 
     try {
+      AppLogger.info('Signing up new user: $email');
       final userModel = await _authService.signUpWithEmail(
         email: email,
         password: password,
@@ -109,7 +56,9 @@ class AuthNotifier extends StateNotifier<AuthData> {
       );
 
       state = AuthData.authenticated(userModel);
+      AppLogger.info('User signed up successfully: ${userModel.displayName}');
     } catch (e) {
+      AppLogger.error('Sign up failed', e);
       state = AuthData.error(e.toString());
     }
   }
@@ -119,51 +68,64 @@ class AuthNotifier extends StateNotifier<AuthData> {
     required String email,
     required String password,
   }) async {
-    if (state.state.isLoading) return; // Prevent multiple simultaneous requests
+    // Prevent multiple simultaneous requests
+    if (state.maybeWhen(loading: () => true, orElse: () => false)) return;
 
     state = const AuthData.loading();
 
     try {
+      AppLogger.info('Signing in user: $email');
       final userModel = await _authService.signInWithEmail(
         email: email,
         password: password,
       );
 
       state = AuthData.authenticated(userModel);
+      AppLogger.info('User signed in successfully: ${userModel.displayName}');
     } catch (e) {
+      AppLogger.error('Sign in failed', e);
       state = AuthData.error(e.toString());
     }
   }
 
   /// Sign out the current explorer
   Future<void> signOut() async {
-    if (state.state.isLoading) return; // Prevent multiple simultaneous requests
+    // Prevent multiple simultaneous requests
+    if (state.maybeWhen(loading: () => true, orElse: () => false)) return;
 
     state = const AuthData.loading();
 
     try {
+      AppLogger.info('Signing out user');
       await _authService.signOut();
       state = const AuthData.unauthenticated();
+      AppLogger.info('User signed out successfully');
     } catch (e) {
+      AppLogger.error('Sign out failed', e);
       state = AuthData.error(e.toString());
     }
   }
 
   /// Send password reset email
   Future<void> resetPassword(String email) async {
-    if (state.state.isLoading) return; // Prevent multiple simultaneous requests
+    // Prevent multiple simultaneous requests
+    if (state.maybeWhen(loading: () => true, orElse: () => false)) return;
 
     state = const AuthData.loading();
 
     try {
+      AppLogger.info('Sending password reset email to: $email');
       await _authService.resetPassword(email);
+
       // Return to previous state after successful reset email
-      if (state.user != null) {
-        state = AuthData.authenticated(state.user!);
-      } else {
-        state = const AuthData.unauthenticated();
-      }
+      state.whenOrNull(
+            authenticated: (user) => state = AuthData.authenticated(user),
+          ) ??
+          (state = const AuthData.unauthenticated());
+
+      AppLogger.info('Password reset email sent successfully');
     } catch (e) {
+      AppLogger.error('Password reset failed', e);
       state = AuthData.error(e.toString());
     }
   }
@@ -171,29 +133,33 @@ class AuthNotifier extends StateNotifier<AuthData> {
   /// Update user profile
   Future<void> updateUserProfile(UserModel updatedUser) async {
     try {
+      AppLogger.info('Updating user profile: ${updatedUser.displayName}');
       await _authService.updateUserProfile(updatedUser);
       state = AuthData.authenticated(updatedUser);
+      AppLogger.info('User profile updated successfully');
     } catch (e) {
+      AppLogger.error('Profile update failed', e);
       state = AuthData.error('Failed to update profile: ${e.toString()}');
     }
   }
 
   /// Clear error state
   void clearError() {
-    if (state.state.hasError) {
-      if (state.user != null) {
-        state = AuthData.authenticated(state.user!);
-      } else {
+    state.whenOrNull(
+      error: (message, exception) {
+        // Return to unauthenticated state when clearing error
         state = const AuthData.unauthenticated();
-      }
-    }
+        AppLogger.info('Error state cleared');
+      },
+    );
   }
 
   /// Get current user (convenience getter)
-  UserModel? get currentUser => state.user;
+  UserModel? get currentUser => state.whenOrNull(authenticated: (user) => user);
 
   /// Check if user is authenticated (convenience getter)
-  bool get isAuthenticated => state.state.isAuthenticated;
+  bool get isAuthenticated =>
+      state.whenOrNull(authenticated: (_) => true) ?? false;
 }
 
 /// AuthService provider - creates a singleton instance
@@ -221,34 +187,36 @@ final authSyncProvider = Provider<void>((ref) {
   final authNotifier = ref.read(authProvider.notifier);
 
   authStateChanges.whenData((firebaseUser) {
-    final currentAppUser = ref.read(authProvider).user;
+    final currentAppUser = ref
+        .read(authProvider)
+        .whenOrNull(authenticated: (user) => user);
 
     // If Firebase user is null but app thinks user is authenticated, sign out
     if (firebaseUser == null && currentAppUser != null) {
       authNotifier.signOut();
-    }
-    // If Firebase user exists but app thinks user is not authenticated, initialize
+    } // If Firebase user exists but app thinks user is not authenticated, initialize
     else if (firebaseUser != null && currentAppUser == null) {
       // This will be handled by the AuthNotifier initialization
     }
   });
-
-  return null;
 });
 
 /// Convenience providers for specific auth state checks
 final isAuthenticatedProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).state.isAuthenticated;
+  return ref.watch(authProvider).whenOrNull(authenticated: (_) => true) ??
+      false;
 });
 
 final isLoadingProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).state.isLoading;
+  return ref.watch(authProvider).whenOrNull(loading: () => true) ?? false;
 });
 
 final currentUserProvider = Provider<UserModel?>((ref) {
-  return ref.watch(authProvider).user;
+  return ref.watch(authProvider).whenOrNull(authenticated: (user) => user);
 });
 
 final authErrorProvider = Provider<String?>((ref) {
-  return ref.watch(authProvider).errorMessage;
+  return ref
+      .watch(authProvider)
+      .whenOrNull(error: (message, exception) => message);
 });

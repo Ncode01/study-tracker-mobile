@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:form_validator/form_validator.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/auth_state.dart';
 import '../../widgets/auth/custom_text_field.dart';
 import '../../widgets/auth/auth_button.dart';
 import '../../widgets/common/loading_overlay.dart';
@@ -24,6 +24,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Professional form validation using form_validator
+  late final String? Function(String?) _nameValidator;
+  late final String? Function(String?) _emailValidator;
+  late final String? Function(String?) _passwordValidator;
+  late final String? Function(String?) _confirmPasswordValidator;
+
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
   late AnimationController _fadeController;
@@ -32,6 +38,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
   @override
   void initState() {
     super.initState();
+
+    // Initialize validators using ValidationBuilder
+    _nameValidator =
+        ValidationBuilder()
+            .required('Every explorer needs a name')
+            .minLength(2, 'Name must be at least 2 characters long')
+            .maxLength(50, 'Name must be less than 50 characters')
+            .build();
+
+    _emailValidator =
+        ValidationBuilder()
+            .required('Every explorer needs an email address')
+            .email('Please enter a valid email address')
+            .build();
+
+    _passwordValidator =
+        ValidationBuilder()
+            .required('A secret password is required for your journey')
+            .minLength(6, 'Password must be at least 6 characters long')
+            .regExp(
+              RegExp(r'^(?=.*[A-Za-z])(?=.*\d)'),
+              'Password must contain at least one letter and one number',
+            )
+            .build();
+
+    _confirmPasswordValidator =
+        ValidationBuilder().required('Please confirm your password').add((
+          value,
+        ) {
+          if (value != _passwordController.text) {
+            return 'Passwords do not match';
+          }
+          return null;
+        }).build();
 
     // Slide animation for the form
     _slideController = AnimationController(
@@ -87,18 +127,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
         );
   }
 
-  String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
-    }
-
-    if (value != _passwordController.text) {
-      return 'Passwords do not match';
-    }
-
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -115,7 +143,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
         ),
       ),
       body: LoadingOverlay(
-        isVisible: authState.state.isLoading,
+        isVisible: authState.maybeWhen(
+          loading: () => true,
+          orElse: () => false,
+        ),
         message: 'Creating your explorer profile...',
         child: SafeArea(
           child: SingleChildScrollView(
@@ -173,64 +204,38 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                           hint: 'What shall we call you?',
                           controller: _nameController,
                           textCapitalization: TextCapitalization.words,
+                          validator: _nameValidator,
                           prefixIcon: Icon(
                             Icons.person_outline_rounded,
                             color: AppColors.fadeGray,
                             size: 20,
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Every explorer needs a name';
-                            }
-                            if (value.trim().length < 2) {
-                              return 'Name must be at least 2 characters';
-                            }
-                            return null;
-                          },
                         ),
 
-                        const SizedBox(height: 24),
-
-                        // Email field
+                        const SizedBox(height: 24), // Email field
                         EmailTextField(
                           controller: _emailController,
-                          errorText:
-                              authState.state.hasError
-                                  ? authState.errorMessage
-                                  : null,
+                          validator: _emailValidator,
+                          errorText: authState.maybeWhen(
+                            error: (message, exception) => message,
+                            orElse: () => null,
+                          ),
                         ),
 
-                        const SizedBox(height: 24),
-
-                        // Password field
+                        const SizedBox(height: 24), // Password field
                         PasswordTextField(
                           controller: _passwordController,
                           label: 'Secret Password',
                           hint: 'Create a strong password',
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'A password is required for your journey';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            if (!RegExp(
-                              r'^(?=.*[a-zA-Z])(?=.*\d)',
-                            ).hasMatch(value)) {
-                              return 'Password should contain letters and numbers';
-                            }
-                            return null;
-                          },
+                          validator: _passwordValidator,
                         ),
 
-                        const SizedBox(height: 24),
-
-                        // Confirm password field
+                        const SizedBox(height: 24), // Confirm password field
                         PasswordTextField(
                           controller: _confirmPasswordController,
                           label: 'Confirm Password',
                           hint: 'Confirm your secret password',
-                          validator: _validateConfirmPassword,
+                          validator: _confirmPasswordValidator,
                         ),
 
                         const SizedBox(height: 32), // Terms and conditions
@@ -273,7 +278,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
                           child: PrimaryButton(
                             text: 'Start My Journey',
                             onPressed: _handleSignUp,
-                            isLoading: authState.state.isLoading,
+                            isLoading: authState.maybeWhen(
+                              loading: () => true,
+                              orElse: () => false,
+                            ),
                             icon: Icons.rocket_launch_rounded,
                           ),
                         ),

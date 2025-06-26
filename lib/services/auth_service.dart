@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import '../utils/app_logger.dart';
 
 /// Authentication service that wraps Firebase Auth operations
 /// This is a clean abstraction layer between Firebase and our app logic
@@ -51,7 +52,7 @@ class AuthService {
       if (_useTestMode && _testAccounts.containsKey(email)) {
         final testAccount = _testAccounts[email]!;
         if (testAccount['password'] == password) {
-          print('Using hardcoded test account: $email');
+          AppLogger.auth('Using hardcoded test account: $email');
           return UserModel.newUser(
             uid: testAccount['uid']!,
             email: email,
@@ -106,7 +107,7 @@ class AuthService {
       if (_useTestMode && _testAccounts.containsKey(email)) {
         final testAccount = _testAccounts[email]!;
         if (testAccount['password'] == password) {
-          print('Signing in with hardcoded test account: $email');
+          AppLogger.auth('Signing in with hardcoded test account: $email');
           return UserModel.newUser(
             uid: testAccount['uid']!,
             email: email,

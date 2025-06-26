@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'services/firebase_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/auth_wrapper.dart';
+import 'utils/app_logger.dart';
 
 /// Main entry point for Project Atlas
 /// Initializes Firebase and sets up the app with Riverpod state management
@@ -14,9 +15,9 @@ void main() async {
   final firebaseInitialized = await FirebaseService.initializeFirebase();
 
   if (firebaseInitialized) {
-    print('Firebase initialized successfully');
+    AppLogger.firebase('Firebase initialized successfully');
   } else {
-    print('App running without Firebase features');
+    AppLogger.warning('App running without Firebase features');
   }
 
   // Run the main app with Riverpod

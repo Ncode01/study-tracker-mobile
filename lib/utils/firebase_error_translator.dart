@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Utility class for translating Firebase errors to user-friendly messages
 /// Provides consistent error messaging across the app with context-aware translations

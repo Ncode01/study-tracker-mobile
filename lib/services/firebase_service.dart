@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import '../utils/app_logger.dart';
 
 /// Service class for Firebase initialization and configuration
 class FirebaseService {
@@ -10,12 +11,11 @@ class FirebaseService {
     try {
       await Firebase.initializeApp();
 
-      print('Firebase initialized successfully');
+      AppLogger.firebase('Firebase initialized successfully');
       return true;
     } catch (e) {
-      // Log error in production, you might want to use a logging service
-      print('Firebase initialization failed: $e');
-      print('App will continue without Firebase features');
+      AppLogger.error('Firebase initialization failed', e);
+      AppLogger.warning('App will continue without Firebase features');
       return false;
     }
   }

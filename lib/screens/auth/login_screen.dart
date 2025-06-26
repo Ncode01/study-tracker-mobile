@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:form_validator/form_validator.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/auth_state.dart';
 import '../../widgets/auth/custom_text_field.dart';
 import '../../widgets/auth/auth_button.dart';
 import '../../widgets/common/loading_overlay.dart';
@@ -23,6 +23,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // Professional form validation using form_validator
+  late final String? Function(String?) _emailValidator;
+  late final String? Function(String?) _passwordValidator;
+
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
   late AnimationController _fadeController;
@@ -31,6 +35,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   void initState() {
     super.initState();
+
+    // Initialize validators using ValidationBuilder
+    _emailValidator =
+        ValidationBuilder()
+            .required('Every explorer needs an email address')
+            .email('Please enter a valid email address')
+            .build();
+
+    _passwordValidator =
+        ValidationBuilder()
+            .required('A password is required for your journey')
+            .minLength(6, 'Password must be at least 6 characters long')
+            .build();
 
     // Slide animation for the form
     _slideController = AnimationController(
@@ -115,7 +132,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: LoadingOverlay(
-        isVisible: authState.state.isLoading,
+        isVisible: authState.maybeWhen(
+          loading: () => true,
+          orElse: () => false,
+        ),
         message: 'Welcome back, Explorer!',
         child: SafeArea(
           child: SingleChildScrollView(
@@ -170,16 +190,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         // Email field
                         EmailTextField(
                           controller: _emailController,
-                          errorText:
-                              authState.state.hasError
-                                  ? authState.errorMessage
-                                  : null,
+                          validator: _emailValidator,
+                          errorText: authState.maybeWhen(
+                            error: (message, exception) => message,
+                            orElse: () => null,
+                          ),
                         ),
 
                         const SizedBox(height: 24),
 
                         // Password field
-                        PasswordTextField(controller: _passwordController),
+                        PasswordTextField(
+                          controller: _passwordController,
+                          validator: _passwordValidator,
+                        ),
 
                         const SizedBox(height: 16),
 
@@ -201,7 +225,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           child: PrimaryButton(
                             text: 'Continue Journey',
                             onPressed: _handleSignIn,
-                            isLoading: authState.state.isLoading,
+                            isLoading: authState.maybeWhen(
+                              loading: () => true,
+                              orElse: () => false,
+                            ),
                             icon: Icons.login_rounded,
                           ),
                         ),
@@ -307,6 +334,21 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  // Professional form validation using form_validator
+  late final String? Function(String?) _emailValidator;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize email validator
+    _emailValidator =
+        ValidationBuilder()
+            .required('Every explorer needs an email address')
+            .email('Please enter a valid email address')
+            .build();
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -384,7 +426,10 @@ class _ForgotPasswordDialogState extends ConsumerState<_ForgotPasswordDialog> {
               ),
             ),
             const SizedBox(height: 20),
-            EmailTextField(controller: _emailController),
+            EmailTextField(
+              controller: _emailController,
+              validator: _emailValidator,
+            ),
           ],
         ),
       ),

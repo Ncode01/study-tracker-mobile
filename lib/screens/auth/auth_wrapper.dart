@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/auth_state.dart';
 import '../../theme/app_colors.dart';
 import 'login_screen.dart';
 
@@ -15,39 +14,21 @@ class AuthWrapper extends ConsumerWidget {
     final authData = ref.watch(authProvider);
 
     // Watch auth state changes to keep in sync with Firebase
-    ref.listen(authStateChangesProvider, (previous, next) {
-      // This ensures our app stays in sync with Firebase auth changes
-      // The authSyncProvider handles the actual synchronization logic
-      ref.read(authSyncProvider);
-    });
-
-    // Handle different authentication states
-    switch (authData.state) {
-      case AuthState.initial:
-        // Show loading screen while checking auth status
-        return _buildLoadingScreen(context);
-
-      case AuthState.loading:
-        // Show loading screen during auth operations
-        return _buildLoadingScreen(context);
-
-      case AuthState.authenticated:
-        // User is authenticated, show the main app
-        if (authData.user != null) {
-          return _buildHomeScreen(context, authData.user!.displayName);
-        } else {
-          // Edge case: authenticated but no user data
-          return _buildErrorScreen(context, 'User data not available');
-        }
-
-      case AuthState.unauthenticated:
-        // User is not authenticated, show login screen
-        return const LoginScreen();
-
-      case AuthState.error:
-        // Authentication error occurred
-        return _buildErrorScreen(context, authData.errorMessage);
-    }
+    ref.listen(
+      authStateChangesProvider,
+      (previous, next) {
+        // This ensures our app stays in sync with Firebase auth changes
+        // The authSyncProvider handles the actual synchronization logic
+        ref.read(authSyncProvider);
+      },
+    ); // Handle different authentication states using the freezed union pattern
+    return authData.when(
+      initial: () => _buildLoadingScreen(context),
+      loading: () => _buildLoadingScreen(context),
+      authenticated: (user) => _buildHomeScreen(context, user.displayName),
+      unauthenticated: () => const LoginScreen(),
+      error: (message, exception) => _buildErrorScreen(context, message),
+    );
   }
 
   /// Loading screen with traveler's diary aesthetic

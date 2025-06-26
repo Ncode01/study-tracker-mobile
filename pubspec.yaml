@@ -38,12 +38,19 @@ dependencies:
   firebase_core: ^2.32.0
   firebase_auth: ^4.20.0
   cloud_firestore: ^4.17.5
-  
-  # State management
+    # State management
   flutter_riverpod: ^2.6.1
   
   # Fonts
   google_fonts: ^6.2.1
+    # Logging
+  logger: ^2.4.0
+    # Code generation for data models
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  
+  # Form validation
+  form_validator: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +62,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  
+  # Code generation
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
