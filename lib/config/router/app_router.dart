@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/signup_screen.dart';
 import '../../screens/auth/auth_wrapper.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 
@@ -33,6 +34,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignUpScreen(),
       ),
       GoRoute(
+        path: '/dashboard',
+        name: 'dashboard',
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const ProfileScreen(),
@@ -41,12 +47,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
-      ),
-      // Legacy /home route redirects to /profile
+      ), // Legacy /home route redirects to /dashboard
       GoRoute(
         path: '/home',
         name: 'home',
-        redirect: (context, state) => '/profile',
+        redirect: (context, state) => '/dashboard',
       ),
     ],
     redirect: (context, state) {

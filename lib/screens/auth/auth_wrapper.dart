@@ -20,7 +20,7 @@ class AuthWrapper extends ConsumerWidget {
       authenticated: (user) {
         // This should not happen due to router redirect, but just in case
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.go('/profile');
+          context.go('/dashboard');
         });
         return _buildLoadingScreen(context);
       },
