@@ -17,11 +17,11 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryBrown,
         secondary: AppColors.primaryGold,
-        surface: AppColors.backgroundLight, // Was background
-        onSurface: AppColors.textPrimary, // Was onBackground
+        surface: AppColors.surfaceLight,
         error: AppColors.errorRed,
         onPrimary: AppColors.textOnPrimary,
         onSecondary: AppColors.textOnSecondary,
+        onSurface: AppColors.textPrimary,
         onError: AppColors.parchmentWhite,
       ),
 
@@ -139,9 +139,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: AppColors.textOnPrimary,
         ),
-      ),
-
-      // Elevated button theme
+      ), // Elevated button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBrown,
@@ -211,8 +209,7 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryGold,
         secondary: AppColors.primaryBrown,
-        surface:
-            AppColors.backgroundDark, // Was background - using surface instead
+        surface: AppColors.surfaceDark,
       ),
     );
   }

@@ -101,28 +101,26 @@ class _AuthButtonState extends State<AuthButton>
                           colors: [
                             AppColors.parchmentWhite,
                             AppColors.surfaceLight,
-                            AppColors.parchmentWhite.withAlpha(
-                              (255 * 0.9).round(),
-                            ),
+                            AppColors.parchmentWhite.withValues(alpha: 0.9),
                           ],
                         )
                         : LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            backgroundColor.withAlpha((255 * 0.9).round()),
+                            backgroundColor.withValues(alpha: 0.9),
                             backgroundColor,
-                            backgroundColor.withAlpha((255 * 0.8).round()),
+                            backgroundColor.withValues(alpha: 0.8),
                           ],
                         ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color:
                       isEnabled
-                          ? borderColor.withAlpha(
-                            (255 * (widget.isSecondary ? 0.8 : 0.0)).round(),
+                          ? borderColor.withValues(
+                            alpha: widget.isSecondary ? 0.8 : 0.0,
                           )
-                          : AppColors.lightGray.withAlpha((255 * 0.5).round()),
+                          : AppColors.lightGray.withValues(alpha: 0.5),
                   width: widget.isSecondary ? 2.0 : 0.0,
                 ),
                 // Physical button effect with multiple shadows
@@ -131,32 +129,26 @@ class _AuthButtonState extends State<AuthButton>
                         ? [
                           // Main shadow for depth
                           BoxShadow(
-                            color: AppColors.fadeGray.withAlpha(
-                              (255 * 0.3).round(),
-                            ),
+                            color: AppColors.fadeGray.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
                           // Subtle highlight on top
                           BoxShadow(
-                            color: Colors.white.withAlpha((255 * 0.5).round()),
+                            color: Colors.white.withValues(alpha: 0.5),
                             blurRadius: 1,
                             offset: const Offset(0, -1),
                           ),
                           // Side shadow for dimensionality
                           BoxShadow(
-                            color: AppColors.fadeGray.withAlpha(
-                              (255 * 0.15).round(),
-                            ),
+                            color: AppColors.fadeGray.withValues(alpha: 0.15),
                             blurRadius: 4,
                             offset: const Offset(2, 0),
                           ),
                         ]
                         : [
                           BoxShadow(
-                            color: AppColors.lightGray.withAlpha(
-                              (255 * 0.2).round(),
-                            ),
+                            color: AppColors.lightGray.withValues(alpha: 0.2),
                             blurRadius: 2,
                             offset: const Offset(0, 1),
                           ),
@@ -167,10 +159,8 @@ class _AuthButtonState extends State<AuthButton>
                 child: InkWell(
                   onTap: isEnabled ? widget.onPressed : null,
                   borderRadius: BorderRadius.circular(16),
-                  splashColor: foregroundColor.withAlpha((255 * 0.1).round()),
-                  highlightColor: foregroundColor.withAlpha(
-                    (255 * 0.05).round(),
-                  ),
+                  splashColor: foregroundColor.withValues(alpha: 0.1),
+                  highlightColor: foregroundColor.withValues(alpha: 0.05),
                   child: Container(
                     padding:
                         widget.padding ??

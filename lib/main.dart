@@ -1,34 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'app.dart';
-import 'widgets/common/firebase_error_widget.dart';
-import 'firebase_options.dart';
-import 'utils/app_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'theme/app_theme.dart';
+import 'config/router/app_router.dart';
+import 'providers/persistent_auth_provider.dart';
 
 /// Main entry point for Project Atlas
-/// Initializes Firebase and sets up the app with Riverpod state management
+/// Sets up the app with persistent authentication and Riverpod state management
 void main() async {
-  // Ensure widgets binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize our custom logger first
-  AppLogger.initialize();
+  // Initialize SharedPreferences for local storage
+  final prefs = await SharedPreferences.getInstance();
 
-  try {
-    // Initialize Firebase with secure configuration
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const ProjectAtlasApp(),
+    ),
+  );
+}
+
+/// Main Project Atlas application
+class ProjectAtlasApp extends ConsumerWidget {
+  const ProjectAtlasApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+
+    return MaterialApp.router(
+      title: 'Project Atlas',
+      debugShowCheckedModeBanner: false,
+      // Use our custom traveler's diary theme
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light, // Start with light theme
+      routerConfig: router,
+      // Custom app-wide error handling
+      builder: (context, child) {
+        return MediaQuery(
+          // Ensure text scaling doesn't break our UI
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(
+              MediaQuery.of(context).textScaler.scale(1.0).clamp(0.8, 1.2),
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
-
-    AppLogger.firebase('Firebase initialized successfully');
-
-    // Run the main app with Riverpod
-    runApp(const ProviderScope(child: ProjectAtlasApp()));  } catch (e) {
-    AppLogger.fatal(
-      'Firebase initialization failed',
-      e,
-    ); // Show Firebase error app
-    runApp(FirebaseErrorApp(error: e));
   }
 }

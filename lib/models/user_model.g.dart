@@ -13,12 +13,8 @@ _$UserModelImpl _$$UserModelImplFromJson(Map<String, dynamic> json) =>
       displayName: json['displayName'] as String,
       level: (json['level'] as num).toInt(),
       xp: (json['xp'] as num).toInt(),
-      createdAt: const TimestampConverter().fromJson(
-        json['createdAt'] as Object,
-      ),
-      lastActiveAt: const TimestampConverter().fromJson(
-        json['lastActiveAt'] as Object,
-      ),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      lastActiveAt: DateTime.parse(json['lastActiveAt'] as String),
     );
 
 Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
@@ -28,6 +24,6 @@ Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
       'displayName': instance.displayName,
       'level': instance.level,
       'xp': instance.xp,
-      'createdAt': const TimestampConverter().toJson(instance.createdAt),
-      'lastActiveAt': const TimestampConverter().toJson(instance.lastActiveAt),
+      'createdAt': instance.createdAt.toIso8601String(),
+      'lastActiveAt': instance.lastActiveAt.toIso8601String(),
     };

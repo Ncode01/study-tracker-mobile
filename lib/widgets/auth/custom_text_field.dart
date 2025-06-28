@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:form_validator/form_validator.dart';
 import '../../theme/app_colors.dart';
 
 /// Custom text field with traveler's diary aesthetic
@@ -87,9 +86,7 @@ class _CustomTextFieldState extends State<CustomTextField>
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-
-        // Parchment-style container
+          ), // Parchment-style container
         Container(
           decoration: BoxDecoration(
             // Subtle parchment-like gradient
@@ -99,19 +96,19 @@ class _CustomTextFieldState extends State<CustomTextField>
               colors: [
                 AppColors.parchmentWhite,
                 AppColors.surfaceLight,
-                AppColors.parchmentWhite.withAlpha((255 * 0.95).round()),
+                AppColors.parchmentWhite.withValues(alpha: 0.95),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
             // Soft shadow for depth
             boxShadow: [
               BoxShadow(
-                color: AppColors.fadeGray.withAlpha((255 * 0.15).round()),
+                color: AppColors.fadeGray.withValues(alpha: 0.15),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ), // Subtle depth shadow
               BoxShadow(
-                color: AppColors.lightGray.withAlpha((255 * 0.2).round()),
+                color: AppColors.lightGray.withValues(alpha: 0.2),
                 blurRadius: 1,
                 offset: const Offset(0, 1),
               ),
@@ -120,8 +117,8 @@ class _CustomTextFieldState extends State<CustomTextField>
             border: Border.all(
               color:
                   _isFocused
-                      ? AppColors.primaryBrown.withAlpha((255 * 0.8).round())
-                      : AppColors.lightGray.withAlpha((255 * 0.6).round()),
+                      ? AppColors.primaryBrown.withValues(alpha: 0.8)
+                      : AppColors.lightGray.withValues(alpha: 0.6),
               width: _isFocused ? 2.0 : 1.0,
             ),
           ),
@@ -223,7 +220,6 @@ class EmailTextField extends StatelessWidget {
     this.onChanged,
     this.errorText,
   });
-
   @override
   Widget build(BuildContext context) {
     return CustomTextField(
@@ -232,7 +228,7 @@ class EmailTextField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.emailAddress,
       textCapitalization: TextCapitalization.none,
-      validator: validator ?? _defaultEmailValidator,
+      validator: validator,
       onChanged: onChanged,
       errorText: errorText,
       prefixIcon: Icon(
@@ -241,12 +237,6 @@ class EmailTextField extends StatelessWidget {
         size: 20,
       ),
     );
-  }
-  String? _defaultEmailValidator(String? value) {
-    return ValidationBuilder()
-        .required('Every explorer needs an email address')
-        .email('Please enter a valid email address')
-        .build()(value);
   }
 }
 
@@ -284,7 +274,7 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       controller: widget.controller,
       obscureText: _obscureText,
       keyboardType: TextInputType.visiblePassword,
-      validator: widget.validator ?? _defaultPasswordValidator,
+      validator: widget.validator,
       onChanged: widget.onChanged,
       errorText: widget.errorText,
       prefixIcon: Icon(
@@ -307,13 +297,5 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
         },
       ),
     );
-  }
-  String? _defaultPasswordValidator(String? value) {
-    return ValidationBuilder()
-        .required('A password is required for your journey')
-        .minLength(6, 'Password must be at least 6 characters long')
-        .regExp(RegExp(r'^(?=.*[a-zA-Z])(?=.*\d)'), 
-                'Password should contain both letters and numbers')
-        .build()(value);
   }
 }

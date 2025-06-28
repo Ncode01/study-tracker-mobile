@@ -97,7 +97,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
             return Opacity(
               opacity: _fadeAnimation.value,
               child: Container(
-                color: AppColors.inkBlack.withAlpha((255 * 0.7).round()),
+                color: AppColors.inkBlack.withValues(alpha: 0.7),
                 child: Center(child: _buildLoadingContent(context)),
               ),
             );
@@ -117,7 +117,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.inkBlack.withAlpha((255 * 0.3).round()),
+            color: AppColors.inkBlack.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -172,14 +172,14 @@ class _LoadingOverlayState extends State<LoadingOverlay>
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            AppColors.primaryGold.withAlpha((255 * 0.8).round()),
+            AppColors.primaryGold.withValues(alpha: 0.8),
             AppColors.primaryBrown,
-            AppColors.primaryBrown.withAlpha((255 * 0.7).round()),
+            AppColors.primaryBrown.withValues(alpha: 0.7),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBrown.withAlpha((255 * 0.3).round()),
+            color: AppColors.primaryBrown.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -195,7 +195,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.parchmentWhite.withAlpha((255 * 0.8).round()),
+                color: AppColors.parchmentWhite.withValues(alpha: 0.8),
                 width: 2,
               ),
             ),
@@ -227,9 +227,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 4,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: AppColors.parchmentWhite.withAlpha(
-                          (255 * 0.6).round(),
-                        ),
+                        color: AppColors.parchmentWhite.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -244,9 +242,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 8,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.parchmentWhite.withAlpha(
-                          (255 * 0.6).round(),
-                        ),
+                        color: AppColors.parchmentWhite.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -261,9 +257,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 8,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.parchmentWhite.withAlpha(
-                          (255 * 0.6).round(),
-                        ),
+                        color: AppColors.parchmentWhite.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -317,7 +311,7 @@ class SimpleLoadingOverlay extends StatelessWidget {
         if (child != null) child!,
         if (isVisible)
           Container(
-            color: AppColors.inkBlack.withAlpha((255 * 0.5).round()),
+            color: AppColors.inkBlack.withValues(alpha: 0.5),
             child: Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
