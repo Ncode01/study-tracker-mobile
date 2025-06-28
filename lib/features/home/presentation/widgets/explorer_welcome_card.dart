@@ -19,18 +19,18 @@ class ExplorerWelcomeCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryGold.withOpacity(0.1),
-            AppColors.primaryCream.withOpacity(0.3),
+            AppColors.primaryGold.withValues(alpha: 0.1),
+            AppColors.primaryCream.withValues(alpha: 0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primaryBrown.withOpacity(0.2),
+          color: AppColors.primaryBrown.withValues(alpha: 0.2),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBrown.withOpacity(0.1),
+            color: AppColors.primaryBrown.withValues(alpha: 0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -94,7 +94,7 @@ class ExplorerWelcomeCard extends StatelessWidget {
               Container(
                 height: 40,
                 width: 1,
-                color: AppColors.primaryBrown.withOpacity(0.2),
+                color: AppColors.primaryBrown.withValues(alpha: 0.2),
               ),
 
               // Weekly sessions
@@ -112,7 +112,7 @@ class ExplorerWelcomeCard extends StatelessWidget {
               Container(
                 height: 40,
                 width: 1,
-                color: AppColors.primaryBrown.withOpacity(0.2),
+                color: AppColors.primaryBrown.withValues(alpha: 0.2),
               ),
 
               // Total time
@@ -134,10 +134,10 @@ class ExplorerWelcomeCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.successGreen.withOpacity(0.1),
+                color: AppColors.successGreen.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.successGreen.withOpacity(0.3),
+                  color: AppColors.successGreen.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -177,7 +177,7 @@ class ExplorerWelcomeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBrown.withOpacity(0.3),
+            color: AppColors.primaryBrown.withValues(alpha: 0.3),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

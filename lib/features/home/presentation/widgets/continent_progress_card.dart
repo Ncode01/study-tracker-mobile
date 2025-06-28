@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../domain/models/study_progress.dart';
 import '../../../../theme/app_colors.dart';
 
@@ -19,12 +20,12 @@ class ContinentProgressCard extends StatelessWidget {
           color: AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppColors.primaryBrown.withOpacity(0.3),
+            color: AppColors.primaryBrown.withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryBrown.withOpacity(0.1),
+              color: AppColors.primaryBrown.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -40,7 +41,7 @@ class ContinentProgressCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryGold.withOpacity(0.2),
+                    color: AppColors.primaryGold.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -98,14 +99,14 @@ class ContinentProgressCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color:
                         progress.targetAchieved
-                            ? AppColors.successGreen.withOpacity(0.1)
-                            : AppColors.warningOrange.withOpacity(0.1),
+                            ? AppColors.successGreen.withValues(alpha: 0.1)
+                            : AppColors.warningOrange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color:
                           progress.targetAchieved
-                              ? AppColors.successGreen.withOpacity(0.3)
-                              : AppColors.warningOrange.withOpacity(0.3),
+                              ? AppColors.successGreen.withValues(alpha: 0.3)
+                              : AppColors.warningOrange.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -153,7 +154,7 @@ class ContinentProgressCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
                     value: progress.clampedProgress,
-                    backgroundColor: AppColors.lightGray.withOpacity(0.3),
+                    backgroundColor: AppColors.lightGray.withValues(alpha: 0.3),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       progress.targetAchieved
                           ? AppColors.successGreen
@@ -209,10 +210,10 @@ class ContinentProgressCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primaryBrown.withOpacity(0.05),
+                color: AppColors.primaryBrown.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.primaryBrown.withOpacity(0.1),
+                  color: AppColors.primaryBrown.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -221,14 +222,14 @@ class ContinentProgressCard extends StatelessWidget {
                   Icon(
                     Icons.lightbulb_outline,
                     size: 16,
-                    color: AppColors.primaryBrown.withOpacity(0.7),
+                    color: AppColors.primaryBrown.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       "Next: ${progress.nextSuggestedTopic}",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primaryBrown.withOpacity(0.8),
+                        color: AppColors.primaryBrown.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -252,7 +253,11 @@ class ContinentProgressCard extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: AppColors.primaryBrown.withOpacity(0.7)),
+        Icon(
+          icon,
+          size: 16,
+          color: AppColors.primaryBrown.withValues(alpha: 0.7),
+        ),
         const SizedBox(height: 4),
         Text(
           value,
@@ -303,12 +308,6 @@ class ContinentProgressCard extends StatelessWidget {
 
   /// Navigate to subject details
   void _navigateToSubject(BuildContext context) {
-    // TODO: Navigate to subject detail screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("${progress.subject.name} details coming soon!"),
-        backgroundColor: AppColors.primaryBrown,
-      ),
-    );
+    context.push('/subjects/${progress.subject.id}');
   }
 }

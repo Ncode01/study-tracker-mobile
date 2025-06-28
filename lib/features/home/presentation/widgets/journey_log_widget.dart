@@ -21,12 +21,12 @@ class JourneyLogWidget extends StatelessWidget {
         color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.primaryBrown.withOpacity(0.2),
+          color: AppColors.primaryBrown.withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBrown.withOpacity(0.08),
+            color: AppColors.primaryBrown.withValues(alpha: 0.08),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -41,7 +41,7 @@ class JourneyLogWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.skyBlue.withOpacity(0.2),
+                  color: AppColors.skyBlue.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -64,21 +64,19 @@ class JourneyLogWidget extends StatelessWidget {
                 child: Text(
                   "View All",
                   style: TextStyle(
-                    color: AppColors.primaryBrown.withOpacity(0.7),
+                    color: AppColors.primaryBrown.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 12),
 
           // Session entries
           ...sessions
               .take(5)
-              .map((session) => _buildLogEntry(context, session))
-              .toList(),
+              .map((session) => _buildLogEntry(context, session)),
         ],
       ),
     );
@@ -94,7 +92,7 @@ class JourneyLogWidget extends StatelessWidget {
           color: AppColors.parchmentWhite,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.primaryBrown.withOpacity(0.15),
+            color: AppColors.primaryBrown.withValues(alpha: 0.15),
             width: 1,
           ),
         ),
@@ -183,7 +181,7 @@ class JourneyLogWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.treasureGreen.withOpacity(0.1),
+                color: AppColors.treasureGreen.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(

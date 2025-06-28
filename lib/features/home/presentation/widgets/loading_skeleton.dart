@@ -67,7 +67,7 @@ class LoadingSkeleton extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: AppColors.lightGray.withOpacity(0.3),
+        color: AppColors.lightGray.withValues(alpha: 0.3),
       ),
       child: Stack(
         children: [
@@ -78,7 +78,7 @@ class LoadingSkeleton extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    AppColors.lightGray.withOpacity(0.1),
+                    AppColors.lightGray.withValues(alpha: 0.1),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.5, 1.0],
@@ -117,7 +117,7 @@ class LoadingSkeleton extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(height / 2),
-        color: AppColors.lightGray.withOpacity(0.4),
+        color: AppColors.lightGray.withValues(alpha: 0.4),
       ),
     );
   }

@@ -3,7 +3,12 @@ import '../domain/repositories/subject_repository.dart';
 
 /// Local in-memory implementation of [SubjectRepository].
 class LocalSubjectRepositoryImpl implements SubjectRepository {
-  final List<Subject> _subjects = [];
+  final List<Subject> _subjects = [
+    // Add some mock subjects for testing
+    Subject(id: '1', name: 'Mathematics'),
+    Subject(id: '2', name: 'Computer Science'),
+    Subject(id: '3', name: 'Physics'),
+  ];
 
   @override
   Future<List<Subject>> getSubjects() async {

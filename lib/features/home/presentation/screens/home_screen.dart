@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../application/providers/dashboard_providers.dart';
 import '../widgets/explorer_welcome_card.dart';
 import '../widgets/quick_actions_row.dart';
@@ -8,6 +9,8 @@ import '../widgets/journey_log_widget.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/loading_skeleton.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../study/providers/study_providers.dart';
+import '../../../study/domain/models/subject_model.dart';
 
 /// Home screen displaying the explorer's dashboard
 /// Shows personalized greeting, study progress, and recent activity
@@ -152,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
               Icon(
                 Icons.explore_outlined,
                 size: 64,
-                color: AppColors.primaryBrown.withOpacity(0.5),
+                color: AppColors.primaryBrown.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -197,7 +200,7 @@ class HomeScreen extends ConsumerWidget {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.errorRed.withOpacity(0.7),
+              color: AppColors.errorRed.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 16),
             Text(
@@ -236,16 +239,20 @@ class HomeScreen extends ConsumerWidget {
 
   /// Build floating action button (compass)
   Widget _buildCompassFAB(BuildContext context) {
-    return FloatingActionButton.extended(
-      onPressed: () => _startStudySession(context),
-      backgroundColor: AppColors.primaryGold,
-      foregroundColor: AppColors.textOnSecondary,
-      elevation: 8,
-      icon: const Icon(Icons.explore, size: 24),
-      label: const Text(
-        "Start Quest",
-        style: TextStyle(fontWeight: FontWeight.w600),
-      ),
+    return Consumer(
+      builder: (context, ref, child) {
+        return FloatingActionButton.extended(
+          onPressed: () => _startStudySession(context, ref),
+          backgroundColor: AppColors.primaryGold,
+          foregroundColor: AppColors.textOnSecondary,
+          elevation: 8,
+          icon: const Icon(Icons.explore, size: 24),
+          label: const Text(
+            "Start Quest",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        );
+      },
     );
   }
 
@@ -256,25 +263,108 @@ class HomeScreen extends ConsumerWidget {
 
   /// Navigate to profile screen
   void _navigateToProfile(BuildContext context) {
-    // TODO: Implement navigation to profile
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profile navigation coming soon!")),
-    );
+    context.push('/profile');
   }
 
   /// Navigate to settings screen
   void _navigateToSettings(BuildContext context) {
-    // TODO: Implement navigation to settings
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Settings navigation coming soon!")),
-    );
+    context.push('/settings');
   }
 
   /// Start new study session
-  void _startStudySession(BuildContext context) {
-    // TODO: Implement study session start
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Study session starting coming soon!")),
+  void _startStudySession(BuildContext context, WidgetRef ref) async {
+    try {
+      // Get available subjects
+      final subjects = await ref.read(subjectsProvider.future);
+
+      if (!context.mounted) return;
+
+      if (subjects.isEmpty) {
+        // No subjects available - redirect to subject creation
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Create your first subject to start studying!"),
+            backgroundColor: AppColors.primaryBrown,
+          ),
+        );
+        // Navigate to subject creation
+        if (context.mounted) {
+          context.push('/subjects/create');
+        }
+        return;
+      }
+
+      // Show subject selector dialog
+      final selectedSubject = await _showSubjectSelector(context, subjects);
+
+      if (selectedSubject != null && context.mounted) {
+        // Navigate to study session screen
+        context.push('/study/session', extra: selectedSubject);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to load subjects. Please try again."),
+            backgroundColor: AppColors.errorRed,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Show subject selector dialog
+  Future<Subject?> _showSubjectSelector(
+    BuildContext context,
+    List<Subject> subjects,
+  ) async {
+    return showDialog<Subject>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Choose Your Quest',
+            style: TextStyle(
+              color: AppColors.primaryBrown,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: subjects.length,
+              itemBuilder: (context, index) {
+                final subject = subjects[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primaryGold,
+                    child: Text(
+                      subject.name.substring(0, 1).toUpperCase(),
+                      style: TextStyle(
+                        color: AppColors.textOnSecondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    subject.name,
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text('Tap to start exploring'),
+                  onTap: () => Navigator.of(context).pop(subject),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

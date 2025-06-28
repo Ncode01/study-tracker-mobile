@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../theme/app_colors.dart';
 
 /// Empty state widget for new users
@@ -21,9 +22,9 @@ class EmptyStateWidget extends StatelessWidget {
             height: 200,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primaryGold.withOpacity(0.1),
+              color: AppColors.primaryGold.withValues(alpha: 0.1),
               border: Border.all(
-                color: AppColors.primaryGold.withOpacity(0.3),
+                color: AppColors.primaryGold.withValues(alpha: 0.3),
                 width: 2,
               ),
             ),
@@ -90,11 +91,13 @@ class EmptyStateWidget extends StatelessWidget {
             onPressed: () => _exploreFeatures(context),
             icon: Icon(
               Icons.help_outline,
-              color: AppColors.primaryBrown.withOpacity(0.7),
+              color: AppColors.primaryBrown.withValues(alpha: 0.7),
             ),
             label: Text(
               "Learn How It Works",
-              style: TextStyle(color: AppColors.primaryBrown.withOpacity(0.7)),
+              style: TextStyle(
+                color: AppColors.primaryBrown.withValues(alpha: 0.7),
+              ),
             ),
           ),
 
@@ -112,12 +115,12 @@ class EmptyStateWidget extends StatelessWidget {
         color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.primaryBrown.withOpacity(0.2),
+          color: AppColors.primaryBrown.withValues(alpha: 0.2),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBrown.withOpacity(0.1),
+            color: AppColors.primaryBrown.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -131,7 +134,7 @@ class EmptyStateWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGold.withOpacity(0.2),
+                  color: AppColors.primaryGold.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -192,7 +195,7 @@ class EmptyStateWidget extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.primaryBrown.withOpacity(0.1),
+              color: AppColors.primaryBrown.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -229,13 +232,7 @@ class EmptyStateWidget extends StatelessWidget {
 
   /// Handle add first subject action
   void _addFirstSubject(BuildContext context) {
-    // TODO: Navigate to add subject screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Add subject feature coming soon!"),
-        backgroundColor: AppColors.primaryBrown,
-      ),
-    );
+    context.push('/subjects/create');
   }
 
   /// Handle explore features action

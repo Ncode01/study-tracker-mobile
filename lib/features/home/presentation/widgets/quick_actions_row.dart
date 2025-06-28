@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../study/domain/models/subject_model.dart';
+import '../../../study/providers/study_providers.dart';
 
 /// Quick action buttons for navigation shortcuts
 /// Provides easy access to common app features
-class QuickActionsRow extends StatelessWidget {
+class QuickActionsRow extends ConsumerWidget {
   const QuickActionsRow({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -19,7 +23,7 @@ class QuickActionsRow extends StatelessWidget {
               icon: Icons.play_circle_outline,
               label: "Start Session",
               color: AppColors.treasureGreen,
-              onTap: () => _startSession(context),
+              onTap: () => _startSession(context, ref),
             ),
           ),
 
@@ -66,12 +70,12 @@ class QuickActionsRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -83,7 +87,7 @@ class QuickActionsRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -104,35 +108,60 @@ class QuickActionsRow extends StatelessWidget {
   }
 
   /// Handle start session action
-  void _startSession(BuildContext context) {
-    // TODO: Navigate to study session start
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Study session feature coming soon!"),
-        backgroundColor: AppColors.treasureGreen,
-      ),
+  Future<void> _startSession(BuildContext context, WidgetRef ref) async {
+    final subjects = await ref.read(subjectRepositoryProvider).getSubjects();
+
+    if (!context.mounted) return;
+
+    if (subjects.isEmpty) {
+      // No subjects available, prompt to create one
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Create a subject first to start studying!"),
+          backgroundColor: AppColors.warningOrange,
+        ),
+      );
+      return;
+    } // Show subject selector dialog
+    final selectedSubject = await showDialog<Subject>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Choose Subject"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children:
+                  subjects
+                      .map(
+                        (subject) => ListTile(
+                          leading: const Icon(Icons.book),
+                          title: Text(subject.name),
+                          onTap: () => Navigator.of(context).pop(subject),
+                        ),
+                      )
+                      .toList(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Cancel"),
+              ),
+            ],
+          ),
     );
+
+    if (selectedSubject != null && context.mounted) {
+      context.go('/study/session', extra: selectedSubject);
+    }
   }
 
   /// Handle view progress action
   void _viewProgress(BuildContext context) {
-    // TODO: Navigate to progress/analytics screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Progress analytics coming soon!"),
-        backgroundColor: AppColors.skyBlue,
-      ),
-    );
+    context.go('/progress');
   }
 
   /// Handle set goals action
   void _setGoals(BuildContext context) {
-    // TODO: Navigate to goals setting screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Goals setting coming soon!"),
-        backgroundColor: AppColors.primaryGold,
-      ),
-    );
+    context.go('/goals');
   }
 }
