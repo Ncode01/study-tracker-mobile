@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../providers/auth_provider.dart';
+import '../../../../providers/persistent_auth_provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/common/loading_overlay.dart';
 
@@ -282,9 +282,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: Text(
                 'Delete Account',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.errorRed,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: AppColors.errorRed,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -316,12 +316,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: _deleteConfirmController.text == 'DELETE'
-                      ? () {
-                          Navigator.of(context).pop();
-                          _deleteAccount();
-                        }
-                      : null,
+                  onPressed:
+                      _deleteConfirmController.text == 'DELETE'
+                          ? () {
+                            Navigator.of(context).pop();
+                            _deleteAccount();
+                          }
+                          : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.errorRed,
                     foregroundColor: Colors.white,
@@ -343,7 +344,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
 
     try {
-      await ref.read(authProvider.notifier).deleteAccount();
+      await ref.read(persistentAuthProvider.notifier).deleteAccount();
 
       // Show success message
       if (mounted) {

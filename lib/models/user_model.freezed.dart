@@ -12,8 +12,7 @@ part of 'user_model.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 UserModel _$UserModelFromJson(Map<String, dynamic> json) {
   return _UserModel.fromJson(json);
@@ -44,15 +43,14 @@ abstract class $UserModelCopyWith<$Res> {
   factory $UserModelCopyWith(UserModel value, $Res Function(UserModel) then) =
       _$UserModelCopyWithImpl<$Res, UserModel>;
   @useResult
-  $Res call({
-    String uid,
-    String email,
-    String displayName,
-    int level,
-    int xp,
-    DateTime createdAt,
-    DateTime lastActiveAt,
-  });
+  $Res call(
+      {String uid,
+      String email,
+      String displayName,
+      int level,
+      int xp,
+      DateTime createdAt,
+      DateTime lastActiveAt});
 }
 
 /// @nodoc
@@ -78,46 +76,36 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
     Object? createdAt = null,
     Object? lastActiveAt = null,
   }) {
-    return _then(
-      _value.copyWith(
-            uid:
-                null == uid
-                    ? _value.uid
-                    : uid // ignore: cast_nullable_to_non_nullable
-                        as String,
-            email:
-                null == email
-                    ? _value.email
-                    : email // ignore: cast_nullable_to_non_nullable
-                        as String,
-            displayName:
-                null == displayName
-                    ? _value.displayName
-                    : displayName // ignore: cast_nullable_to_non_nullable
-                        as String,
-            level:
-                null == level
-                    ? _value.level
-                    : level // ignore: cast_nullable_to_non_nullable
-                        as int,
-            xp:
-                null == xp
-                    ? _value.xp
-                    : xp // ignore: cast_nullable_to_non_nullable
-                        as int,
-            createdAt:
-                null == createdAt
-                    ? _value.createdAt
-                    : createdAt // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
-            lastActiveAt:
-                null == lastActiveAt
-                    ? _value.lastActiveAt
-                    : lastActiveAt // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      uid: null == uid
+          ? _value.uid
+          : uid // ignore: cast_nullable_to_non_nullable
+              as String,
+      email: null == email
+          ? _value.email
+          : email // ignore: cast_nullable_to_non_nullable
+              as String,
+      displayName: null == displayName
+          ? _value.displayName
+          : displayName // ignore: cast_nullable_to_non_nullable
+              as String,
+      level: null == level
+          ? _value.level
+          : level // ignore: cast_nullable_to_non_nullable
+              as int,
+      xp: null == xp
+          ? _value.xp
+          : xp // ignore: cast_nullable_to_non_nullable
+              as int,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      lastActiveAt: null == lastActiveAt
+          ? _value.lastActiveAt
+          : lastActiveAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ) as $Val);
   }
 }
 
@@ -125,20 +113,18 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
 abstract class _$$UserModelImplCopyWith<$Res>
     implements $UserModelCopyWith<$Res> {
   factory _$$UserModelImplCopyWith(
-    _$UserModelImpl value,
-    $Res Function(_$UserModelImpl) then,
-  ) = __$$UserModelImplCopyWithImpl<$Res>;
+          _$UserModelImpl value, $Res Function(_$UserModelImpl) then) =
+      __$$UserModelImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String uid,
-    String email,
-    String displayName,
-    int level,
-    int xp,
-    DateTime createdAt,
-    DateTime lastActiveAt,
-  });
+  $Res call(
+      {String uid,
+      String email,
+      String displayName,
+      int level,
+      int xp,
+      DateTime createdAt,
+      DateTime lastActiveAt});
 }
 
 /// @nodoc
@@ -146,9 +132,8 @@ class __$$UserModelImplCopyWithImpl<$Res>
     extends _$UserModelCopyWithImpl<$Res, _$UserModelImpl>
     implements _$$UserModelImplCopyWith<$Res> {
   __$$UserModelImplCopyWithImpl(
-    _$UserModelImpl _value,
-    $Res Function(_$UserModelImpl) _then,
-  ) : super(_value, _then);
+      _$UserModelImpl _value, $Res Function(_$UserModelImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -163,60 +148,50 @@ class __$$UserModelImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? lastActiveAt = null,
   }) {
-    return _then(
-      _$UserModelImpl(
-        uid:
-            null == uid
-                ? _value.uid
-                : uid // ignore: cast_nullable_to_non_nullable
-                    as String,
-        email:
-            null == email
-                ? _value.email
-                : email // ignore: cast_nullable_to_non_nullable
-                    as String,
-        displayName:
-            null == displayName
-                ? _value.displayName
-                : displayName // ignore: cast_nullable_to_non_nullable
-                    as String,
-        level:
-            null == level
-                ? _value.level
-                : level // ignore: cast_nullable_to_non_nullable
-                    as int,
-        xp:
-            null == xp
-                ? _value.xp
-                : xp // ignore: cast_nullable_to_non_nullable
-                    as int,
-        createdAt:
-            null == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
-        lastActiveAt:
-            null == lastActiveAt
-                ? _value.lastActiveAt
-                : lastActiveAt // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
-      ),
-    );
+    return _then(_$UserModelImpl(
+      uid: null == uid
+          ? _value.uid
+          : uid // ignore: cast_nullable_to_non_nullable
+              as String,
+      email: null == email
+          ? _value.email
+          : email // ignore: cast_nullable_to_non_nullable
+              as String,
+      displayName: null == displayName
+          ? _value.displayName
+          : displayName // ignore: cast_nullable_to_non_nullable
+              as String,
+      level: null == level
+          ? _value.level
+          : level // ignore: cast_nullable_to_non_nullable
+              as int,
+      xp: null == xp
+          ? _value.xp
+          : xp // ignore: cast_nullable_to_non_nullable
+              as int,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      lastActiveAt: null == lastActiveAt
+          ? _value.lastActiveAt
+          : lastActiveAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$UserModelImpl implements _UserModel {
-  const _$UserModelImpl({
-    required this.uid,
-    required this.email,
-    required this.displayName,
-    required this.level,
-    required this.xp,
-    required this.createdAt,
-    required this.lastActiveAt,
-  });
+  const _$UserModelImpl(
+      {required this.uid,
+      required this.email,
+      required this.displayName,
+      required this.level,
+      required this.xp,
+      required this.createdAt,
+      required this.lastActiveAt});
 
   factory _$UserModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserModelImplFromJson(json);
@@ -261,15 +236,7 @@ class _$UserModelImpl implements _UserModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    uid,
-    email,
-    displayName,
-    level,
-    xp,
-    createdAt,
-    lastActiveAt,
-  );
+      runtimeType, uid, email, displayName, level, xp, createdAt, lastActiveAt);
 
   /// Create a copy of UserModel
   /// with the given fields replaced by the non-null parameter values.
@@ -281,20 +248,21 @@ class _$UserModelImpl implements _UserModel {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$UserModelImplToJson(this);
+    return _$$UserModelImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _UserModel implements UserModel {
-  const factory _UserModel({
-    required final String uid,
-    required final String email,
-    required final String displayName,
-    required final int level,
-    required final int xp,
-    required final DateTime createdAt,
-    required final DateTime lastActiveAt,
-  }) = _$UserModelImpl;
+  const factory _UserModel(
+      {required final String uid,
+      required final String email,
+      required final String displayName,
+      required final int level,
+      required final int xp,
+      required final DateTime createdAt,
+      required final DateTime lastActiveAt}) = _$UserModelImpl;
 
   factory _UserModel.fromJson(Map<String, dynamic> json) =
       _$UserModelImpl.fromJson;

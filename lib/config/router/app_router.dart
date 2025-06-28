@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/persistent_auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/signup_screen.dart';
-import '../../screens/auth/auth_wrapper.dart';
+import '../../features/authentication/presentation/widgets/enhanced_auth_wrapper.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
-import '../../features/subjects/presentation/screens/subject_create_placeholder_screen.dart';
-import '../../features/subjects/presentation/screens/subject_detail_placeholder_screen.dart';
-import '../../features/study_session/presentation/screens/study_session_placeholder_screen.dart';
-import '../../features/progress/presentation/screens/progress_placeholder_screen.dart';
+import '../../features/subjects/presentation/screens/subject_create_screen.dart';
+import '../../features/subjects/presentation/screens/subject_detail_screen.dart';
+import '../../features/study_session/presentation/screens/study_session_screen.dart';
+import '../../features/progress/presentation/screens/progress_dashboard_screen.dart';
 import '../../features/goals/presentation/screens/goals_placeholder_screen.dart';
 import '../../features/study/domain/models/subject_model.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authProvider);
+  final auth = ref.watch(persistentAuthProvider);
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
@@ -27,7 +27,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         name: 'splash',
-        builder: (context, state) => const AuthWrapper(),
+        builder:
+            (context, state) => const EnhancedAuthWrapper(child: HomeScreen()),
       ),
       GoRoute(
         path: '/login',
@@ -58,14 +59,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/subjects/create',
         name: 'subject-create',
-        builder: (context, state) => const SubjectCreatePlaceholderScreen(),
+        builder: (context, state) => const SubjectCreateScreen(),
       ),
       GoRoute(
         path: '/subjects/:id',
         name: 'subject-detail',
         builder: (context, state) {
           final subjectId = state.pathParameters['id']!;
-          return SubjectDetailPlaceholderScreen(subjectId: subjectId);
+          return SubjectDetailScreen(subjectId: subjectId);
         },
       ),
       // Study session routes
@@ -74,15 +75,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'study-session',
         builder: (context, state) {
           final subject = state.extra as Subject?;
-          return StudySessionPlaceholderScreen(subject: subject);
+          return StudySessionScreen(subject: subject);
         },
-      ),
-
-      // Progress/Analytics routes
+      ), // Progress/Analytics routes
       GoRoute(
         path: '/progress',
         name: 'progress',
-        builder: (context, state) => const ProgressPlaceholderScreen(),
+        builder: (context, state) => const ProgressDashboardScreen(),
       ),
 
       // Goals routes

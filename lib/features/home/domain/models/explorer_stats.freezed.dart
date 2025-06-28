@@ -12,8 +12,7 @@ part of 'explorer_stats.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 ExplorerStats _$ExplorerStatsFromJson(Map<String, dynamic> json) {
   return _ExplorerStats.fromJson(json);
@@ -44,21 +43,19 @@ mixin _$ExplorerStats {
 /// @nodoc
 abstract class $ExplorerStatsCopyWith<$Res> {
   factory $ExplorerStatsCopyWith(
-    ExplorerStats value,
-    $Res Function(ExplorerStats) then,
-  ) = _$ExplorerStatsCopyWithImpl<$Res, ExplorerStats>;
+          ExplorerStats value, $Res Function(ExplorerStats) then) =
+      _$ExplorerStatsCopyWithImpl<$Res, ExplorerStats>;
   @useResult
-  $Res call({
-    int currentStreak,
-    int longestStreak,
-    int totalSessionsThisWeek,
-    Duration totalTimeThisWeek,
-    List<String> recentAchievements,
-    double progressToNextLevel,
-    String currentRank,
-    int totalXP,
-    int xpToNextLevel,
-  });
+  $Res call(
+      {int currentStreak,
+      int longestStreak,
+      int totalSessionsThisWeek,
+      Duration totalTimeThisWeek,
+      List<String> recentAchievements,
+      double progressToNextLevel,
+      String currentRank,
+      int totalXP,
+      int xpToNextLevel});
 }
 
 /// @nodoc
@@ -86,56 +83,44 @@ class _$ExplorerStatsCopyWithImpl<$Res, $Val extends ExplorerStats>
     Object? totalXP = null,
     Object? xpToNextLevel = null,
   }) {
-    return _then(
-      _value.copyWith(
-            currentStreak:
-                null == currentStreak
-                    ? _value.currentStreak
-                    : currentStreak // ignore: cast_nullable_to_non_nullable
-                        as int,
-            longestStreak:
-                null == longestStreak
-                    ? _value.longestStreak
-                    : longestStreak // ignore: cast_nullable_to_non_nullable
-                        as int,
-            totalSessionsThisWeek:
-                null == totalSessionsThisWeek
-                    ? _value.totalSessionsThisWeek
-                    : totalSessionsThisWeek // ignore: cast_nullable_to_non_nullable
-                        as int,
-            totalTimeThisWeek:
-                null == totalTimeThisWeek
-                    ? _value.totalTimeThisWeek
-                    : totalTimeThisWeek // ignore: cast_nullable_to_non_nullable
-                        as Duration,
-            recentAchievements:
-                null == recentAchievements
-                    ? _value.recentAchievements
-                    : recentAchievements // ignore: cast_nullable_to_non_nullable
-                        as List<String>,
-            progressToNextLevel:
-                null == progressToNextLevel
-                    ? _value.progressToNextLevel
-                    : progressToNextLevel // ignore: cast_nullable_to_non_nullable
-                        as double,
-            currentRank:
-                null == currentRank
-                    ? _value.currentRank
-                    : currentRank // ignore: cast_nullable_to_non_nullable
-                        as String,
-            totalXP:
-                null == totalXP
-                    ? _value.totalXP
-                    : totalXP // ignore: cast_nullable_to_non_nullable
-                        as int,
-            xpToNextLevel:
-                null == xpToNextLevel
-                    ? _value.xpToNextLevel
-                    : xpToNextLevel // ignore: cast_nullable_to_non_nullable
-                        as int,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      currentStreak: null == currentStreak
+          ? _value.currentStreak
+          : currentStreak // ignore: cast_nullable_to_non_nullable
+              as int,
+      longestStreak: null == longestStreak
+          ? _value.longestStreak
+          : longestStreak // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalSessionsThisWeek: null == totalSessionsThisWeek
+          ? _value.totalSessionsThisWeek
+          : totalSessionsThisWeek // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalTimeThisWeek: null == totalTimeThisWeek
+          ? _value.totalTimeThisWeek
+          : totalTimeThisWeek // ignore: cast_nullable_to_non_nullable
+              as Duration,
+      recentAchievements: null == recentAchievements
+          ? _value.recentAchievements
+          : recentAchievements // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      progressToNextLevel: null == progressToNextLevel
+          ? _value.progressToNextLevel
+          : progressToNextLevel // ignore: cast_nullable_to_non_nullable
+              as double,
+      currentRank: null == currentRank
+          ? _value.currentRank
+          : currentRank // ignore: cast_nullable_to_non_nullable
+              as String,
+      totalXP: null == totalXP
+          ? _value.totalXP
+          : totalXP // ignore: cast_nullable_to_non_nullable
+              as int,
+      xpToNextLevel: null == xpToNextLevel
+          ? _value.xpToNextLevel
+          : xpToNextLevel // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
   }
 }
 
@@ -143,22 +128,20 @@ class _$ExplorerStatsCopyWithImpl<$Res, $Val extends ExplorerStats>
 abstract class _$$ExplorerStatsImplCopyWith<$Res>
     implements $ExplorerStatsCopyWith<$Res> {
   factory _$$ExplorerStatsImplCopyWith(
-    _$ExplorerStatsImpl value,
-    $Res Function(_$ExplorerStatsImpl) then,
-  ) = __$$ExplorerStatsImplCopyWithImpl<$Res>;
+          _$ExplorerStatsImpl value, $Res Function(_$ExplorerStatsImpl) then) =
+      __$$ExplorerStatsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    int currentStreak,
-    int longestStreak,
-    int totalSessionsThisWeek,
-    Duration totalTimeThisWeek,
-    List<String> recentAchievements,
-    double progressToNextLevel,
-    String currentRank,
-    int totalXP,
-    int xpToNextLevel,
-  });
+  $Res call(
+      {int currentStreak,
+      int longestStreak,
+      int totalSessionsThisWeek,
+      Duration totalTimeThisWeek,
+      List<String> recentAchievements,
+      double progressToNextLevel,
+      String currentRank,
+      int totalXP,
+      int xpToNextLevel});
 }
 
 /// @nodoc
@@ -166,9 +149,8 @@ class __$$ExplorerStatsImplCopyWithImpl<$Res>
     extends _$ExplorerStatsCopyWithImpl<$Res, _$ExplorerStatsImpl>
     implements _$$ExplorerStatsImplCopyWith<$Res> {
   __$$ExplorerStatsImplCopyWithImpl(
-    _$ExplorerStatsImpl _value,
-    $Res Function(_$ExplorerStatsImpl) _then,
-  ) : super(_value, _then);
+      _$ExplorerStatsImpl _value, $Res Function(_$ExplorerStatsImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of ExplorerStats
   /// with the given fields replaced by the non-null parameter values.
@@ -185,72 +167,61 @@ class __$$ExplorerStatsImplCopyWithImpl<$Res>
     Object? totalXP = null,
     Object? xpToNextLevel = null,
   }) {
-    return _then(
-      _$ExplorerStatsImpl(
-        currentStreak:
-            null == currentStreak
-                ? _value.currentStreak
-                : currentStreak // ignore: cast_nullable_to_non_nullable
-                    as int,
-        longestStreak:
-            null == longestStreak
-                ? _value.longestStreak
-                : longestStreak // ignore: cast_nullable_to_non_nullable
-                    as int,
-        totalSessionsThisWeek:
-            null == totalSessionsThisWeek
-                ? _value.totalSessionsThisWeek
-                : totalSessionsThisWeek // ignore: cast_nullable_to_non_nullable
-                    as int,
-        totalTimeThisWeek:
-            null == totalTimeThisWeek
-                ? _value.totalTimeThisWeek
-                : totalTimeThisWeek // ignore: cast_nullable_to_non_nullable
-                    as Duration,
-        recentAchievements:
-            null == recentAchievements
-                ? _value._recentAchievements
-                : recentAchievements // ignore: cast_nullable_to_non_nullable
-                    as List<String>,
-        progressToNextLevel:
-            null == progressToNextLevel
-                ? _value.progressToNextLevel
-                : progressToNextLevel // ignore: cast_nullable_to_non_nullable
-                    as double,
-        currentRank:
-            null == currentRank
-                ? _value.currentRank
-                : currentRank // ignore: cast_nullable_to_non_nullable
-                    as String,
-        totalXP:
-            null == totalXP
-                ? _value.totalXP
-                : totalXP // ignore: cast_nullable_to_non_nullable
-                    as int,
-        xpToNextLevel:
-            null == xpToNextLevel
-                ? _value.xpToNextLevel
-                : xpToNextLevel // ignore: cast_nullable_to_non_nullable
-                    as int,
-      ),
-    );
+    return _then(_$ExplorerStatsImpl(
+      currentStreak: null == currentStreak
+          ? _value.currentStreak
+          : currentStreak // ignore: cast_nullable_to_non_nullable
+              as int,
+      longestStreak: null == longestStreak
+          ? _value.longestStreak
+          : longestStreak // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalSessionsThisWeek: null == totalSessionsThisWeek
+          ? _value.totalSessionsThisWeek
+          : totalSessionsThisWeek // ignore: cast_nullable_to_non_nullable
+              as int,
+      totalTimeThisWeek: null == totalTimeThisWeek
+          ? _value.totalTimeThisWeek
+          : totalTimeThisWeek // ignore: cast_nullable_to_non_nullable
+              as Duration,
+      recentAchievements: null == recentAchievements
+          ? _value._recentAchievements
+          : recentAchievements // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      progressToNextLevel: null == progressToNextLevel
+          ? _value.progressToNextLevel
+          : progressToNextLevel // ignore: cast_nullable_to_non_nullable
+              as double,
+      currentRank: null == currentRank
+          ? _value.currentRank
+          : currentRank // ignore: cast_nullable_to_non_nullable
+              as String,
+      totalXP: null == totalXP
+          ? _value.totalXP
+          : totalXP // ignore: cast_nullable_to_non_nullable
+              as int,
+      xpToNextLevel: null == xpToNextLevel
+          ? _value.xpToNextLevel
+          : xpToNextLevel // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$ExplorerStatsImpl implements _ExplorerStats {
-  const _$ExplorerStatsImpl({
-    required this.currentStreak,
-    required this.longestStreak,
-    required this.totalSessionsThisWeek,
-    required this.totalTimeThisWeek,
-    required final List<String> recentAchievements,
-    required this.progressToNextLevel,
-    required this.currentRank,
-    required this.totalXP,
-    required this.xpToNextLevel,
-  }) : _recentAchievements = recentAchievements;
+  const _$ExplorerStatsImpl(
+      {required this.currentStreak,
+      required this.longestStreak,
+      required this.totalSessionsThisWeek,
+      required this.totalTimeThisWeek,
+      required final List<String> recentAchievements,
+      required this.progressToNextLevel,
+      required this.currentRank,
+      required this.totalXP,
+      required this.xpToNextLevel})
+      : _recentAchievements = recentAchievements;
 
   factory _$ExplorerStatsImpl.fromJson(Map<String, dynamic> json) =>
       _$$ExplorerStatsImplFromJson(json);
@@ -299,10 +270,8 @@ class _$ExplorerStatsImpl implements _ExplorerStats {
                 other.totalSessionsThisWeek == totalSessionsThisWeek) &&
             (identical(other.totalTimeThisWeek, totalTimeThisWeek) ||
                 other.totalTimeThisWeek == totalTimeThisWeek) &&
-            const DeepCollectionEquality().equals(
-              other._recentAchievements,
-              _recentAchievements,
-            ) &&
+            const DeepCollectionEquality()
+                .equals(other._recentAchievements, _recentAchievements) &&
             (identical(other.progressToNextLevel, progressToNextLevel) ||
                 other.progressToNextLevel == progressToNextLevel) &&
             (identical(other.currentRank, currentRank) ||
@@ -315,17 +284,16 @@ class _$ExplorerStatsImpl implements _ExplorerStats {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    currentStreak,
-    longestStreak,
-    totalSessionsThisWeek,
-    totalTimeThisWeek,
-    const DeepCollectionEquality().hash(_recentAchievements),
-    progressToNextLevel,
-    currentRank,
-    totalXP,
-    xpToNextLevel,
-  );
+      runtimeType,
+      currentStreak,
+      longestStreak,
+      totalSessionsThisWeek,
+      totalTimeThisWeek,
+      const DeepCollectionEquality().hash(_recentAchievements),
+      progressToNextLevel,
+      currentRank,
+      totalXP,
+      xpToNextLevel);
 
   /// Create a copy of ExplorerStats
   /// with the given fields replaced by the non-null parameter values.
@@ -337,22 +305,23 @@ class _$ExplorerStatsImpl implements _ExplorerStats {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ExplorerStatsImplToJson(this);
+    return _$$ExplorerStatsImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _ExplorerStats implements ExplorerStats {
-  const factory _ExplorerStats({
-    required final int currentStreak,
-    required final int longestStreak,
-    required final int totalSessionsThisWeek,
-    required final Duration totalTimeThisWeek,
-    required final List<String> recentAchievements,
-    required final double progressToNextLevel,
-    required final String currentRank,
-    required final int totalXP,
-    required final int xpToNextLevel,
-  }) = _$ExplorerStatsImpl;
+  const factory _ExplorerStats(
+      {required final int currentStreak,
+      required final int longestStreak,
+      required final int totalSessionsThisWeek,
+      required final Duration totalTimeThisWeek,
+      required final List<String> recentAchievements,
+      required final double progressToNextLevel,
+      required final String currentRank,
+      required final int totalXP,
+      required final int xpToNextLevel}) = _$ExplorerStatsImpl;
 
   factory _ExplorerStats.fromJson(Map<String, dynamic> json) =
       _$ExplorerStatsImpl.fromJson;

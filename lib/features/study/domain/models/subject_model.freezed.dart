@@ -12,8 +12,7 @@ part of 'subject_model.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Subject _$SubjectFromJson(Map<String, dynamic> json) {
   return _Subject.fromJson(json);
@@ -55,31 +54,28 @@ class _$SubjectCopyWithImpl<$Res, $Val extends Subject>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? id = null, Object? name = null}) {
-    return _then(
-      _value.copyWith(
-            id:
-                null == id
-                    ? _value.id
-                    : id // ignore: cast_nullable_to_non_nullable
-                        as String,
-            name:
-                null == name
-                    ? _value.name
-                    : name // ignore: cast_nullable_to_non_nullable
-                        as String,
-          )
-          as $Val,
-    );
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$SubjectImplCopyWith<$Res> implements $SubjectCopyWith<$Res> {
   factory _$$SubjectImplCopyWith(
-    _$SubjectImpl value,
-    $Res Function(_$SubjectImpl) then,
-  ) = __$$SubjectImplCopyWithImpl<$Res>;
+          _$SubjectImpl value, $Res Function(_$SubjectImpl) then) =
+      __$$SubjectImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String id, String name});
@@ -90,29 +86,27 @@ class __$$SubjectImplCopyWithImpl<$Res>
     extends _$SubjectCopyWithImpl<$Res, _$SubjectImpl>
     implements _$$SubjectImplCopyWith<$Res> {
   __$$SubjectImplCopyWithImpl(
-    _$SubjectImpl _value,
-    $Res Function(_$SubjectImpl) _then,
-  ) : super(_value, _then);
+      _$SubjectImpl _value, $Res Function(_$SubjectImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of Subject
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? id = null, Object? name = null}) {
-    return _then(
-      _$SubjectImpl(
-        id:
-            null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                    as String,
-        name:
-            null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                    as String,
-      ),
-    );
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+  }) {
+    return _then(_$SubjectImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
   }
 }
 
@@ -157,15 +151,15 @@ class _$SubjectImpl implements _Subject {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SubjectImplToJson(this);
+    return _$$SubjectImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _Subject implements Subject {
-  const factory _Subject({
-    required final String id,
-    required final String name,
-  }) = _$SubjectImpl;
+  const factory _Subject(
+      {required final String id, required final String name}) = _$SubjectImpl;
 
   factory _Subject.fromJson(Map<String, dynamic> json) = _$SubjectImpl.fromJson;
 

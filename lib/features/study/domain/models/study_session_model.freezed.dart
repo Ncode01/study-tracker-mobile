@@ -12,8 +12,7 @@ part of 'study_session_model.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 StudySession _$StudySessionFromJson(Map<String, dynamic> json) {
   return _StudySession.fromJson(json);
@@ -41,18 +40,16 @@ mixin _$StudySession {
 /// @nodoc
 abstract class $StudySessionCopyWith<$Res> {
   factory $StudySessionCopyWith(
-    StudySession value,
-    $Res Function(StudySession) then,
-  ) = _$StudySessionCopyWithImpl<$Res, StudySession>;
+          StudySession value, $Res Function(StudySession) then) =
+      _$StudySessionCopyWithImpl<$Res, StudySession>;
   @useResult
-  $Res call({
-    String id,
-    String subjectId,
-    DateTime startTime,
-    DateTime endTime,
-    int durationMinutes,
-    String notes,
-  });
+  $Res call(
+      {String id,
+      String subjectId,
+      DateTime startTime,
+      DateTime endTime,
+      int durationMinutes,
+      String notes});
 }
 
 /// @nodoc
@@ -77,41 +74,32 @@ class _$StudySessionCopyWithImpl<$Res, $Val extends StudySession>
     Object? durationMinutes = null,
     Object? notes = null,
   }) {
-    return _then(
-      _value.copyWith(
-            id:
-                null == id
-                    ? _value.id
-                    : id // ignore: cast_nullable_to_non_nullable
-                        as String,
-            subjectId:
-                null == subjectId
-                    ? _value.subjectId
-                    : subjectId // ignore: cast_nullable_to_non_nullable
-                        as String,
-            startTime:
-                null == startTime
-                    ? _value.startTime
-                    : startTime // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
-            endTime:
-                null == endTime
-                    ? _value.endTime
-                    : endTime // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
-            durationMinutes:
-                null == durationMinutes
-                    ? _value.durationMinutes
-                    : durationMinutes // ignore: cast_nullable_to_non_nullable
-                        as int,
-            notes:
-                null == notes
-                    ? _value.notes
-                    : notes // ignore: cast_nullable_to_non_nullable
-                        as String,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      subjectId: null == subjectId
+          ? _value.subjectId
+          : subjectId // ignore: cast_nullable_to_non_nullable
+              as String,
+      startTime: null == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      endTime: null == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      durationMinutes: null == durationMinutes
+          ? _value.durationMinutes
+          : durationMinutes // ignore: cast_nullable_to_non_nullable
+              as int,
+      notes: null == notes
+          ? _value.notes
+          : notes // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
   }
 }
 
@@ -119,19 +107,17 @@ class _$StudySessionCopyWithImpl<$Res, $Val extends StudySession>
 abstract class _$$StudySessionImplCopyWith<$Res>
     implements $StudySessionCopyWith<$Res> {
   factory _$$StudySessionImplCopyWith(
-    _$StudySessionImpl value,
-    $Res Function(_$StudySessionImpl) then,
-  ) = __$$StudySessionImplCopyWithImpl<$Res>;
+          _$StudySessionImpl value, $Res Function(_$StudySessionImpl) then) =
+      __$$StudySessionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String subjectId,
-    DateTime startTime,
-    DateTime endTime,
-    int durationMinutes,
-    String notes,
-  });
+  $Res call(
+      {String id,
+      String subjectId,
+      DateTime startTime,
+      DateTime endTime,
+      int durationMinutes,
+      String notes});
 }
 
 /// @nodoc
@@ -139,9 +125,8 @@ class __$$StudySessionImplCopyWithImpl<$Res>
     extends _$StudySessionCopyWithImpl<$Res, _$StudySessionImpl>
     implements _$$StudySessionImplCopyWith<$Res> {
   __$$StudySessionImplCopyWithImpl(
-    _$StudySessionImpl _value,
-    $Res Function(_$StudySessionImpl) _then,
-  ) : super(_value, _then);
+      _$StudySessionImpl _value, $Res Function(_$StudySessionImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of StudySession
   /// with the given fields replaced by the non-null parameter values.
@@ -155,54 +140,45 @@ class __$$StudySessionImplCopyWithImpl<$Res>
     Object? durationMinutes = null,
     Object? notes = null,
   }) {
-    return _then(
-      _$StudySessionImpl(
-        id:
-            null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                    as String,
-        subjectId:
-            null == subjectId
-                ? _value.subjectId
-                : subjectId // ignore: cast_nullable_to_non_nullable
-                    as String,
-        startTime:
-            null == startTime
-                ? _value.startTime
-                : startTime // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
-        endTime:
-            null == endTime
-                ? _value.endTime
-                : endTime // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
-        durationMinutes:
-            null == durationMinutes
-                ? _value.durationMinutes
-                : durationMinutes // ignore: cast_nullable_to_non_nullable
-                    as int,
-        notes:
-            null == notes
-                ? _value.notes
-                : notes // ignore: cast_nullable_to_non_nullable
-                    as String,
-      ),
-    );
+    return _then(_$StudySessionImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      subjectId: null == subjectId
+          ? _value.subjectId
+          : subjectId // ignore: cast_nullable_to_non_nullable
+              as String,
+      startTime: null == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      endTime: null == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      durationMinutes: null == durationMinutes
+          ? _value.durationMinutes
+          : durationMinutes // ignore: cast_nullable_to_non_nullable
+              as int,
+      notes: null == notes
+          ? _value.notes
+          : notes // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$StudySessionImpl implements _StudySession {
-  const _$StudySessionImpl({
-    required this.id,
-    required this.subjectId,
-    required this.startTime,
-    required this.endTime,
-    required this.durationMinutes,
-    this.notes = '',
-  });
+  const _$StudySessionImpl(
+      {required this.id,
+      required this.subjectId,
+      required this.startTime,
+      required this.endTime,
+      required this.durationMinutes,
+      this.notes = ''});
 
   factory _$StudySessionImpl.fromJson(Map<String, dynamic> json) =>
       _$$StudySessionImplFromJson(json);
@@ -245,14 +221,7 @@ class _$StudySessionImpl implements _StudySession {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    subjectId,
-    startTime,
-    endTime,
-    durationMinutes,
-    notes,
-  );
+      runtimeType, id, subjectId, startTime, endTime, durationMinutes, notes);
 
   /// Create a copy of StudySession
   /// with the given fields replaced by the non-null parameter values.
@@ -264,19 +233,20 @@ class _$StudySessionImpl implements _StudySession {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$StudySessionImplToJson(this);
+    return _$$StudySessionImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _StudySession implements StudySession {
-  const factory _StudySession({
-    required final String id,
-    required final String subjectId,
-    required final DateTime startTime,
-    required final DateTime endTime,
-    required final int durationMinutes,
-    final String notes,
-  }) = _$StudySessionImpl;
+  const factory _StudySession(
+      {required final String id,
+      required final String subjectId,
+      required final DateTime startTime,
+      required final DateTime endTime,
+      required final int durationMinutes,
+      final String notes}) = _$StudySessionImpl;
 
   factory _StudySession.fromJson(Map<String, dynamic> json) =
       _$StudySessionImpl.fromJson;

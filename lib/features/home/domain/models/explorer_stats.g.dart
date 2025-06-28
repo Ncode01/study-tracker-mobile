@@ -11,13 +11,11 @@ _$ExplorerStatsImpl _$$ExplorerStatsImplFromJson(Map<String, dynamic> json) =>
       currentStreak: (json['currentStreak'] as num).toInt(),
       longestStreak: (json['longestStreak'] as num).toInt(),
       totalSessionsThisWeek: (json['totalSessionsThisWeek'] as num).toInt(),
-      totalTimeThisWeek: Duration(
-        microseconds: (json['totalTimeThisWeek'] as num).toInt(),
-      ),
-      recentAchievements:
-          (json['recentAchievements'] as List<dynamic>)
-              .map((e) => e as String)
-              .toList(),
+      totalTimeThisWeek:
+          Duration(microseconds: (json['totalTimeThisWeek'] as num).toInt()),
+      recentAchievements: (json['recentAchievements'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
       progressToNextLevel: (json['progressToNextLevel'] as num).toDouble(),
       currentRank: json['currentRank'] as String,
       totalXP: (json['totalXP'] as num).toInt(),

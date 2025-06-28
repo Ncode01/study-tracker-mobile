@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import 'config/router/app_router.dart';
+import 'providers/persistent_auth_provider.dart';
 
 /// Main entry point for Project Atlas
-/// Sets up the app with Riverpod state management (no Firebase)
-void main() {
+/// Sets up the app with persistent authentication and Riverpod state management
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: ProjectAtlasApp()));
+
+  // Initialize SharedPreferences for local storage
+  final prefs = await SharedPreferences.getInstance();
+
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const ProjectAtlasApp(),
+    ),
+  );
 }
 
 /// Main Project Atlas application

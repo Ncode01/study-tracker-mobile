@@ -12,8 +12,7 @@ part of 'home_dashboard_data.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 HomeDashboardData _$HomeDashboardDataFromJson(Map<String, dynamic> json) {
   return _HomeDashboardData.fromJson(json);
@@ -41,18 +40,16 @@ mixin _$HomeDashboardData {
 /// @nodoc
 abstract class $HomeDashboardDataCopyWith<$Res> {
   factory $HomeDashboardDataCopyWith(
-    HomeDashboardData value,
-    $Res Function(HomeDashboardData) then,
-  ) = _$HomeDashboardDataCopyWithImpl<$Res, HomeDashboardData>;
+          HomeDashboardData value, $Res Function(HomeDashboardData) then) =
+      _$HomeDashboardDataCopyWithImpl<$Res, HomeDashboardData>;
   @useResult
-  $Res call({
-    UserModel user,
-    List<StudyProgress> subjectProgress,
-    ExplorerStats stats,
-    List<StudySession> recentSessions,
-    bool hasActiveSession,
-    DateTime lastRefreshed,
-  });
+  $Res call(
+      {UserModel user,
+      List<StudyProgress> subjectProgress,
+      ExplorerStats stats,
+      List<StudySession> recentSessions,
+      bool hasActiveSession,
+      DateTime lastRefreshed});
 
   $UserModelCopyWith<$Res> get user;
   $ExplorerStatsCopyWith<$Res> get stats;
@@ -80,41 +77,32 @@ class _$HomeDashboardDataCopyWithImpl<$Res, $Val extends HomeDashboardData>
     Object? hasActiveSession = null,
     Object? lastRefreshed = null,
   }) {
-    return _then(
-      _value.copyWith(
-            user:
-                null == user
-                    ? _value.user
-                    : user // ignore: cast_nullable_to_non_nullable
-                        as UserModel,
-            subjectProgress:
-                null == subjectProgress
-                    ? _value.subjectProgress
-                    : subjectProgress // ignore: cast_nullable_to_non_nullable
-                        as List<StudyProgress>,
-            stats:
-                null == stats
-                    ? _value.stats
-                    : stats // ignore: cast_nullable_to_non_nullable
-                        as ExplorerStats,
-            recentSessions:
-                null == recentSessions
-                    ? _value.recentSessions
-                    : recentSessions // ignore: cast_nullable_to_non_nullable
-                        as List<StudySession>,
-            hasActiveSession:
-                null == hasActiveSession
-                    ? _value.hasActiveSession
-                    : hasActiveSession // ignore: cast_nullable_to_non_nullable
-                        as bool,
-            lastRefreshed:
-                null == lastRefreshed
-                    ? _value.lastRefreshed
-                    : lastRefreshed // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      user: null == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as UserModel,
+      subjectProgress: null == subjectProgress
+          ? _value.subjectProgress
+          : subjectProgress // ignore: cast_nullable_to_non_nullable
+              as List<StudyProgress>,
+      stats: null == stats
+          ? _value.stats
+          : stats // ignore: cast_nullable_to_non_nullable
+              as ExplorerStats,
+      recentSessions: null == recentSessions
+          ? _value.recentSessions
+          : recentSessions // ignore: cast_nullable_to_non_nullable
+              as List<StudySession>,
+      hasActiveSession: null == hasActiveSession
+          ? _value.hasActiveSession
+          : hasActiveSession // ignore: cast_nullable_to_non_nullable
+              as bool,
+      lastRefreshed: null == lastRefreshed
+          ? _value.lastRefreshed
+          : lastRefreshed // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ) as $Val);
   }
 
   /// Create a copy of HomeDashboardData
@@ -141,20 +129,18 @@ class _$HomeDashboardDataCopyWithImpl<$Res, $Val extends HomeDashboardData>
 /// @nodoc
 abstract class _$$HomeDashboardDataImplCopyWith<$Res>
     implements $HomeDashboardDataCopyWith<$Res> {
-  factory _$$HomeDashboardDataImplCopyWith(
-    _$HomeDashboardDataImpl value,
-    $Res Function(_$HomeDashboardDataImpl) then,
-  ) = __$$HomeDashboardDataImplCopyWithImpl<$Res>;
+  factory _$$HomeDashboardDataImplCopyWith(_$HomeDashboardDataImpl value,
+          $Res Function(_$HomeDashboardDataImpl) then) =
+      __$$HomeDashboardDataImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    UserModel user,
-    List<StudyProgress> subjectProgress,
-    ExplorerStats stats,
-    List<StudySession> recentSessions,
-    bool hasActiveSession,
-    DateTime lastRefreshed,
-  });
+  $Res call(
+      {UserModel user,
+      List<StudyProgress> subjectProgress,
+      ExplorerStats stats,
+      List<StudySession> recentSessions,
+      bool hasActiveSession,
+      DateTime lastRefreshed});
 
   @override
   $UserModelCopyWith<$Res> get user;
@@ -166,10 +152,9 @@ abstract class _$$HomeDashboardDataImplCopyWith<$Res>
 class __$$HomeDashboardDataImplCopyWithImpl<$Res>
     extends _$HomeDashboardDataCopyWithImpl<$Res, _$HomeDashboardDataImpl>
     implements _$$HomeDashboardDataImplCopyWith<$Res> {
-  __$$HomeDashboardDataImplCopyWithImpl(
-    _$HomeDashboardDataImpl _value,
-    $Res Function(_$HomeDashboardDataImpl) _then,
-  ) : super(_value, _then);
+  __$$HomeDashboardDataImplCopyWithImpl(_$HomeDashboardDataImpl _value,
+      $Res Function(_$HomeDashboardDataImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of HomeDashboardData
   /// with the given fields replaced by the non-null parameter values.
@@ -183,55 +168,47 @@ class __$$HomeDashboardDataImplCopyWithImpl<$Res>
     Object? hasActiveSession = null,
     Object? lastRefreshed = null,
   }) {
-    return _then(
-      _$HomeDashboardDataImpl(
-        user:
-            null == user
-                ? _value.user
-                : user // ignore: cast_nullable_to_non_nullable
-                    as UserModel,
-        subjectProgress:
-            null == subjectProgress
-                ? _value._subjectProgress
-                : subjectProgress // ignore: cast_nullable_to_non_nullable
-                    as List<StudyProgress>,
-        stats:
-            null == stats
-                ? _value.stats
-                : stats // ignore: cast_nullable_to_non_nullable
-                    as ExplorerStats,
-        recentSessions:
-            null == recentSessions
-                ? _value._recentSessions
-                : recentSessions // ignore: cast_nullable_to_non_nullable
-                    as List<StudySession>,
-        hasActiveSession:
-            null == hasActiveSession
-                ? _value.hasActiveSession
-                : hasActiveSession // ignore: cast_nullable_to_non_nullable
-                    as bool,
-        lastRefreshed:
-            null == lastRefreshed
-                ? _value.lastRefreshed
-                : lastRefreshed // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
-      ),
-    );
+    return _then(_$HomeDashboardDataImpl(
+      user: null == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as UserModel,
+      subjectProgress: null == subjectProgress
+          ? _value._subjectProgress
+          : subjectProgress // ignore: cast_nullable_to_non_nullable
+              as List<StudyProgress>,
+      stats: null == stats
+          ? _value.stats
+          : stats // ignore: cast_nullable_to_non_nullable
+              as ExplorerStats,
+      recentSessions: null == recentSessions
+          ? _value._recentSessions
+          : recentSessions // ignore: cast_nullable_to_non_nullable
+              as List<StudySession>,
+      hasActiveSession: null == hasActiveSession
+          ? _value.hasActiveSession
+          : hasActiveSession // ignore: cast_nullable_to_non_nullable
+              as bool,
+      lastRefreshed: null == lastRefreshed
+          ? _value.lastRefreshed
+          : lastRefreshed // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$HomeDashboardDataImpl implements _HomeDashboardData {
-  const _$HomeDashboardDataImpl({
-    required this.user,
-    required final List<StudyProgress> subjectProgress,
-    required this.stats,
-    required final List<StudySession> recentSessions,
-    required this.hasActiveSession,
-    required this.lastRefreshed,
-  }) : _subjectProgress = subjectProgress,
-       _recentSessions = recentSessions;
+  const _$HomeDashboardDataImpl(
+      {required this.user,
+      required final List<StudyProgress> subjectProgress,
+      required this.stats,
+      required final List<StudySession> recentSessions,
+      required this.hasActiveSession,
+      required this.lastRefreshed})
+      : _subjectProgress = subjectProgress,
+        _recentSessions = recentSessions;
 
   factory _$HomeDashboardDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomeDashboardDataImplFromJson(json);
@@ -272,15 +249,11 @@ class _$HomeDashboardDataImpl implements _HomeDashboardData {
         (other.runtimeType == runtimeType &&
             other is _$HomeDashboardDataImpl &&
             (identical(other.user, user) || other.user == user) &&
-            const DeepCollectionEquality().equals(
-              other._subjectProgress,
-              _subjectProgress,
-            ) &&
+            const DeepCollectionEquality()
+                .equals(other._subjectProgress, _subjectProgress) &&
             (identical(other.stats, stats) || other.stats == stats) &&
-            const DeepCollectionEquality().equals(
-              other._recentSessions,
-              _recentSessions,
-            ) &&
+            const DeepCollectionEquality()
+                .equals(other._recentSessions, _recentSessions) &&
             (identical(other.hasActiveSession, hasActiveSession) ||
                 other.hasActiveSession == hasActiveSession) &&
             (identical(other.lastRefreshed, lastRefreshed) ||
@@ -290,14 +263,13 @@ class _$HomeDashboardDataImpl implements _HomeDashboardData {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    user,
-    const DeepCollectionEquality().hash(_subjectProgress),
-    stats,
-    const DeepCollectionEquality().hash(_recentSessions),
-    hasActiveSession,
-    lastRefreshed,
-  );
+      runtimeType,
+      user,
+      const DeepCollectionEquality().hash(_subjectProgress),
+      stats,
+      const DeepCollectionEquality().hash(_recentSessions),
+      hasActiveSession,
+      lastRefreshed);
 
   /// Create a copy of HomeDashboardData
   /// with the given fields replaced by the non-null parameter values.
@@ -306,25 +278,24 @@ class _$HomeDashboardDataImpl implements _HomeDashboardData {
   @pragma('vm:prefer-inline')
   _$$HomeDashboardDataImplCopyWith<_$HomeDashboardDataImpl> get copyWith =>
       __$$HomeDashboardDataImplCopyWithImpl<_$HomeDashboardDataImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$HomeDashboardDataImplToJson(this);
+    return _$$HomeDashboardDataImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _HomeDashboardData implements HomeDashboardData {
-  const factory _HomeDashboardData({
-    required final UserModel user,
-    required final List<StudyProgress> subjectProgress,
-    required final ExplorerStats stats,
-    required final List<StudySession> recentSessions,
-    required final bool hasActiveSession,
-    required final DateTime lastRefreshed,
-  }) = _$HomeDashboardDataImpl;
+  const factory _HomeDashboardData(
+      {required final UserModel user,
+      required final List<StudyProgress> subjectProgress,
+      required final ExplorerStats stats,
+      required final List<StudySession> recentSessions,
+      required final bool hasActiveSession,
+      required final DateTime lastRefreshed}) = _$HomeDashboardDataImpl;
 
   factory _HomeDashboardData.fromJson(Map<String, dynamic> json) =
       _$HomeDashboardDataImpl.fromJson;

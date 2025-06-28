@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:study/models/user_model.dart';
-import '../../../../providers/auth_provider.dart';
+import '../../../../providers/persistent_auth_provider.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../widgets/auth/auth_button.dart';
 
@@ -10,11 +10,23 @@ import '../../../../widgets/auth/auth_button.dart';
 /// Displays user information and provides navigation to settings
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+    final authState = ref.watch(persistentAuthProvider);
     final theme = Theme.of(context);
+
+    // Debug logging to check auth state
+    print('ProfileScreen: authState = $authState');
+    authState.when(
+      initial: () => print('ProfileScreen: State is INITIAL'),
+      loading: () => print('ProfileScreen: State is LOADING'),
+      authenticated:
+          (user) => print(
+            'ProfileScreen: State is AUTHENTICATED with user: ${user.email}',
+          ),
+      unauthenticated: () => print('ProfileScreen: State is UNAUTHENTICATED'),
+      error: (message, _) => print('ProfileScreen: State is ERROR: $message'),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -66,7 +78,10 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildProfileContent(
-      BuildContext context, WidgetRef ref, UserModel user) {
+    BuildContext context,
+    WidgetRef ref,
+    UserModel user,
+  ) {
     final theme = Theme.of(context);
 
     return SafeArea(
@@ -117,98 +132,103 @@ class ProfileScreen extends ConsumerWidget {
                   color: AppColors.primaryBrown,
                   fontWeight: FontWeight.w600,
                 ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // User Stats Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.lightGray.withValues(alpha: 0.5),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryBrown.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
-            child: Column(
-              children: [
-                Text(
-                  'Explorer Stats',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: AppColors.primaryBrown,
-                    fontWeight: FontWeight.bold,
+            const SizedBox(height: 24),
+
+            // User Stats Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.lightGray.withValues(alpha: 0.5),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryBrown.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStatItem(context, 'Level', user.level.toString()),
-                    _buildStatItem(context, 'XP', user.xp.toString()),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // XP Progress
-                LinearProgressIndicator(
-                  value: user.xpProgress,
-                  backgroundColor: AppColors.lightGray,
-                  color: AppColors.primaryGold,
-                  minHeight: 8,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${user.xp} / ${user.xpForNextLevel} XP to next level',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.fadeGray,
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Explorer Stats',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: AppColors.primaryBrown,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Icon(Icons.email, color: AppColors.primaryBrown, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        user.email,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.fadeGray,
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildStatItem(context, 'Level', user.level.toString()),
+                      _buildStatItem(context, 'XP', user.xp.toString()),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // XP Progress
+                  LinearProgressIndicator(
+                    value: user.xpProgress,
+                    backgroundColor: AppColors.lightGray,
+                    color: AppColors.primaryGold,
+                    minHeight: 8,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${user.xp} / ${user.xpForNextLevel} XP to next level',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.fadeGray,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.email,
+                        color: AppColors.primaryBrown,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          user.email,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.fadeGray,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Action Buttons
-          AuthButton(
-            text: 'Settings',
-            icon: Icons.settings,
-            onPressed: () => context.go('/settings'),
-            width: double.infinity,
-          ),
-          const SizedBox(height: 16),
-          AuthButton(
-            text: 'Sign Out',
-            icon: Icons.logout,
-            isSecondary: true,
-            onPressed: () => _showSignOutDialog(context, ref),
-            width: double.infinity,
-          ),
-        ],
+            // Action Buttons
+            AuthButton(
+              text: 'Settings',
+              icon: Icons.settings,
+              onPressed: () => context.go('/settings'),
+              width: double.infinity,
+            ),
+            const SizedBox(height: 16),
+            AuthButton(
+              text: 'Sign Out',
+              icon: Icons.logout,
+              isSecondary: true,
+              onPressed: () => _showSignOutDialog(context, ref),
+              width: double.infinity,
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildStatItem(BuildContext context, String label, String value) {
@@ -261,7 +281,7 @@ class ProfileScreen extends ConsumerWidget {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  ref.read(authProvider.notifier).signOut();
+                  ref.read(persistentAuthProvider.notifier).signOut();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.errorRed,

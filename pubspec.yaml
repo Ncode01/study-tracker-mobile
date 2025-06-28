@@ -34,18 +34,22 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-    # Firebase dependencies - compatible with Flutter 3.29.0 & Dart 3.7.0
+  
+  # Firebase dependencies - compatible with Flutter 3.29.0 & Dart 3.7.0
   firebase_core: ^2.32.0
   firebase_auth: ^4.20.0
   cloud_firestore: ^4.17.5
-    # State management
+  
+  # State management
   flutter_riverpod: ^2.6.1
   
   # Fonts
   google_fonts: ^6.2.1
-    # Logging
+  
+  # Logging
   logger: ^2.4.0
-    # Code generation for data models
+  
+  # Code generation for data models
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
   
@@ -53,6 +57,12 @@ dependencies:
   form_validator: ^1.0.0
   shared_preferences: ^2.5.3
   go_router: ^15.2.4
+  
+  # Analytics and charts
+  fl_chart: ^0.69.2
+  intl: ^0.19.0
+  collection: ^1.18.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

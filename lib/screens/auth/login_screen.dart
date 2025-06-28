@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_validator/form_validator.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/persistent_auth_provider.dart';
 import '../../widgets/auth/custom_text_field.dart';
 import '../../widgets/auth/auth_button.dart';
 import '../../widgets/common/loading_overlay.dart';
@@ -91,9 +91,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     if (!_formKey.currentState!.validate()) {
       return;
     }
-
     await ref
-        .read(authProvider.notifier)
+        .read(persistentAuthProvider.notifier)
         .signInWithEmail(
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -111,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final authState = ref.watch(authProvider);
+    final authState = ref.watch(persistentAuthProvider);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,

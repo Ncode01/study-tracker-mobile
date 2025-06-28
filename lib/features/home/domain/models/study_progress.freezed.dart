@@ -12,8 +12,7 @@ part of 'study_progress.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 StudyProgress _$StudyProgressFromJson(Map<String, dynamic> json) {
   return _StudyProgress.fromJson(json);
@@ -45,22 +44,20 @@ mixin _$StudyProgress {
 /// @nodoc
 abstract class $StudyProgressCopyWith<$Res> {
   factory $StudyProgressCopyWith(
-    StudyProgress value,
-    $Res Function(StudyProgress) then,
-  ) = _$StudyProgressCopyWithImpl<$Res, StudyProgress>;
+          StudyProgress value, $Res Function(StudyProgress) then) =
+      _$StudyProgressCopyWithImpl<$Res, StudyProgress>;
   @useResult
-  $Res call({
-    Subject subject,
-    Duration weeklyTime,
-    Duration targetTime,
-    int sessionsThisWeek,
-    DateTime lastStudied,
-    double completionPercentage,
-    String nextSuggestedTopic,
-    String continentEmoji,
-    int level,
-    int xpEarned,
-  });
+  $Res call(
+      {Subject subject,
+      Duration weeklyTime,
+      Duration targetTime,
+      int sessionsThisWeek,
+      DateTime lastStudied,
+      double completionPercentage,
+      String nextSuggestedTopic,
+      String continentEmoji,
+      int level,
+      int xpEarned});
 
   $SubjectCopyWith<$Res> get subject;
 }
@@ -91,61 +88,48 @@ class _$StudyProgressCopyWithImpl<$Res, $Val extends StudyProgress>
     Object? level = null,
     Object? xpEarned = null,
   }) {
-    return _then(
-      _value.copyWith(
-            subject:
-                null == subject
-                    ? _value.subject
-                    : subject // ignore: cast_nullable_to_non_nullable
-                        as Subject,
-            weeklyTime:
-                null == weeklyTime
-                    ? _value.weeklyTime
-                    : weeklyTime // ignore: cast_nullable_to_non_nullable
-                        as Duration,
-            targetTime:
-                null == targetTime
-                    ? _value.targetTime
-                    : targetTime // ignore: cast_nullable_to_non_nullable
-                        as Duration,
-            sessionsThisWeek:
-                null == sessionsThisWeek
-                    ? _value.sessionsThisWeek
-                    : sessionsThisWeek // ignore: cast_nullable_to_non_nullable
-                        as int,
-            lastStudied:
-                null == lastStudied
-                    ? _value.lastStudied
-                    : lastStudied // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
-            completionPercentage:
-                null == completionPercentage
-                    ? _value.completionPercentage
-                    : completionPercentage // ignore: cast_nullable_to_non_nullable
-                        as double,
-            nextSuggestedTopic:
-                null == nextSuggestedTopic
-                    ? _value.nextSuggestedTopic
-                    : nextSuggestedTopic // ignore: cast_nullable_to_non_nullable
-                        as String,
-            continentEmoji:
-                null == continentEmoji
-                    ? _value.continentEmoji
-                    : continentEmoji // ignore: cast_nullable_to_non_nullable
-                        as String,
-            level:
-                null == level
-                    ? _value.level
-                    : level // ignore: cast_nullable_to_non_nullable
-                        as int,
-            xpEarned:
-                null == xpEarned
-                    ? _value.xpEarned
-                    : xpEarned // ignore: cast_nullable_to_non_nullable
-                        as int,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      subject: null == subject
+          ? _value.subject
+          : subject // ignore: cast_nullable_to_non_nullable
+              as Subject,
+      weeklyTime: null == weeklyTime
+          ? _value.weeklyTime
+          : weeklyTime // ignore: cast_nullable_to_non_nullable
+              as Duration,
+      targetTime: null == targetTime
+          ? _value.targetTime
+          : targetTime // ignore: cast_nullable_to_non_nullable
+              as Duration,
+      sessionsThisWeek: null == sessionsThisWeek
+          ? _value.sessionsThisWeek
+          : sessionsThisWeek // ignore: cast_nullable_to_non_nullable
+              as int,
+      lastStudied: null == lastStudied
+          ? _value.lastStudied
+          : lastStudied // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      completionPercentage: null == completionPercentage
+          ? _value.completionPercentage
+          : completionPercentage // ignore: cast_nullable_to_non_nullable
+              as double,
+      nextSuggestedTopic: null == nextSuggestedTopic
+          ? _value.nextSuggestedTopic
+          : nextSuggestedTopic // ignore: cast_nullable_to_non_nullable
+              as String,
+      continentEmoji: null == continentEmoji
+          ? _value.continentEmoji
+          : continentEmoji // ignore: cast_nullable_to_non_nullable
+              as String,
+      level: null == level
+          ? _value.level
+          : level // ignore: cast_nullable_to_non_nullable
+              as int,
+      xpEarned: null == xpEarned
+          ? _value.xpEarned
+          : xpEarned // ignore: cast_nullable_to_non_nullable
+              as int,
+    ) as $Val);
   }
 
   /// Create a copy of StudyProgress
@@ -163,23 +147,21 @@ class _$StudyProgressCopyWithImpl<$Res, $Val extends StudyProgress>
 abstract class _$$StudyProgressImplCopyWith<$Res>
     implements $StudyProgressCopyWith<$Res> {
   factory _$$StudyProgressImplCopyWith(
-    _$StudyProgressImpl value,
-    $Res Function(_$StudyProgressImpl) then,
-  ) = __$$StudyProgressImplCopyWithImpl<$Res>;
+          _$StudyProgressImpl value, $Res Function(_$StudyProgressImpl) then) =
+      __$$StudyProgressImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    Subject subject,
-    Duration weeklyTime,
-    Duration targetTime,
-    int sessionsThisWeek,
-    DateTime lastStudied,
-    double completionPercentage,
-    String nextSuggestedTopic,
-    String continentEmoji,
-    int level,
-    int xpEarned,
-  });
+  $Res call(
+      {Subject subject,
+      Duration weeklyTime,
+      Duration targetTime,
+      int sessionsThisWeek,
+      DateTime lastStudied,
+      double completionPercentage,
+      String nextSuggestedTopic,
+      String continentEmoji,
+      int level,
+      int xpEarned});
 
   @override
   $SubjectCopyWith<$Res> get subject;
@@ -190,9 +172,8 @@ class __$$StudyProgressImplCopyWithImpl<$Res>
     extends _$StudyProgressCopyWithImpl<$Res, _$StudyProgressImpl>
     implements _$$StudyProgressImplCopyWith<$Res> {
   __$$StudyProgressImplCopyWithImpl(
-    _$StudyProgressImpl _value,
-    $Res Function(_$StudyProgressImpl) _then,
-  ) : super(_value, _then);
+      _$StudyProgressImpl _value, $Res Function(_$StudyProgressImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of StudyProgress
   /// with the given fields replaced by the non-null parameter values.
@@ -210,78 +191,65 @@ class __$$StudyProgressImplCopyWithImpl<$Res>
     Object? level = null,
     Object? xpEarned = null,
   }) {
-    return _then(
-      _$StudyProgressImpl(
-        subject:
-            null == subject
-                ? _value.subject
-                : subject // ignore: cast_nullable_to_non_nullable
-                    as Subject,
-        weeklyTime:
-            null == weeklyTime
-                ? _value.weeklyTime
-                : weeklyTime // ignore: cast_nullable_to_non_nullable
-                    as Duration,
-        targetTime:
-            null == targetTime
-                ? _value.targetTime
-                : targetTime // ignore: cast_nullable_to_non_nullable
-                    as Duration,
-        sessionsThisWeek:
-            null == sessionsThisWeek
-                ? _value.sessionsThisWeek
-                : sessionsThisWeek // ignore: cast_nullable_to_non_nullable
-                    as int,
-        lastStudied:
-            null == lastStudied
-                ? _value.lastStudied
-                : lastStudied // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
-        completionPercentage:
-            null == completionPercentage
-                ? _value.completionPercentage
-                : completionPercentage // ignore: cast_nullable_to_non_nullable
-                    as double,
-        nextSuggestedTopic:
-            null == nextSuggestedTopic
-                ? _value.nextSuggestedTopic
-                : nextSuggestedTopic // ignore: cast_nullable_to_non_nullable
-                    as String,
-        continentEmoji:
-            null == continentEmoji
-                ? _value.continentEmoji
-                : continentEmoji // ignore: cast_nullable_to_non_nullable
-                    as String,
-        level:
-            null == level
-                ? _value.level
-                : level // ignore: cast_nullable_to_non_nullable
-                    as int,
-        xpEarned:
-            null == xpEarned
-                ? _value.xpEarned
-                : xpEarned // ignore: cast_nullable_to_non_nullable
-                    as int,
-      ),
-    );
+    return _then(_$StudyProgressImpl(
+      subject: null == subject
+          ? _value.subject
+          : subject // ignore: cast_nullable_to_non_nullable
+              as Subject,
+      weeklyTime: null == weeklyTime
+          ? _value.weeklyTime
+          : weeklyTime // ignore: cast_nullable_to_non_nullable
+              as Duration,
+      targetTime: null == targetTime
+          ? _value.targetTime
+          : targetTime // ignore: cast_nullable_to_non_nullable
+              as Duration,
+      sessionsThisWeek: null == sessionsThisWeek
+          ? _value.sessionsThisWeek
+          : sessionsThisWeek // ignore: cast_nullable_to_non_nullable
+              as int,
+      lastStudied: null == lastStudied
+          ? _value.lastStudied
+          : lastStudied // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      completionPercentage: null == completionPercentage
+          ? _value.completionPercentage
+          : completionPercentage // ignore: cast_nullable_to_non_nullable
+              as double,
+      nextSuggestedTopic: null == nextSuggestedTopic
+          ? _value.nextSuggestedTopic
+          : nextSuggestedTopic // ignore: cast_nullable_to_non_nullable
+              as String,
+      continentEmoji: null == continentEmoji
+          ? _value.continentEmoji
+          : continentEmoji // ignore: cast_nullable_to_non_nullable
+              as String,
+      level: null == level
+          ? _value.level
+          : level // ignore: cast_nullable_to_non_nullable
+              as int,
+      xpEarned: null == xpEarned
+          ? _value.xpEarned
+          : xpEarned // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$StudyProgressImpl implements _StudyProgress {
-  const _$StudyProgressImpl({
-    required this.subject,
-    required this.weeklyTime,
-    required this.targetTime,
-    required this.sessionsThisWeek,
-    required this.lastStudied,
-    required this.completionPercentage,
-    required this.nextSuggestedTopic,
-    required this.continentEmoji,
-    required this.level,
-    required this.xpEarned,
-  });
+  const _$StudyProgressImpl(
+      {required this.subject,
+      required this.weeklyTime,
+      required this.targetTime,
+      required this.sessionsThisWeek,
+      required this.lastStudied,
+      required this.completionPercentage,
+      required this.nextSuggestedTopic,
+      required this.continentEmoji,
+      required this.level,
+      required this.xpEarned});
 
   factory _$StudyProgressImpl.fromJson(Map<String, dynamic> json) =>
       _$$StudyProgressImplFromJson(json);
@@ -340,18 +308,17 @@ class _$StudyProgressImpl implements _StudyProgress {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    subject,
-    weeklyTime,
-    targetTime,
-    sessionsThisWeek,
-    lastStudied,
-    completionPercentage,
-    nextSuggestedTopic,
-    continentEmoji,
-    level,
-    xpEarned,
-  );
+      runtimeType,
+      subject,
+      weeklyTime,
+      targetTime,
+      sessionsThisWeek,
+      lastStudied,
+      completionPercentage,
+      nextSuggestedTopic,
+      continentEmoji,
+      level,
+      xpEarned);
 
   /// Create a copy of StudyProgress
   /// with the given fields replaced by the non-null parameter values.
@@ -363,23 +330,24 @@ class _$StudyProgressImpl implements _StudyProgress {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$StudyProgressImplToJson(this);
+    return _$$StudyProgressImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _StudyProgress implements StudyProgress {
-  const factory _StudyProgress({
-    required final Subject subject,
-    required final Duration weeklyTime,
-    required final Duration targetTime,
-    required final int sessionsThisWeek,
-    required final DateTime lastStudied,
-    required final double completionPercentage,
-    required final String nextSuggestedTopic,
-    required final String continentEmoji,
-    required final int level,
-    required final int xpEarned,
-  }) = _$StudyProgressImpl;
+  const factory _StudyProgress(
+      {required final Subject subject,
+      required final Duration weeklyTime,
+      required final Duration targetTime,
+      required final int sessionsThisWeek,
+      required final DateTime lastStudied,
+      required final double completionPercentage,
+      required final String nextSuggestedTopic,
+      required final String continentEmoji,
+      required final int level,
+      required final int xpEarned}) = _$StudyProgressImpl;
 
   factory _StudyProgress.fromJson(Map<String, dynamic> json) =
       _$StudyProgressImpl.fromJson;

@@ -95,7 +95,7 @@ class StudySessionPlaceholderScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
-                onPressed: () => context.pop(),
+                onPressed: () => context.go('/dashboard'),
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back to Dashboard'),
                 style: ElevatedButton.styleFrom(

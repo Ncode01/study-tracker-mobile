@@ -5,7 +5,7 @@ import '../../domain/models/study_progress.dart';
 import '../../domain/models/explorer_stats.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../../study/providers/study_providers.dart';
-import '../../../../providers/auth_provider.dart';
+import '../../../../providers/persistent_auth_provider.dart';
 
 // Repository provider
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
