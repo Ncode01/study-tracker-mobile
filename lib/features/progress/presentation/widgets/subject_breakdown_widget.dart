@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_colors.dart';
 import '../../domain/models/study_analytics.dart';
 import '../../providers/analytics_providers.dart';
+import '../../../../widgets/shared_loading_error.dart';
 
 /// Widget displaying subject breakdown with donut chart and list
 class SubjectBreakdownWidget extends ConsumerWidget {
@@ -42,8 +43,10 @@ class SubjectBreakdownWidget extends ConsumerWidget {
             const SizedBox(height: 16),
             subjectAnalyticsAsync.when(
               data: (subjects) => _buildContent(context, subjects),
-              loading: () => _buildLoadingSkeleton(),
-              error: (error, stack) => _buildErrorState(error),
+              loading:
+                  () =>
+                      const SharedLoadingSkeleton(itemCount: 3, itemHeight: 60),
+              error: (error, stack) => SharedErrorState(error),
             ),
           ],
         ),
@@ -274,62 +277,6 @@ class SubjectBreakdownWidget extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildLoadingSkeleton() {
-    return Column(
-      children: [
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            color: AppColors.fadeGray.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primaryGold,
-              strokeWidth: 2,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...List.generate(
-          3,
-          (index) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.fadeGray.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildErrorState(Object error) {
-    return Container(
-      height: 150,
-      decoration: BoxDecoration(
-        color: AppColors.compassRed.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.compassRed.withOpacity(0.3)),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, color: AppColors.compassRed, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              'Failed to load subjects',
-              style: TextStyle(color: AppColors.compassRed, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

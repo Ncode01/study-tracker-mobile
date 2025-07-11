@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../widgets/shared_loading_error.dart';
+
 import '../../../../theme/app_colors.dart';
 import '../../domain/models/study_analytics.dart';
 import '../../providers/analytics_providers.dart';
@@ -214,44 +216,9 @@ class AchievementsWidget extends ConsumerWidget {
     }
   }
 
-  Widget _buildLoadingSkeleton() {
-    return Column(
-      children: List.generate(
-        3,
-        (index) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.fadeGray.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(Object error) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.compassRed.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.compassRed.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: AppColors.compassRed, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Failed to load achievements',
-              style: TextStyle(color: AppColors.compassRed, fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildLoadingSkeleton() =>
+      const SharedLoadingSkeleton(itemCount: 3, itemHeight: 80);
+  Widget _buildErrorState(Object error) => SharedErrorState(error);
 
   Widget _buildEmptyState() {
     return Container(

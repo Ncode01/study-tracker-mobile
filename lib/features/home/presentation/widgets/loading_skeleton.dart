@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../widgets/shared_loading_error.dart';
 
 /// Loading skeleton for the home screen
 /// Shows placeholder content while dashboard data is being loaded
@@ -34,13 +35,7 @@ class LoadingSkeleton extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Subject cards skeleton
-          ...List.generate(
-            3,
-            (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildSkeletonCard(height: 140),
-            ),
-          ),
+          const SharedLoadingSkeleton(itemCount: 3, itemHeight: 80),
 
           const SizedBox(height: 24),
 
