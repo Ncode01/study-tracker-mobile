@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../study/data/local_subject_repository_impl.dart';
+import '../../study/data/hive_subject_repository_impl.dart';
 import '../data/repositories/local_analytics_repository_impl.dart';
 import '../data/services/analytics_service.dart';
 import '../domain/models/study_analytics.dart';
@@ -18,8 +18,8 @@ final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
 });
 
 // Subject Repository Provider (imported from study feature)
-final subjectRepositoryProvider = Provider<LocalSubjectRepositoryImpl>((ref) {
-  return LocalSubjectRepositoryImpl();
+final subjectRepositoryProvider = Provider<HiveSubjectRepositoryImpl>((ref) {
+  return HiveSubjectRepositoryImpl();
 });
 
 // Time Range State Provider

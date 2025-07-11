@@ -4,13 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_theme.dart';
 import 'config/router/app_router.dart';
 import 'providers/persistent_auth_provider.dart';
+import 'features/study/data/hive_data_service.dart';
 
 /// Main entry point for Project Atlas
-/// Sets up the app with persistent authentication and Riverpod state management
+/// Sets up the app with persistent authentication, Hive storage, and Riverpod state management
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SharedPreferences for local storage
+  // Initialize Hive database for persistent storage
+  await HiveDataService.initialize();
+
+  // Initialize SharedPreferences for legacy storage support
   final prefs = await SharedPreferences.getInstance();
 
   runApp(

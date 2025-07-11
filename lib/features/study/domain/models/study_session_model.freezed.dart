@@ -20,11 +20,17 @@ StudySession _$StudySessionFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$StudySession {
+  @HiveField(0)
   String get id => throw _privateConstructorUsedError;
+  @HiveField(1)
   String get subjectId => throw _privateConstructorUsedError;
+  @HiveField(2)
   DateTime get startTime => throw _privateConstructorUsedError;
+  @HiveField(3)
   DateTime get endTime => throw _privateConstructorUsedError;
+  @HiveField(4)
   int get durationMinutes => throw _privateConstructorUsedError;
+  @HiveField(5)
   String get notes => throw _privateConstructorUsedError;
 
   /// Serializes this StudySession to a JSON map.
@@ -44,12 +50,12 @@ abstract class $StudySessionCopyWith<$Res> {
       _$StudySessionCopyWithImpl<$Res, StudySession>;
   @useResult
   $Res call(
-      {String id,
-      String subjectId,
-      DateTime startTime,
-      DateTime endTime,
-      int durationMinutes,
-      String notes});
+      {@HiveField(0) String id,
+      @HiveField(1) String subjectId,
+      @HiveField(2) DateTime startTime,
+      @HiveField(3) DateTime endTime,
+      @HiveField(4) int durationMinutes,
+      @HiveField(5) String notes});
 }
 
 /// @nodoc
@@ -112,12 +118,12 @@ abstract class _$$StudySessionImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
-      String subjectId,
-      DateTime startTime,
-      DateTime endTime,
-      int durationMinutes,
-      String notes});
+      {@HiveField(0) String id,
+      @HiveField(1) String subjectId,
+      @HiveField(2) DateTime startTime,
+      @HiveField(3) DateTime endTime,
+      @HiveField(4) int durationMinutes,
+      @HiveField(5) String notes});
 }
 
 /// @nodoc
@@ -173,28 +179,34 @@ class __$$StudySessionImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$StudySessionImpl implements _StudySession {
   const _$StudySessionImpl(
-      {required this.id,
-      required this.subjectId,
-      required this.startTime,
-      required this.endTime,
-      required this.durationMinutes,
-      this.notes = ''});
+      {@HiveField(0) required this.id,
+      @HiveField(1) required this.subjectId,
+      @HiveField(2) required this.startTime,
+      @HiveField(3) required this.endTime,
+      @HiveField(4) required this.durationMinutes,
+      @HiveField(5) this.notes = ''});
 
   factory _$StudySessionImpl.fromJson(Map<String, dynamic> json) =>
       _$$StudySessionImplFromJson(json);
 
   @override
+  @HiveField(0)
   final String id;
   @override
+  @HiveField(1)
   final String subjectId;
   @override
+  @HiveField(2)
   final DateTime startTime;
   @override
+  @HiveField(3)
   final DateTime endTime;
   @override
+  @HiveField(4)
   final int durationMinutes;
   @override
   @JsonKey()
+  @HiveField(5)
   final String notes;
 
   @override
@@ -241,27 +253,33 @@ class _$StudySessionImpl implements _StudySession {
 
 abstract class _StudySession implements StudySession {
   const factory _StudySession(
-      {required final String id,
-      required final String subjectId,
-      required final DateTime startTime,
-      required final DateTime endTime,
-      required final int durationMinutes,
-      final String notes}) = _$StudySessionImpl;
+      {@HiveField(0) required final String id,
+      @HiveField(1) required final String subjectId,
+      @HiveField(2) required final DateTime startTime,
+      @HiveField(3) required final DateTime endTime,
+      @HiveField(4) required final int durationMinutes,
+      @HiveField(5) final String notes}) = _$StudySessionImpl;
 
   factory _StudySession.fromJson(Map<String, dynamic> json) =
       _$StudySessionImpl.fromJson;
 
   @override
+  @HiveField(0)
   String get id;
   @override
+  @HiveField(1)
   String get subjectId;
   @override
+  @HiveField(2)
   DateTime get startTime;
   @override
+  @HiveField(3)
   DateTime get endTime;
   @override
+  @HiveField(4)
   int get durationMinutes;
   @override
+  @HiveField(5)
   String get notes;
 
   /// Create a copy of StudySession

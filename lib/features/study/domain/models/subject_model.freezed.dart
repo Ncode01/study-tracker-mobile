@@ -20,7 +20,9 @@ Subject _$SubjectFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Subject {
+  @HiveField(0)
   String get id => throw _privateConstructorUsedError;
+  @HiveField(1)
   String get name => throw _privateConstructorUsedError;
 
   /// Serializes this Subject to a JSON map.
@@ -37,7 +39,7 @@ abstract class $SubjectCopyWith<$Res> {
   factory $SubjectCopyWith(Subject value, $Res Function(Subject) then) =
       _$SubjectCopyWithImpl<$Res, Subject>;
   @useResult
-  $Res call({String id, String name});
+  $Res call({@HiveField(0) String id, @HiveField(1) String name});
 }
 
 /// @nodoc
@@ -78,7 +80,7 @@ abstract class _$$SubjectImplCopyWith<$Res> implements $SubjectCopyWith<$Res> {
       __$$SubjectImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String name});
+  $Res call({@HiveField(0) String id, @HiveField(1) String name});
 }
 
 /// @nodoc
@@ -113,14 +115,17 @@ class __$$SubjectImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$SubjectImpl implements _Subject {
-  const _$SubjectImpl({required this.id, required this.name});
+  const _$SubjectImpl(
+      {@HiveField(0) required this.id, @HiveField(1) required this.name});
 
   factory _$SubjectImpl.fromJson(Map<String, dynamic> json) =>
       _$$SubjectImplFromJson(json);
 
   @override
+  @HiveField(0)
   final String id;
   @override
+  @HiveField(1)
   final String name;
 
   @override
@@ -159,13 +164,16 @@ class _$SubjectImpl implements _Subject {
 
 abstract class _Subject implements Subject {
   const factory _Subject(
-      {required final String id, required final String name}) = _$SubjectImpl;
+      {@HiveField(0) required final String id,
+      @HiveField(1) required final String name}) = _$SubjectImpl;
 
   factory _Subject.fromJson(Map<String, dynamic> json) = _$SubjectImpl.fromJson;
 
   @override
+  @HiveField(0)
   String get id;
   @override
+  @HiveField(1)
   String get name;
 
   /// Create a copy of Subject

@@ -1,4 +1,4 @@
-import '../../../study/data/local_subject_repository_impl.dart';
+import '../../../study/data/hive_subject_repository_impl.dart';
 import '../../../study/domain/models/study_session_model.dart';
 import '../../domain/models/study_analytics.dart';
 import '../../domain/repositories/analytics_repository.dart';
@@ -7,7 +7,7 @@ import '../services/analytics_service.dart';
 /// Local implementation of the analytics repository
 class LocalAnalyticsRepositoryImpl implements AnalyticsRepository {
   final AnalyticsService _analyticsService;
-  final LocalSubjectRepositoryImpl _subjectRepository;
+  final HiveSubjectRepositoryImpl _subjectRepository;
 
   LocalAnalyticsRepositoryImpl(this._analyticsService, this._subjectRepository);
 
