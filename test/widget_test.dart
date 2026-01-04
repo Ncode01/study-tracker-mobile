@@ -25,7 +25,7 @@ void main() {
             keyboardType: TextInputType.emailAddress,
           ),
         ),
-      ),
+      ),h
     );
 
     // Allow time for the widget to render
