@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:study/widgets/auth/custom_text_field.dart';
 
 void main() {
-  testWidgets('CustomTextField renders correctly', (WidgetTester tester) async {
+  testWidgets('CustomTextField rendersj correctly', (WidgetTester tester) async {
     final controller = TextEditingController();
 
     // Build the CustomTextField widget
