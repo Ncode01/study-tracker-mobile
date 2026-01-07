@@ -1,4 +1,4 @@
-a# study
+a# studya
 
 A new Flutter project.
 
