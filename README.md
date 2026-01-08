@@ -1,6 +1,6 @@
 a# studya
 
-A new Flutter project.
+A new Flutter projecta.
 
 ## Getting Started
 
