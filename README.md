@@ -2,7 +2,7 @@ skwaa# studya
 
 A new Flutter projecta.
 wj
-## Getting Started
+## Getting Starsted
 ss
 This project is a starting point for a Flutter application.
 
