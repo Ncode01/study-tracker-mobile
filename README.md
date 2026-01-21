@@ -1,7 +1,7 @@
 kwaa# studya
 
 A new Flutter projecta.
-w
+wj
 ## Getting Started
 ss
 This project is a starting point for a Flutter application.
