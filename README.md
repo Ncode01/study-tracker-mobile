@@ -4,7 +4,7 @@ A new Flutter projecta.
 wj
 ## Getting Starsted
 ss
-This project is a starting point for a Flutter application.
+This project is a starting point for a Flutter application.k
 
 A few resources to get you started if this is your firsdt Fluttser project:
 e
