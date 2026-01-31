@@ -1,4 +1,4 @@
-ajaaasskwaa# studya
+fajaaasskwaa# studya
 
 A new Flutter projecta.
 wj
