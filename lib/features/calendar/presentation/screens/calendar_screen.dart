@@ -295,6 +295,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         isPlanned
             ? accent.withValues(alpha: 0.20)
             : accent.withValues(alpha: 0.12);
+    final bool isTinyBlock = frame.height < 28;
+    final bool isCompactBlock = frame.height < 44;
+    final EdgeInsetsGeometry blockPadding =
+        isTinyBlock
+            ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
+            : isCompactBlock
+            ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5)
+            : const EdgeInsets.all(10);
 
     final String timeLabel =
         '${_formatHourMinute(frame.renderStart)} - ${_formatHourMinute(frame.renderEnd)}';
@@ -303,12 +311,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       borderRadius: BorderRadius.circular(14),
       backgroundColor: background,
       borderColor: accent.withValues(alpha: 0.62),
-      padding: const EdgeInsets.all(10),
+      padding: blockPadding,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            width: 3,
+            width: isTinyBlock ? 2 : 3,
             decoration: BoxDecoration(
               color: accent,
               borderRadius: BorderRadius.circular(99),
@@ -317,6 +325,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Row(
@@ -325,18 +334,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       child: Text(
                         event.title,
                         style: AppTypography.heading(
-                          fontSize: 13,
+                          fontSize: isTinyBlock ? 11 : 13,
                           fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: frame.height < 44 ? 1 : 2,
+                        ).copyWith(height: isTinyBlock ? 1 : null),
+                        maxLines: isCompactBlock ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    _EventTag(label: tag, color: accent),
+                    if (!isTinyBlock) ...<Widget>[
+                      const SizedBox(width: 6),
+                      _EventTag(label: tag, color: accent),
+                    ],
                   ],
                 ),
-                if (frame.height >= 40) ...<Widget>[
+                if (frame.height >= 46) ...<Widget>[
                   const SizedBox(height: 2),
                   Text(
                     timeLabel,
@@ -348,7 +359,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                if (frame.height >= 58 &&
+                if (frame.height >= 64 &&
                     event.note.trim().isNotEmpty) ...<Widget>[
                   const SizedBox(height: 2),
                   Text(

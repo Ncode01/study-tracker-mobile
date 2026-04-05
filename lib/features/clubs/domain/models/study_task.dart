@@ -2,6 +2,7 @@ class StudyTask {
   const StudyTask({
     this.id,
     required this.clubId,
+    required this.projectId,
     required this.status,
     required this.title,
     required this.dueLabel,
@@ -11,6 +12,7 @@ class StudyTask {
 
   final int? id;
   final String clubId;
+  final String projectId;
   final String status;
   final String title;
   final String dueLabel;
@@ -32,6 +34,7 @@ class StudyTask {
   StudyTask copyWith({
     int? id,
     String? clubId,
+    String? projectId,
     String? status,
     String? title,
     String? dueLabel,
@@ -41,6 +44,7 @@ class StudyTask {
     return StudyTask(
       id: id ?? this.id,
       clubId: clubId ?? this.clubId,
+      projectId: projectId ?? this.projectId,
       status: status ?? this.status,
       title: title ?? this.title,
       dueLabel: dueLabel ?? this.dueLabel,
@@ -53,6 +57,7 @@ class StudyTask {
     return <String, Object?>{
       'id': id,
       'clubId': clubId,
+      'projectId': projectId,
       'status': status,
       'title': title,
       'dueLabel': dueLabel,
@@ -65,6 +70,7 @@ class StudyTask {
     return StudyTask(
       id: map['id'] as int?,
       clubId: map['clubId'] as String? ?? '',
+      projectId: map['projectId'] as String? ?? 'general',
       status: map['status'] as String? ?? 'todo',
       title: map['title'] as String? ?? '',
       dueLabel: map['dueLabel'] as String? ?? '',

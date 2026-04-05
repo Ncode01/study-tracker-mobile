@@ -272,11 +272,29 @@ class SqliteCalendarRepository implements CalendarRepository {
     required Database db,
     required DateTime selectedDate,
   }) async {
+    final bool hasStartDate = await _columnExists(
+      db: db,
+      tableName: 'hub_classes',
+      columnName: 'startDate',
+    );
+    final bool hasEndDate = await _columnExists(
+      db: db,
+      tableName: 'hub_classes',
+      columnName: 'endDate',
+    );
+
+    final String startDateSelect =
+        hasStartDate ? 'h.startDate AS startDate,' : 'NULL AS startDate,';
+    final String endDateSelect =
+        hasEndDate ? 'h.endDate AS endDate,' : 'NULL AS endDate,';
+
     final List<Map<String, Object?>> rows = await db.rawQuery('''
       SELECT
         h.id,
         h.subjectId,
         h.teacherName,
+        $startDateSelect
+        $endDateSelect
         h.weekday,
         h.startMinutes,
         h.durationMinutes,
@@ -294,7 +312,12 @@ class SqliteCalendarRepository implements CalendarRepository {
     ''');
 
     final DateTime dayStart = _startOfDay(selectedDate);
+    final DateTime dayEnd = dayStart.add(const Duration(days: 1));
     final DateTime now = DateTime.now();
+    final bool hasHubRecordingsTable = await _tableExists(
+      db: db,
+      tableName: 'hub_recordings',
+    );
     final List<PlannedItem> generated = <PlannedItem>[];
 
     for (final Map<String, Object?> row in rows) {
@@ -318,13 +341,25 @@ class SqliteCalendarRepository implements CalendarRepository {
           (row['durationMinutes'] as num?)?.toInt() ?? 60;
       final String attendanceStatus =
           row['attendanceStatus'] as String? ?? 'pending';
+      final DateTime? startDate = DateTime.tryParse(
+        row['startDate'] as String? ?? '',
+      );
+      final DateTime? endDate = DateTime.tryParse(
+        row['endDate'] as String? ?? '',
+      );
 
       final DateTime createdAt =
           DateTime.tryParse(row['createdAt'] as String? ?? '') ?? now;
       final DateTime updatedAt =
           DateTime.tryParse(row['updatedAt'] as String? ?? '') ?? createdAt;
 
-      if (selectedDate.weekday == weekday && durationMinutes > 0) {
+      if (selectedDate.weekday == weekday &&
+          durationMinutes > 0 &&
+          _isDateWithinClassRange(
+            date: selectedDate,
+            startDate: startDate,
+            endDate: endDate,
+          )) {
         final DateTime startAt = dayStart.add(Duration(minutes: startMinutes));
         final DateTime endAt = startAt.add(Duration(minutes: durationMinutes));
 
@@ -347,6 +382,10 @@ class SqliteCalendarRepository implements CalendarRepository {
         );
       }
 
+      if (hasHubRecordingsTable) {
+        continue;
+      }
+
       final String? recordingRaw = row['recordingPlannedAt'] as String?;
       final DateTime? recordingPlannedAt =
           recordingRaw == null || recordingRaw.isEmpty
@@ -363,7 +402,7 @@ class SqliteCalendarRepository implements CalendarRepository {
             (row['recordingCompleted'] as num?)?.toInt() == 1;
         generated.add(
           PlannedItem(
-            id: _virtualHubRecordingId(classId: classId),
+            id: _virtualHubRecordingId(recordingId: classId),
             categoryId: subjectId,
             categoryTitle: categoryTitle,
             accentColor: accentColor,
@@ -374,6 +413,79 @@ class SqliteCalendarRepository implements CalendarRepository {
             ),
             notes:
                 'Teacher: $teacherName · ${recordingCompleted ? 'Marked watched' : 'Recording catch-up planned'}',
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            source: PlannedItemSource.hubRecording,
+            isEditable: false,
+          ),
+        );
+      }
+    }
+
+    if (hasHubRecordingsTable) {
+      final List<Map<String, Object?>> recordingRows = await db.rawQuery(
+        '''
+        SELECT
+          r.id,
+          r.classId,
+          r.subjectId,
+          r.plannedAt,
+          r.durationMinutes,
+          r.completed,
+          r.createdAt,
+          r.updatedAt,
+          h.teacherName,
+          c.title AS categoryTitle,
+          c.accentColorValue AS accentColorValue
+        FROM hub_recordings r
+        LEFT JOIN hub_classes h ON h.id = r.classId
+        LEFT JOIN categories c ON c.id = r.subjectId
+        WHERE r.plannedAt >= ?
+          AND r.plannedAt < ?
+        ORDER BY r.plannedAt ASC
+      ''',
+        <Object?>[dayStart.toIso8601String(), dayEnd.toIso8601String()],
+      );
+
+      for (final Map<String, Object?> row in recordingRows) {
+        final int recordingId = (row['id'] as num?)?.toInt() ?? 0;
+        if (recordingId <= 0) {
+          continue;
+        }
+
+        final DateTime? plannedAt = DateTime.tryParse(
+          row['plannedAt'] as String? ?? '',
+        );
+        final int durationMinutes =
+            (row['durationMinutes'] as num?)?.toInt() ?? 0;
+        if (plannedAt == null || durationMinutes <= 0) {
+          continue;
+        }
+
+        final String subjectId = row['subjectId'] as String? ?? 'study';
+        final String categoryTitle =
+            row['categoryTitle'] as String? ?? _titleFromCategoryId(subjectId);
+        final Color accentColor = Color(
+          row['accentColorValue'] as int? ?? 0xFF64748B,
+        );
+        final String teacherName = row['teacherName'] as String? ?? 'Teacher';
+        final bool completed = (row['completed'] as num?)?.toInt() == 1;
+        final DateTime createdAt =
+            DateTime.tryParse(row['createdAt'] as String? ?? '') ?? now;
+        final DateTime updatedAt =
+            DateTime.tryParse(row['updatedAt'] as String? ?? '') ?? createdAt;
+
+        generated.add(
+          PlannedItem(
+            id: _virtualHubRecordingId(recordingId: recordingId),
+            categoryId: subjectId,
+            categoryTitle: categoryTitle,
+            accentColor: accentColor,
+            title: 'Watch $categoryTitle Recording',
+            startAt: plannedAt,
+            endAt: plannedAt.add(Duration(minutes: durationMinutes)),
+            notes:
+                'Teacher: $teacherName · ${completed ? 'Marked watched' : 'Recording catch-up planned'}',
             createdAt: createdAt,
             updatedAt: updatedAt,
             source: PlannedItemSource.hubRecording,
@@ -397,13 +509,41 @@ class SqliteCalendarRepository implements CalendarRepository {
     return rows.isNotEmpty;
   }
 
+  Future<bool> _columnExists({
+    required Database db,
+    required String tableName,
+    required String columnName,
+  }) async {
+    final List<Map<String, Object?>> rows = await db.rawQuery(
+      'PRAGMA table_info($tableName)',
+    );
+    return rows.any((Map<String, Object?> row) {
+      return (row['name'] as String?) == columnName;
+    });
+  }
+
   int _virtualHubLiveId({required int classId, required DateTime day}) {
     final int compactDate = day.year * 10000 + day.month * 100 + day.day;
     return -(classId * 1000000 + compactDate);
   }
 
-  int _virtualHubRecordingId({required int classId}) {
-    return -(classId * 1000000 + 999999);
+  int _virtualHubRecordingId({required int recordingId}) {
+    return -(recordingId * 1000000 + 999999);
+  }
+
+  bool _isDateWithinClassRange({
+    required DateTime date,
+    required DateTime? startDate,
+    required DateTime? endDate,
+  }) {
+    final DateTime day = _startOfDay(date);
+    if (startDate != null && day.isBefore(_startOfDay(startDate))) {
+      return false;
+    }
+    if (endDate != null && day.isAfter(_startOfDay(endDate))) {
+      return false;
+    }
+    return true;
   }
 
   String _hubStatusLabel(String raw) {

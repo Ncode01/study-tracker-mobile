@@ -71,14 +71,14 @@ void main() {
     });
 
     test(
-      'upgrading v4 -> v6 adds planned and hub tables while keeping data',
+      'upgrading v4 -> v8 adds planned/hub tables, task project linkage, and hub recording backlog while keeping data',
       () async {
         final AppDatabase appDatabase = AppDatabase();
 
         await appDatabase.upgradeSchemaForTest(
           db: db,
           oldVersion: 4,
-          newVersion: 6,
+          newVersion: 8,
         );
 
         final List<Map<String, Object?>> tables = await db.rawQuery('''
@@ -120,6 +120,45 @@ void main() {
       ''');
 
         expect(hubIndexes.length, 3);
+
+        final List<Map<String, Object?>> hubColumns = await db.rawQuery(
+          'PRAGMA table_info(hub_classes)',
+        );
+        final Set<String> columnNames =
+            hubColumns
+                .map((Map<String, Object?> row) => row['name'] as String? ?? '')
+                .toSet();
+        expect(columnNames.contains('startDate'), isTrue);
+        expect(columnNames.contains('endDate'), isTrue);
+
+        final List<Map<String, Object?>> recordingTables = await db.rawQuery('''
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name = 'hub_recordings'
+      ''');
+        expect(recordingTables, isNotEmpty);
+
+        final List<Map<String, Object?>> recordingIndexes = await db.rawQuery(
+          '''
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'index' AND name IN (
+          'idx_hub_recordings_class_id',
+          'idx_hub_recordings_planned_at',
+          'idx_hub_recordings_completed'
+        )
+      ''',
+        );
+        expect(recordingIndexes.length, 3);
+
+        final List<Map<String, Object?>> taskColumns = await db.rawQuery(
+          'PRAGMA table_info(tasks)',
+        );
+        final Set<String> taskColumnNames =
+            taskColumns
+                .map((Map<String, Object?> row) => row['name'] as String? ?? '')
+                .toSet();
+        expect(taskColumnNames.contains('projectId'), isTrue);
 
         final int categoryCount =
             Sqflite.firstIntValue(

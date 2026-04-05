@@ -31,6 +31,8 @@ class HubClassSchedule {
     required this.id,
     required this.subjectId,
     required this.teacherName,
+    required this.startDate,
+    required this.endDate,
     required this.weekday,
     required this.startMinutes,
     required this.durationMinutes,
@@ -38,6 +40,8 @@ class HubClassSchedule {
     required this.recordingPlannedAt,
     required this.recordingDurationMinutes,
     required this.recordingCompleted,
+    required this.pendingRecordingCount,
+    required this.completedRecordingCount,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -45,6 +49,8 @@ class HubClassSchedule {
   final int id;
   final String subjectId;
   final String teacherName;
+  final DateTime startDate;
+  final DateTime? endDate;
   final int weekday;
   final int startMinutes;
   final int durationMinutes;
@@ -52,6 +58,8 @@ class HubClassSchedule {
   final DateTime? recordingPlannedAt;
   final int? recordingDurationMinutes;
   final bool recordingCompleted;
+  final int pendingRecordingCount;
+  final int completedRecordingCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -59,6 +67,8 @@ class HubClassSchedule {
     int? id,
     String? subjectId,
     String? teacherName,
+    DateTime? startDate,
+    DateTime? endDate,
     int? weekday,
     int? startMinutes,
     int? durationMinutes,
@@ -66,6 +76,8 @@ class HubClassSchedule {
     DateTime? recordingPlannedAt,
     int? recordingDurationMinutes,
     bool? recordingCompleted,
+    int? pendingRecordingCount,
+    int? completedRecordingCount,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -73,6 +85,8 @@ class HubClassSchedule {
       id: id ?? this.id,
       subjectId: subjectId ?? this.subjectId,
       teacherName: teacherName ?? this.teacherName,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
       weekday: weekday ?? this.weekday,
       startMinutes: startMinutes ?? this.startMinutes,
       durationMinutes: durationMinutes ?? this.durationMinutes,
@@ -81,6 +95,10 @@ class HubClassSchedule {
       recordingDurationMinutes:
           recordingDurationMinutes ?? this.recordingDurationMinutes,
       recordingCompleted: recordingCompleted ?? this.recordingCompleted,
+      pendingRecordingCount:
+          pendingRecordingCount ?? this.pendingRecordingCount,
+      completedRecordingCount:
+          completedRecordingCount ?? this.completedRecordingCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

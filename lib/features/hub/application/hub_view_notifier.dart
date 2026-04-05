@@ -1,16 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/providers/core_providers.dart';
+import '../../../core/theme/material_category_icon_resolver.dart';
 import '../../calendar/presentation/providers/calendar_providers.dart';
 import '../domain/models/hub_class_schedule.dart';
 import '../domain/repositories/hub_repository.dart';
+
+class HubClassCreationOutcome {
+  const HubClassCreationOutcome({
+    required this.historicalSessions,
+    required this.missedSessions,
+    required this.watchedSessions,
+    required this.pendingRecordings,
+  });
+
+  final int historicalSessions;
+  final int missedSessions;
+  final int watchedSessions;
+  final int pendingRecordings;
+
+  bool get hasHeavyBacklog => pendingRecordings >= 3;
+}
+
+enum HubWeeklyAttendanceAction {
+  attendedLive,
+  watchedRecording,
+  missedNeedsCatchUp,
+}
+
+class HubWeeklyAttendancePrompt {
+  const HubWeeklyAttendancePrompt({
+    required this.classId,
+    required this.subjectId,
+    required this.subjectTitle,
+    required this.teacherName,
+    required this.occurrenceDate,
+    required this.startMinutes,
+    required this.durationMinutes,
+  });
+
+  final int classId;
+  final String subjectId;
+  final String subjectTitle;
+  final String teacherName;
+  final DateTime occurrenceDate;
+  final int startMinutes;
+  final int durationMinutes;
+
+  String get occurrenceKey {
+    final DateTime day = DateTime(
+      occurrenceDate.year,
+      occurrenceDate.month,
+      occurrenceDate.day,
+    );
+    return '$classId|${day.toIso8601String()}';
+  }
+}
+
+class HubWeeklyAttendanceResolveResult {
+  const HubWeeklyAttendanceResolveResult({required this.pendingRecordings});
+
+  final int pendingRecordings;
+
+  bool get hasHeavyBacklog => pendingRecordings >= 3;
+}
 
 class HubClassEntry {
   const HubClassEntry({
     required this.id,
     required this.subjectId,
     required this.teacherName,
+    required this.startDate,
+    required this.endDate,
     required this.weekday,
     required this.startMinutes,
     required this.durationMinutes,
@@ -18,11 +81,15 @@ class HubClassEntry {
     required this.recordingPlannedAt,
     required this.recordingDurationMinutes,
     required this.recordingCompleted,
+    required this.pendingRecordingCount,
+    required this.completedRecordingCount,
   });
 
   final int id;
   final String subjectId;
   final String teacherName;
+  final DateTime startDate;
+  final DateTime? endDate;
   final int weekday;
   final int startMinutes;
   final int durationMinutes;
@@ -30,8 +97,27 @@ class HubClassEntry {
   final DateTime? recordingPlannedAt;
   final int? recordingDurationMinutes;
   final bool recordingCompleted;
+  final int pendingRecordingCount;
+  final int completedRecordingCount;
 
   bool get canPlanRecording => attendanceStatus == HubAttendanceStatus.missed;
+
+  bool get hasRecordingBacklog {
+    return pendingRecordingCount > 0 || completedRecordingCount > 0;
+  }
+
+  bool get isStopped {
+    if (endDate == null) {
+      return false;
+    }
+    final DateTime today = DateTime.now();
+    final DateTime normalizedToday = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    );
+    return endDate!.isBefore(normalizedToday);
+  }
 }
 
 class HubSubject {
@@ -100,6 +186,8 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
     'physics',
     'chemistry',
   ];
+  static const String _weeklyPromptProgressPrefix =
+      'hub_weekly_prompt_upto_class_';
 
   HubRepository? _repository;
 
@@ -133,12 +221,15 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
     await _reload(preferredExpandedSubjectId: current?.expandedSubjectId);
   }
 
-  Future<void> addClassSession({
+  Future<HubClassCreationOutcome> addClassSession({
     required String subjectId,
     required String teacherName,
+    required DateTime startDate,
     required int weekday,
     required int startMinutes,
     required int durationMinutes,
+    required int historicalMissedSessions,
+    required int historicalWatchedSessions,
   }) async {
     final String normalizedTeacher = teacherName.trim();
     if (normalizedTeacher.isEmpty) {
@@ -153,16 +244,52 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
     if (durationMinutes <= 0) {
       throw const FormatException('Class duration must be greater than zero.');
     }
+    if (historicalMissedSessions < 0 || historicalWatchedSessions < 0) {
+      throw const FormatException(
+        'Historical attendance values cannot be negative.',
+      );
+    }
+    if (historicalWatchedSessions > historicalMissedSessions) {
+      throw const FormatException(
+        'Watched recordings cannot exceed missed sessions.',
+      );
+    }
 
-    await _runMutation(() {
-      return _repo.addClassSchedule(
+    final HubViewState? current = state.valueOrNull;
+    final String? expandedId = current?.expandedSubjectId ?? subjectId;
+
+    state = const AsyncLoading<HubViewState>().copyWithPrevious(state);
+
+    try {
+      final int classId = await _repo.addClassSchedule(
         subjectId: subjectId,
         teacherName: normalizedTeacher,
+        startDate: DateTime(startDate.year, startDate.month, startDate.day),
         weekday: weekday,
         startMinutes: startMinutes,
         durationMinutes: durationMinutes,
       );
-    });
+
+      final HubHistoricalAttendanceSeedResult seedResult = await _repo
+          .seedHistoricalAttendance(
+            classId: classId,
+            missedSessions: historicalMissedSessions,
+            watchedSessions: historicalWatchedSessions,
+          );
+
+      await _reload(preferredExpandedSubjectId: expandedId);
+      ref.invalidate(calendarViewProvider);
+
+      return HubClassCreationOutcome(
+        historicalSessions: seedResult.historicalSessions,
+        missedSessions: seedResult.missedSessions,
+        watchedSessions: seedResult.watchedSessions,
+        pendingRecordings: seedResult.pendingRecordings,
+      );
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
   }
 
   Future<void> updateAttendance({
@@ -212,6 +339,156 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
     });
   }
 
+  Future<void> stopClassSession({
+    required int classId,
+    required DateTime endDate,
+  }) async {
+    await _runMutation(() {
+      return _repo.stopClassSchedule(classId: classId, endDate: endDate);
+    });
+  }
+
+  Future<List<HubWeeklyAttendancePrompt>> loadDueWeeklyAttendancePrompts({
+    int limit = 12,
+  }) async {
+    final HubViewState? current = state.valueOrNull;
+    if (current == null || limit <= 0) {
+      return const <HubWeeklyAttendancePrompt>[];
+    }
+
+    final SharedPreferences preferences = ref.read(sharedPreferencesProvider);
+    final DateTime now = DateTime.now();
+    final DateTime today = _dateOnly(now);
+
+    final List<HubWeeklyAttendancePrompt> prompts =
+        <HubWeeklyAttendancePrompt>[];
+
+    for (final HubSubject subject in current.subjects) {
+      for (final HubClassEntry entry in subject.classes) {
+        final String key = _weeklyPromptProgressKey(entry.id);
+        final DateTime? lastPrompted = _parsePromptDate(
+          preferences.getString(key),
+        );
+
+        final DateTime classStart = _dateOnly(entry.startDate);
+        final DateTime classEndBoundary = _dateOnly(entry.endDate ?? today);
+        final DateTime endDate =
+            classEndBoundary.isAfter(today) ? today : classEndBoundary;
+
+        if (classStart.isAfter(endDate)) {
+          continue;
+        }
+
+        DateTime cursor = _firstOccurrenceOnOrAfter(
+          startDate: classStart,
+          weekday: entry.weekday,
+        );
+
+        while (!cursor.isAfter(endDate)) {
+          if (lastPrompted != null && !cursor.isAfter(lastPrompted)) {
+            cursor = cursor.add(const Duration(days: 7));
+            continue;
+          }
+
+          if (_hasOccurrenceFinished(
+            occurrenceDate: cursor,
+            startMinutes: entry.startMinutes,
+            durationMinutes: entry.durationMinutes,
+            now: now,
+          )) {
+            prompts.add(
+              HubWeeklyAttendancePrompt(
+                classId: entry.id,
+                subjectId: entry.subjectId,
+                subjectTitle: subject.title,
+                teacherName: entry.teacherName,
+                occurrenceDate: cursor,
+                startMinutes: entry.startMinutes,
+                durationMinutes: entry.durationMinutes,
+              ),
+            );
+          }
+
+          if (prompts.length >= limit) {
+            prompts.sort((
+              HubWeeklyAttendancePrompt a,
+              HubWeeklyAttendancePrompt b,
+            ) {
+              final int byDate = a.occurrenceDate.compareTo(b.occurrenceDate);
+              if (byDate != 0) {
+                return byDate;
+              }
+              return a.startMinutes.compareTo(b.startMinutes);
+            });
+            return prompts;
+          }
+
+          cursor = cursor.add(const Duration(days: 7));
+        }
+      }
+    }
+
+    prompts.sort((HubWeeklyAttendancePrompt a, HubWeeklyAttendancePrompt b) {
+      final int byDate = a.occurrenceDate.compareTo(b.occurrenceDate);
+      if (byDate != 0) {
+        return byDate;
+      }
+      return a.startMinutes.compareTo(b.startMinutes);
+    });
+    return prompts;
+  }
+
+  Future<HubWeeklyAttendanceResolveResult> resolveWeeklyAttendancePrompt({
+    required HubWeeklyAttendancePrompt prompt,
+    required HubWeeklyAttendanceAction action,
+  }) async {
+    final HubViewState? current = state.valueOrNull;
+    final String? expandedId = current?.expandedSubjectId;
+    final SharedPreferences preferences = ref.read(sharedPreferencesProvider);
+    int pendingRecordings = 0;
+
+    switch (action) {
+      case HubWeeklyAttendanceAction.attendedLive:
+        await _repo.updateClassAttendance(
+          classId: prompt.classId,
+          status: HubAttendanceStatus.attended,
+        );
+        break;
+      case HubWeeklyAttendanceAction.watchedRecording:
+        await _repo.setRecordingCompleted(
+          classId: prompt.classId,
+          completed: true,
+        );
+        await _repo.updateClassAttendance(
+          classId: prompt.classId,
+          status: HubAttendanceStatus.attended,
+        );
+        break;
+      case HubWeeklyAttendanceAction.missedNeedsCatchUp:
+        pendingRecordings = await _repo.scheduleAutomaticRecordingCatchUp(
+          classId: prompt.classId,
+          occurrenceDate: prompt.occurrenceDate,
+        );
+        break;
+    }
+
+    await preferences.setString(
+      _weeklyPromptProgressKey(prompt.classId),
+      _dateOnly(prompt.occurrenceDate).toIso8601String(),
+    );
+
+    await _reload(preferredExpandedSubjectId: expandedId);
+    ref.invalidate(calendarViewProvider);
+
+    if (pendingRecordings == 0) {
+      pendingRecordings = _pendingRecordingsForClass(prompt.classId);
+    }
+
+    return HubWeeklyAttendanceResolveResult(
+      pendingRecordings: pendingRecordings,
+    );
+  }
+
   Future<void> _runMutation(Future<Object?> Function() mutation) async {
     final HubViewState? current = state.valueOrNull;
     final String? expandedId = current?.expandedSubjectId;
@@ -219,6 +496,61 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
     await mutation();
     await _reload(preferredExpandedSubjectId: expandedId);
     ref.invalidate(calendarViewProvider);
+  }
+
+  int _pendingRecordingsForClass(int classId) {
+    final HubViewState? current = state.valueOrNull;
+    if (current == null) {
+      return 0;
+    }
+
+    for (final HubSubject subject in current.subjects) {
+      for (final HubClassEntry entry in subject.classes) {
+        if (entry.id == classId) {
+          return entry.pendingRecordingCount;
+        }
+      }
+    }
+    return 0;
+  }
+
+  String _weeklyPromptProgressKey(int classId) {
+    return '$_weeklyPromptProgressPrefix$classId';
+  }
+
+  DateTime? _parsePromptDate(String? raw) {
+    final DateTime? parsed = DateTime.tryParse(raw ?? '');
+    if (parsed == null) {
+      return null;
+    }
+    return _dateOnly(parsed);
+  }
+
+  DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
+  DateTime _firstOccurrenceOnOrAfter({
+    required DateTime startDate,
+    required int weekday,
+  }) {
+    final int offset = (weekday - startDate.weekday + 7) % 7;
+    return startDate.add(Duration(days: offset));
+  }
+
+  bool _hasOccurrenceFinished({
+    required DateTime occurrenceDate,
+    required int startMinutes,
+    required int durationMinutes,
+    required DateTime now,
+  }) {
+    final DateTime startAt = _dateOnly(
+      occurrenceDate,
+    ).add(Duration(minutes: startMinutes.clamp(0, 1439)));
+    final DateTime endAt = startAt.add(
+      Duration(minutes: durationMinutes.clamp(1, 720)),
+    );
+    return !endAt.isAfter(now);
   }
 
   Future<void> _reload({String? preferredExpandedSubjectId}) async {
@@ -247,10 +579,11 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
       for (final Map<String, Object?> row in categoryRows)
         (row['id'] as String? ?? ''): _HubSubjectMeta(
           title: row['title'] as String? ?? 'Study',
-          icon: IconData(
-            row['iconCodePoint'] as int? ??
-                Icons.auto_awesome_rounded.codePoint,
-            fontFamily: row['iconFontFamily'] as String? ?? 'MaterialIcons',
+          icon: MaterialCategoryIconResolver.resolve(
+            categoryId: row['id'] as String?,
+            iconCodePoint: row['iconCodePoint'] as int?,
+            iconFontFamily: row['iconFontFamily'] as String?,
+            fallback: Icons.auto_awesome_rounded,
           ),
           accentColor: Color(row['accentColorValue'] as int? ?? 0xFF64748B),
         ),
@@ -307,6 +640,8 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
       id: schedule.id,
       subjectId: schedule.subjectId,
       teacherName: schedule.teacherName,
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
       weekday: schedule.weekday,
       startMinutes: schedule.startMinutes,
       durationMinutes: schedule.durationMinutes,
@@ -314,6 +649,8 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
       recordingPlannedAt: schedule.recordingPlannedAt,
       recordingDurationMinutes: schedule.recordingDurationMinutes,
       recordingCompleted: schedule.recordingCompleted,
+      pendingRecordingCount: schedule.pendingRecordingCount,
+      completedRecordingCount: schedule.completedRecordingCount,
     );
   }
 

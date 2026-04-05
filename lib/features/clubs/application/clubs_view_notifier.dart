@@ -21,19 +21,38 @@ class ClubOption {
   final Color accentColor;
 }
 
+class ClubProject {
+  const ClubProject({
+    required this.id,
+    required this.title,
+    required this.icon,
+    required this.accentColor,
+  });
+
+  final String id;
+  final String title;
+  final IconData icon;
+  final Color accentColor;
+}
+
 class ClubTask {
   const ClubTask({
     this.id,
-    required this.clubId,
+    required String? clubId,
+    required String? projectId,
     required this.status,
     required this.title,
     required this.dueLabel,
     required this.estimateLabel,
     required this.progress,
-  });
+  }) : _clubId = clubId,
+       _projectId = projectId;
 
   final int? id;
-  final String clubId;
+  final String? _clubId;
+  final String? _projectId;
+  String get clubId => _clubId ?? 'general';
+  String get projectId => _projectId ?? 'general';
   final ClubTaskStatus status;
   final String title;
   final String dueLabel;
@@ -43,6 +62,7 @@ class ClubTask {
   ClubTask copyWith({
     int? id,
     String? clubId,
+    String? projectId,
     ClubTaskStatus? status,
     String? title,
     String? dueLabel,
@@ -51,7 +71,8 @@ class ClubTask {
   }) {
     return ClubTask(
       id: id ?? this.id,
-      clubId: clubId ?? this.clubId,
+      clubId: clubId ?? _clubId,
+      projectId: projectId ?? _projectId,
       status: status ?? this.status,
       title: title ?? this.title,
       dueLabel: dueLabel ?? this.dueLabel,
@@ -64,26 +85,70 @@ class ClubTask {
 class ClubsViewState {
   const ClubsViewState({
     required this.clubs,
+    Map<String, List<ClubProject>>? projectsByClubId,
     required this.tasks,
     required this.selectedClubId,
-  });
+    required this.selectedProjectId,
+  }) : _projectsByClubId = projectsByClubId;
+
+  static const ClubOption _fallbackClub = ClubOption(
+    id: 'general',
+    title: 'General',
+    icon: Icons.groups_outlined,
+    accentColor: Color(0xFF64748B),
+  );
+
+  static const ClubProject _fallbackProject = ClubProject(
+    id: 'general',
+    title: 'General',
+    icon: Icons.apps_rounded,
+    accentColor: Color(0xFF64748B),
+  );
 
   final List<ClubOption> clubs;
+  final Map<String, List<ClubProject>>? _projectsByClubId;
   final List<ClubTask> tasks;
   final String selectedClubId;
+  final String selectedProjectId;
 
-  ClubOption get selectedClub =>
-      clubs.firstWhere((ClubOption club) => club.id == selectedClubId);
+  Map<String, List<ClubProject>> get projectsByClubId =>
+      _projectsByClubId ?? const <String, List<ClubProject>>{};
+
+  ClubOption get selectedClub {
+    if (clubs.isEmpty) {
+      return _fallbackClub;
+    }
+    return clubs.firstWhere(
+      (ClubOption club) => club.id == selectedClubId,
+      orElse: () => clubs.first,
+    );
+  }
+
+  List<ClubProject> get selectedProjects =>
+      projectsByClubId[selectedClubId] ?? const <ClubProject>[];
+
+  ClubProject get selectedProject => selectedProjects.firstWhere(
+    (ClubProject project) => project.id == selectedProjectId,
+    orElse:
+        () =>
+            selectedProjects.isNotEmpty
+                ? selectedProjects.first
+                : _fallbackProject,
+  );
 
   ClubsViewState copyWith({
     List<ClubOption>? clubs,
+    Map<String, List<ClubProject>>? projectsByClubId,
     List<ClubTask>? tasks,
     String? selectedClubId,
+    String? selectedProjectId,
   }) {
     return ClubsViewState(
       clubs: clubs ?? this.clubs,
+      projectsByClubId: projectsByClubId ?? this.projectsByClubId,
       tasks: tasks ?? this.tasks,
       selectedClubId: selectedClubId ?? this.selectedClubId,
+      selectedProjectId: selectedProjectId ?? this.selectedProjectId,
     );
   }
 }
@@ -118,10 +183,93 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
       ),
     ];
 
+    final Map<String, List<ClubProject>> projectsByClubId =
+        <String, List<ClubProject>>{
+          'robotics': const <ClubProject>[
+            ClubProject(
+              id: 'general',
+              title: 'General',
+              icon: Icons.apps_rounded,
+              accentColor: Color(0xFF3B82F6),
+            ),
+            ClubProject(
+              id: 'chassis',
+              title: 'Chassis',
+              icon: Icons.smart_toy_outlined,
+              accentColor: Color(0xFF3B82F6),
+            ),
+            ClubProject(
+              id: 'electronics',
+              title: 'Electronics',
+              icon: Icons.memory_rounded,
+              accentColor: Color(0xFF3B82F6),
+            ),
+          ],
+          'debate': const <ClubProject>[
+            ClubProject(
+              id: 'general',
+              title: 'General',
+              icon: Icons.apps_rounded,
+              accentColor: Color(0xFFF43F5E),
+            ),
+            ClubProject(
+              id: 'cases',
+              title: 'Cases',
+              icon: Icons.gavel_rounded,
+              accentColor: Color(0xFFF43F5E),
+            ),
+            ClubProject(
+              id: 'speech',
+              title: 'Speech',
+              icon: Icons.mic_rounded,
+              accentColor: Color(0xFFF43F5E),
+            ),
+          ],
+          'hackathon': const <ClubProject>[
+            ClubProject(
+              id: 'general',
+              title: 'General',
+              icon: Icons.apps_rounded,
+              accentColor: Color(0xFF22C55E),
+            ),
+            ClubProject(
+              id: 'product',
+              title: 'Product',
+              icon: Icons.rocket_launch_rounded,
+              accentColor: Color(0xFF22C55E),
+            ),
+            ClubProject(
+              id: 'pitch',
+              title: 'Pitch',
+              icon: Icons.campaign_rounded,
+              accentColor: Color(0xFF22C55E),
+            ),
+          ],
+        };
+
+    final List<ClubTask> mappedTasks = tasks
+        .map(_mapStudyTask)
+        .map(
+          (ClubTask task) => task.copyWith(
+            projectId: _normalizedProjectId(
+              clubId: task.clubId,
+              candidateProjectId: task.projectId,
+              projectsByClubId: projectsByClubId,
+            ),
+          ),
+        )
+        .toList(growable: false);
+
+    final String selectedClubId = 'robotics';
+    final String selectedProjectId =
+        (projectsByClubId[selectedClubId] ?? const <ClubProject>[]).first.id;
+
     return ClubsViewState(
       clubs: clubs,
-      tasks: tasks.map(_mapStudyTask).toList(growable: false),
-      selectedClubId: 'robotics',
+      projectsByClubId: projectsByClubId,
+      tasks: mappedTasks,
+      selectedClubId: selectedClubId,
+      selectedProjectId: selectedProjectId,
     );
   }
 
@@ -130,11 +278,41 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
     if (current == null) {
       return;
     }
-    state = AsyncData(current.copyWith(selectedClubId: clubId));
+
+    final List<ClubProject> projects =
+        current.projectsByClubId[clubId] ?? const <ClubProject>[];
+    final String selectedProjectId =
+        projects.isNotEmpty ? projects.first.id : 'general';
+
+    state = AsyncData(
+      current.copyWith(
+        selectedClubId: clubId,
+        selectedProjectId: selectedProjectId,
+      ),
+    );
+  }
+
+  void selectProject(String projectId) {
+    final ClubsViewState? current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+
+    final Set<String> projectIds =
+        (current.projectsByClubId[current.selectedClubId] ??
+                const <ClubProject>[])
+            .map((ClubProject project) => project.id)
+            .toSet();
+    if (!projectIds.contains(projectId)) {
+      return;
+    }
+
+    state = AsyncData(current.copyWith(selectedProjectId: projectId));
   }
 
   Future<void> createTask({
     required String clubId,
+    required String projectId,
     required ClubTaskStatus status,
     required String title,
     required String dueLabel,
@@ -151,6 +329,12 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
       return;
     }
 
+    final String normalizedProjectId = _normalizedProjectId(
+      clubId: clubId,
+      candidateProjectId: projectId,
+      projectsByClubId: current.projectsByClubId,
+    );
+
     final int normalizedEstimateMinutes = estimateMinutes.clamp(1, 480);
     final int tempId = _tempTaskIdSeed;
     _tempTaskIdSeed -= 1;
@@ -158,6 +342,7 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
     final ClubTask optimisticTask = ClubTask(
       id: tempId,
       clubId: clubId,
+      projectId: normalizedProjectId,
       status: status,
       title: normalizedTitle,
       dueLabel: normalizedDueLabel,
@@ -173,6 +358,7 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
     try {
       final StudyTask created = await _repository.createTask(
         clubId: clubId,
+        projectId: normalizedProjectId,
         status: _statusValue(status),
         title: normalizedTitle,
         dueLabel: normalizedDueLabel,
@@ -260,12 +446,31 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
     return ClubTask(
       id: task.id,
       clubId: task.clubId,
+      projectId: task.projectId,
       status: status,
       title: task.title,
       dueLabel: task.dueLabel,
       estimateLabel: task.estimateLabel,
       progress: task.progress,
     );
+  }
+
+  String _normalizedProjectId({
+    required String clubId,
+    required String candidateProjectId,
+    required Map<String, List<ClubProject>> projectsByClubId,
+  }) {
+    final List<ClubProject> projects =
+        projectsByClubId[clubId] ?? const <ClubProject>[];
+    if (projects.isEmpty) {
+      return 'general';
+    }
+    final Set<String> projectIds =
+        projects.map((ClubProject project) => project.id).toSet();
+    if (projectIds.contains(candidateProjectId)) {
+      return candidateProjectId;
+    }
+    return projects.first.id;
   }
 
   String _statusValue(ClubTaskStatus status) {

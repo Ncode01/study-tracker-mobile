@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/material_category_icon_resolver.dart';
+
 class SubjectCategory {
   const SubjectCategory({
     required this.id,
@@ -46,9 +48,11 @@ class SubjectCategory {
     return SubjectCategory(
       id: map['id'] as String? ?? '',
       title: map['title'] as String? ?? '',
-      icon: IconData(
-        map['iconCodePoint'] as int? ?? Icons.circle.codePoint,
-        fontFamily: map['iconFontFamily'] as String? ?? 'MaterialIcons',
+      icon: MaterialCategoryIconResolver.resolve(
+        categoryId: map['id'] as String?,
+        iconCodePoint: map['iconCodePoint'] as int?,
+        iconFontFamily: map['iconFontFamily'] as String?,
+        fallback: Icons.circle,
       ),
       accentColor: Color(map['accentColorValue'] as int? ?? 0xFFFFFFFF),
       section: map['section'] as String? ?? 'A/LEVELS',

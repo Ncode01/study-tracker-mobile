@@ -7,7 +7,7 @@ class AppDatabase {
   AppDatabase();
 
   static const String _databaseName = 'timeflow.db';
-  static const int _databaseVersion = 6;
+  static const int _databaseVersion = 8;
 
   Database? _database;
 
@@ -25,11 +25,15 @@ class AppDatabase {
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onOpen: (Database db) async {
+        await _ensureTaskProjectColumn(db);
         await _createSessionIndexes(db);
         await _createPlannedItemsTable(db);
         await _createPlannedItemIndexes(db);
         await _createHubClassesTable(db);
+        await _ensureHubClassColumns(db);
         await _createHubClassIndexes(db);
+        await _createHubRecordingsTable(db);
+        await _createHubRecordingIndexes(db);
         await _seedDefaultsIfNeeded(db);
       },
     );
@@ -54,6 +58,7 @@ class AppDatabase {
       CREATE TABLE tasks(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         clubId TEXT NOT NULL,
+        projectId TEXT NOT NULL DEFAULT 'general',
         status TEXT NOT NULL CHECK(status IN ('todo', 'doing', 'done')),
         title TEXT NOT NULL,
         dueLabel TEXT NOT NULL,
@@ -101,6 +106,32 @@ class AppDatabase {
       await _createHubClassesTable(db);
       await _createHubClassIndexes(db);
     }
+    if (oldVersion < 7) {
+      await _ensureHubClassColumns(db);
+      await _createHubRecordingsTable(db);
+      await _createHubRecordingIndexes(db);
+      await _migrateLegacyHubRecordings(db);
+    }
+    if (oldVersion < 8) {
+      await _ensureTaskProjectColumn(db);
+    }
+  }
+
+  Future<void> _ensureTaskProjectColumn(Database db) async {
+    final bool hasProjectId = await _columnExists(
+      db: db,
+      tableName: 'tasks',
+      columnName: 'projectId',
+    );
+    if (!hasProjectId) {
+      await db.execute(
+        "ALTER TABLE tasks ADD COLUMN projectId TEXT NOT NULL DEFAULT 'general'",
+      );
+    }
+
+    await db.execute(
+      "UPDATE tasks SET projectId = 'general' WHERE projectId IS NULL OR projectId = ''",
+    );
   }
 
   Future<void> _createPlannedItemsTable(Database db) async {
@@ -136,6 +167,8 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         subjectId TEXT NOT NULL,
         teacherName TEXT NOT NULL,
+        startDate TEXT NOT NULL,
+        endDate TEXT,
         weekday INTEGER NOT NULL,
         startMinutes INTEGER NOT NULL,
         durationMinutes INTEGER NOT NULL,
@@ -150,6 +183,40 @@ class AppDatabase {
     ''');
   }
 
+  Future<void> _ensureHubClassColumns(Database db) async {
+    final bool hasStartDate = await _columnExists(
+      db: db,
+      tableName: 'hub_classes',
+      columnName: 'startDate',
+    );
+    if (!hasStartDate) {
+      await db.execute('ALTER TABLE hub_classes ADD COLUMN startDate TEXT');
+    }
+
+    final bool hasEndDate = await _columnExists(
+      db: db,
+      tableName: 'hub_classes',
+      columnName: 'endDate',
+    );
+    if (!hasEndDate) {
+      await db.execute('ALTER TABLE hub_classes ADD COLUMN endDate TEXT');
+    }
+
+    await db.execute('''
+      UPDATE hub_classes
+      SET startDate = createdAt
+      WHERE (startDate IS NULL OR startDate = '')
+        AND createdAt IS NOT NULL
+        AND createdAt != ''
+    ''');
+
+    await db.execute('''
+      UPDATE hub_classes
+      SET startDate = datetime('now')
+      WHERE startDate IS NULL OR startDate = ''
+    ''');
+  }
+
   Future<void> _createHubClassIndexes(Database db) async {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_hub_classes_subject_id ON hub_classes (subjectId);',
@@ -160,6 +227,113 @@ class AppDatabase {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_hub_classes_recording_planned_at ON hub_classes (recordingPlannedAt);',
     );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_classes_start_date ON hub_classes (startDate);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_classes_end_date ON hub_classes (endDate);',
+    );
+  }
+
+  Future<void> _createHubRecordingsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS hub_recordings(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        classId INTEGER NOT NULL,
+        subjectId TEXT NOT NULL,
+        occurrenceDate TEXT NOT NULL,
+        plannedAt TEXT NOT NULL,
+        durationMinutes INTEGER NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _createHubRecordingIndexes(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_recordings_class_id ON hub_recordings (classId);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_recordings_planned_at ON hub_recordings (plannedAt);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_recordings_completed ON hub_recordings (completed);',
+    );
+  }
+
+  Future<void> _migrateLegacyHubRecordings(Database db) async {
+    final List<Map<String, Object?>> rows = await db.query(
+      'hub_classes',
+      columns: const <String>[
+        'id',
+        'subjectId',
+        'recordingPlannedAt',
+        'recordingDurationMinutes',
+        'recordingCompleted',
+        'createdAt',
+        'updatedAt',
+      ],
+      where: 'recordingPlannedAt IS NOT NULL AND recordingPlannedAt != ""',
+    );
+
+    for (final Map<String, Object?> row in rows) {
+      final int classId = (row['id'] as num?)?.toInt() ?? 0;
+      final String plannedAtRaw = row['recordingPlannedAt'] as String? ?? '';
+      if (classId <= 0 || plannedAtRaw.isEmpty) {
+        continue;
+      }
+
+      final int durationMinutes =
+          ((row['recordingDurationMinutes'] as num?)?.toInt() ?? 60).clamp(
+            15,
+            360,
+          );
+
+      final List<Map<String, Object?>> existing = await db.query(
+        'hub_recordings',
+        columns: const <String>['id'],
+        where: 'classId = ? AND plannedAt = ?',
+        whereArgs: <Object?>[classId, plannedAtRaw],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) {
+        continue;
+      }
+
+      final DateTime? plannedAt = DateTime.tryParse(plannedAtRaw);
+      final DateTime now = DateTime.now();
+      final DateTime normalizedOccurrence =
+          plannedAt == null
+              ? now
+              : DateTime(plannedAt.year, plannedAt.month, plannedAt.day);
+
+      await db.insert('hub_recordings', <String, Object?>{
+        'classId': classId,
+        'subjectId': row['subjectId'] as String? ?? 'study',
+        'occurrenceDate': normalizedOccurrence.toIso8601String(),
+        'plannedAt': plannedAtRaw,
+        'durationMinutes': durationMinutes,
+        'completed': (row['recordingCompleted'] as num?)?.toInt() == 1 ? 1 : 0,
+        'createdAt': row['createdAt'] as String? ?? now.toIso8601String(),
+        'updatedAt': row['updatedAt'] as String? ?? now.toIso8601String(),
+      });
+    }
+  }
+
+  Future<bool> _columnExists({
+    required Database db,
+    required String tableName,
+    required String columnName,
+  }) async {
+    final List<Map<String, Object?>> rows = await db.rawQuery(
+      'PRAGMA table_info($tableName)',
+    );
+
+    return rows.any((Map<String, Object?> row) {
+      return (row['name'] as String?) == columnName;
+    });
   }
 
   Future<void> _removeLegacySeededTasksIfPresent(Database db) async {
@@ -215,6 +389,7 @@ class AppDatabase {
         CREATE TABLE tasks_new(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           clubId TEXT NOT NULL,
+          projectId TEXT NOT NULL DEFAULT 'general',
           status TEXT NOT NULL CHECK(status IN ('todo', 'doing', 'done')),
           title TEXT NOT NULL,
           dueLabel TEXT NOT NULL,
@@ -227,6 +402,7 @@ class AppDatabase {
         INSERT INTO tasks_new(
           id,
           clubId,
+          projectId,
           status,
           title,
           dueLabel,
@@ -236,6 +412,7 @@ class AppDatabase {
         SELECT
           id,
           clubId,
+          'general',
           CASE
             WHEN status IN ('todo', 'doing', 'done') THEN status
             ELSE 'todo'
@@ -321,6 +498,7 @@ class AppDatabase {
       await txn.delete('sessions');
       await txn.delete('planned_items');
       await txn.delete('hub_classes');
+      await txn.delete('hub_recordings');
       await txn.delete('tasks');
       await txn.delete('categories');
     });

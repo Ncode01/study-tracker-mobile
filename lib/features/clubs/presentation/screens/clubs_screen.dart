@@ -37,6 +37,7 @@ class ClubsScreen extends ConsumerWidget {
       try {
         await notifier.createTask(
           clubId: state.selectedClubId,
+          projectId: state.selectedProjectId,
           status: status,
           title: payload.title,
           dueLabel: payload.dueLabel,
@@ -124,10 +125,14 @@ class ClubsScreen extends ConsumerWidget {
                     .where(
                       (ClubTask task) =>
                           task.clubId == state.selectedClubId &&
+                          task.projectId == state.selectedProjectId &&
                           task.status == status,
                     )
                     .toList(growable: false);
               }
+
+              final List<ClubProject> selectedClubProjects =
+                  state.selectedProjects;
 
               final List<ClubTaskStatus> visibleStatuses =
                   ClubTaskStatus.values;
@@ -139,16 +144,62 @@ class ClubsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Clubs',
-                        style: AppTypography.heading(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: state.selectedClubId,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withValues(alpha: 0.04),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.glassBorder,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: state.selectedClub.accentColor,
+                                  ),
+                                ),
+                              ),
+                              items: state.clubs
+                                  .map(
+                                    (ClubOption club) =>
+                                        DropdownMenuItem<String>(
+                                          value: club.id,
+                                          child: Text(club.title),
+                                        ),
+                                  )
+                                  .toList(growable: false),
+                              onChanged: (String? value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                notifier.selectClub(value);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Clubs',
+                            style: AppTypography.heading(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ).animate().fade(duration: 380.ms).slideY(begin: 0.05),
                       const SizedBox(height: 4),
                       Text(
-                        'Kanban flow for extracurricular work',
+                        '${state.selectedProject.title} · ${state.selectedClub.title}',
                         style: AppTypography.display(
                           color: AppColors.textMuted,
                           fontSize: 13,
@@ -157,25 +208,43 @@ class ClubsScreen extends ConsumerWidget {
                       const SizedBox(height: 18),
                       SizedBox(
                         height: 96,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: state.clubs.length,
-                          separatorBuilder:
-                              (_, __) => const SizedBox(width: 14),
-                          itemBuilder: (BuildContext context, int index) {
-                            final ClubOption club = state.clubs[index];
-                            final bool selected =
-                                club.id == state.selectedClubId;
-                            return _ClubSelector(
-                                  club: club,
-                                  selected: selected,
-                                  onTap: () => notifier.selectClub(club.id),
+                        child:
+                            selectedClubProjects.isEmpty
+                                ? Center(
+                                  child: Text(
+                                    'No projects yet for this club.',
+                                    style: AppTypography.display(
+                                      color: AppColors.textMuted,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 )
-                                .animate(delay: (45 * index).ms)
-                                .scaleXY(begin: 0.94);
-                          },
-                        ),
+                                : ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: selectedClubProjects.length,
+                                  separatorBuilder:
+                                      (_, __) => const SizedBox(width: 14),
+                                  itemBuilder: (
+                                    BuildContext context,
+                                    int index,
+                                  ) {
+                                    final ClubProject project =
+                                        selectedClubProjects[index];
+                                    return _ProjectBubble(
+                                          project: project,
+                                          selected:
+                                              project.id ==
+                                              state.selectedProjectId,
+                                          onTap:
+                                              () => notifier.selectProject(
+                                                project.id,
+                                              ),
+                                        )
+                                        .animate(delay: (45 * index).ms)
+                                        .scaleXY(begin: 0.94);
+                                  },
+                                ),
                       ),
                       const SizedBox(height: 20),
                       LayoutBuilder(
@@ -296,63 +365,93 @@ class _ClubsLoadingSkeleton extends StatelessWidget {
   }
 }
 
-class _ClubSelector extends StatelessWidget {
-  const _ClubSelector({
-    required this.club,
+class _ProjectBubble extends StatelessWidget {
+  const _ProjectBubble({
+    required this.project,
     required this.selected,
     required this.onTap,
   });
 
-  final ClubOption club;
+  final ClubProject project;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final String initial =
+        project.title.trim().isEmpty
+            ? 'P'
+            : project.title.trim().substring(0, 1).toUpperCase();
+
     return Semantics(
       button: true,
       selected: selected,
-      label: club.title,
+      label: project.title,
       child: GestureDetector(
         onTap: onTap,
         child: Column(
           children: [
-            AnimatedContainer(
-              duration: 220.ms,
+            Container(
               width: 72,
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color:
                     selected
-                        ? club.accentColor.withValues(alpha: 0.20)
-                        : AppColors.glassBackground,
+                        ? project.accentColor.withValues(alpha: 0.24)
+                        : project.accentColor.withValues(alpha: 0.14),
                 border: Border.all(
-                  color: selected ? club.accentColor : AppColors.glassBorder,
-                  width: selected ? 1.3 : 1,
+                  color: selected ? project.accentColor : AppColors.glassBorder,
+                  width: selected ? 1.6 : 1,
                 ),
-                boxShadow:
-                    selected
-                        ? <BoxShadow>[
-                          BoxShadow(
-                            color: club.accentColor.withValues(alpha: 0.28),
-                            blurRadius: 18,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                        : null,
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: project.accentColor.withValues(
+                      alpha: selected ? 0.28 : 0.18,
+                    ),
+                    blurRadius: 14,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
-              child: Icon(club.icon, color: club.accentColor, size: 28),
+              child: Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      project.icon,
+                      size: 26,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      right: 10,
+                      child: Text(
+                        initial,
+                        style: AppTypography.mono(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 6),
-            Text(
-              club.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.display(
-                color: selected ? AppColors.textMain : AppColors.textMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+            SizedBox(
+              width: 84,
+              child: Text(
+                project.title,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.display(
+                  color: selected ? AppColors.textMain : AppColors.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -774,102 +873,110 @@ class _CreateTaskDialogState extends State<_CreateTaskDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GlassContainer(
-        borderRadius: BorderRadius.circular(22),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Create Task',
-                style: AppTypography.heading(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Adding to $laneTitle lane.',
-                style: AppTypography.display(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _titleController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: _fieldDecoration('Task title'),
-                style: AppTypography.display(color: AppColors.textMain),
-                validator: (String? value) {
-                  if ((value ?? '').trim().isEmpty) {
-                    return 'Enter a task title.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _dueController,
-                textCapitalization: TextCapitalization.words,
-                decoration: _fieldDecoration('Due label (e.g., Due Fri)'),
-                style: AppTypography.display(color: AppColors.textMain),
-                validator: (String? value) {
-                  if ((value ?? '').trim().isEmpty) {
-                    return 'Enter a due label.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _estimateController,
-                keyboardType: TextInputType.number,
-                decoration: _fieldDecoration('Estimate minutes'),
-                style: AppTypography.display(color: AppColors.textMain),
-                validator: (String? value) {
-                  final int? minutes = int.tryParse((value ?? '').trim());
-                  if (minutes == null || minutes <= 0) {
-                    return 'Enter a valid number of minutes.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: GlassContainer(
+          borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        'Cancel',
-                        style: AppTypography.display(
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                  Text(
+                    'Create Task',
+                    style: AppTypography.heading(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _submit,
-                      child: Text(
-                        'Create',
-                        style: AppTypography.display(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                  const SizedBox(height: 6),
+                  Text(
+                    'Adding to $laneTitle lane.',
+                    style: AppTypography.display(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _titleController,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _fieldDecoration('Task title'),
+                    style: AppTypography.display(color: AppColors.textMain),
+                    validator: (String? value) {
+                      if ((value ?? '').trim().isEmpty) {
+                        return 'Enter a task title.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _dueController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: _fieldDecoration('Due label (e.g., Due Fri)'),
+                    style: AppTypography.display(color: AppColors.textMain),
+                    validator: (String? value) {
+                      if ((value ?? '').trim().isEmpty) {
+                        return 'Enter a due label.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _estimateController,
+                    keyboardType: TextInputType.number,
+                    decoration: _fieldDecoration('Estimate minutes'),
+                    style: AppTypography.display(color: AppColors.textMain),
+                    validator: (String? value) {
+                      final int? minutes = int.tryParse((value ?? '').trim());
+                      if (minutes == null || minutes <= 0) {
+                        return 'Enter a valid number of minutes.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: AppTypography.display(
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: _submit,
+                          child: Text(
+                            'Create',
+                            style: AppTypography.display(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),

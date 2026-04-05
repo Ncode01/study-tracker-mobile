@@ -16,6 +16,7 @@ class TaskRepository {
 
   Future<StudyTask> createTask({
     required String clubId,
+    required String projectId,
     required String status,
     required String title,
     required String dueLabel,
@@ -25,6 +26,7 @@ class TaskRepository {
     final db = await _database.database;
     final int id = await db.insert('tasks', <String, Object?>{
       'clubId': clubId,
+      'projectId': projectId,
       'status': status,
       'title': title,
       'dueLabel': dueLabel,
@@ -35,6 +37,7 @@ class TaskRepository {
     return StudyTask(
       id: id,
       clubId: clubId,
+      projectId: projectId,
       status: status,
       title: title,
       dueLabel: dueLabel,
