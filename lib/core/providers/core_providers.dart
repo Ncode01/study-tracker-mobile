@@ -12,8 +12,13 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   );
 });
 
+final databaseProvider = Provider<AppDatabase>((ref) {
+  return AppDatabase();
+});
+
+@Deprecated('Use databaseProvider instead')
 final databaseHelperProvider = Provider<AppDatabase>((ref) {
-  return AppDatabase.instance;
+  return ref.watch(databaseProvider);
 });
 
 final appSettingsServiceProvider = Provider<AppSettingsService>((ref) {
@@ -28,5 +33,5 @@ final sensoryServiceProvider = Provider<SensoryService>((ref) {
 });
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  return NotificationService.instance;
+  return NotificationService();
 });

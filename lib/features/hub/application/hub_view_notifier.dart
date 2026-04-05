@@ -83,7 +83,7 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
   }
 
   Future<HubViewState> _loadState() async {
-    final db = await ref.read(databaseHelperProvider).database;
+    final db = await ref.read(databaseProvider).database;
 
     final List<Map<String, Object?>> categoryRows = await db.query(
       'categories',

@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/data/local/app_database.dart';
 import 'core/providers/core_providers.dart';
 import 'core/routing/app_router.dart';
 import 'core/services/app_settings_service.dart';
@@ -25,7 +26,10 @@ Future<void> main() async {
   );
   await appSettingsService.init();
 
-  await NotificationService.instance.init(
+  final AppDatabase appDatabase = AppDatabase();
+  final NotificationService notificationService = NotificationService();
+
+  await notificationService.init(
     onTap: (String? payload) {
       if (payload != 'timer_complete') {
         return;
@@ -46,6 +50,8 @@ Future<void> main() async {
       overrides: <Override>[
         sharedPreferencesProvider.overrideWithValue(preferences),
         appSettingsServiceProvider.overrideWithValue(appSettingsService),
+        databaseProvider.overrideWithValue(appDatabase),
+        notificationServiceProvider.overrideWithValue(notificationService),
       ],
       child: const TimeFlowApp(),
     ),

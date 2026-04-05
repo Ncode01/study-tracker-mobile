@@ -5,9 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 typedef NotificationTapHandler = void Function(String? payload);
 
 class NotificationService {
-  NotificationService._();
-
-  static final NotificationService instance = NotificationService._();
+  NotificationService();
 
   static const int _timerNotificationId = 7001;
 
@@ -56,10 +54,6 @@ class NotificationService {
         ?.requestPermissions(alert: true, badge: true, sound: true);
 
     _initialized = true;
-  }
-
-  void setTapHandler(NotificationTapHandler handler) {
-    _tapHandler = handler;
   }
 
   Future<void> scheduleTimerCompletion({

@@ -1,3 +1,5 @@
+> [ARCHIVED] Out of date as of Phase 11. This document is retained for historical context and does not represent the current source of truth.
+
 # 02 State Management Plan - Current Snapshot + Refactor Path
 
 ## 1. Current State Topology (Verified)

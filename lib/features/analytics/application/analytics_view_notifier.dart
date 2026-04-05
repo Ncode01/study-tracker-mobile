@@ -41,6 +41,24 @@ class WeeklyTrendBar {
   final double value;
 }
 
+class AnalyticsSession {
+  const AnalyticsSession({
+    required this.categoryId,
+    required this.categoryTitle,
+    required this.startedAt,
+    required this.endedAt,
+    required this.durationSeconds,
+    required this.isProductive,
+  });
+
+  final String categoryId;
+  final String categoryTitle;
+  final DateTime startedAt;
+  final DateTime endedAt;
+  final int durationSeconds;
+  final bool isProductive;
+}
+
 class SmartInsight {
   const SmartInsight({
     required this.title,
@@ -60,6 +78,7 @@ class AnalyticsViewState {
     required this.periods,
     required this.selectedPeriod,
     required this.productivityScore,
+    required this.sessions,
     required this.insights,
     required this.distribution,
     required this.weeklyTrend,
@@ -71,6 +90,7 @@ class AnalyticsViewState {
   final List<String> periods;
   final String selectedPeriod;
   final int productivityScore;
+  final List<AnalyticsSession> sessions;
   final List<AnalyticsInsight> insights;
   final List<DistributionSlice> distribution;
   final List<WeeklyTrendBar> weeklyTrend;
@@ -82,6 +102,7 @@ class AnalyticsViewState {
     List<String>? periods,
     String? selectedPeriod,
     int? productivityScore,
+    List<AnalyticsSession>? sessions,
     List<AnalyticsInsight>? insights,
     List<DistributionSlice>? distribution,
     List<WeeklyTrendBar>? weeklyTrend,
@@ -93,6 +114,7 @@ class AnalyticsViewState {
       periods: periods ?? this.periods,
       selectedPeriod: selectedPeriod ?? this.selectedPeriod,
       productivityScore: productivityScore ?? this.productivityScore,
+      sessions: sessions ?? this.sessions,
       insights: insights ?? this.insights,
       distribution: distribution ?? this.distribution,
       weeklyTrend: weeklyTrend ?? this.weeklyTrend,
@@ -108,9 +130,7 @@ class AnalyticsViewNotifier extends AsyncNotifier<AnalyticsViewState> {
 
   @override
   Future<AnalyticsViewState> build() async {
-    _repository = AnalyticsRepository(
-      database: ref.read(databaseHelperProvider),
-    );
+    _repository = AnalyticsRepository(database: ref.read(databaseProvider));
     const String defaultPeriod = 'This Week';
     final AnalyticsDataBundle bundle = await _repository.loadBundle(
       selectedPeriod: defaultPeriod,
@@ -121,6 +141,18 @@ class AnalyticsViewNotifier extends AsyncNotifier<AnalyticsViewState> {
       periods: <String>['This Week', 'This Month', 'Term'],
       selectedPeriod: bundle.selectedPeriod,
       productivityScore: bundle.productivityScore,
+      sessions: bundle.sessions
+          .map(
+            (AnalyticsSessionEntry session) => AnalyticsSession(
+              categoryId: session.categoryId,
+              categoryTitle: session.categoryTitle,
+              startedAt: session.startedAt,
+              endedAt: session.endedAt,
+              durationSeconds: session.durationSeconds,
+              isProductive: session.isProductive,
+            ),
+          )
+          .toList(growable: false),
       insights: const <AnalyticsInsight>[
         AnalyticsInsight(
           title: 'Focus',
@@ -205,6 +237,18 @@ class AnalyticsViewNotifier extends AsyncNotifier<AnalyticsViewState> {
       current.copyWith(
         selectedPeriod: period,
         productivityScore: bundle.productivityScore,
+        sessions: bundle.sessions
+            .map(
+              (AnalyticsSessionEntry session) => AnalyticsSession(
+                categoryId: session.categoryId,
+                categoryTitle: session.categoryTitle,
+                startedAt: session.startedAt,
+                endedAt: session.endedAt,
+                durationSeconds: session.durationSeconds,
+                isProductive: session.isProductive,
+              ),
+            )
+            .toList(growable: false),
         distribution: bundle.distribution
             .map(
               (DistributionEntry entry) => DistributionSlice(
@@ -256,13 +300,13 @@ class AnalyticsViewNotifier extends AsyncNotifier<AnalyticsViewState> {
 
   String _weekdayLabel(int weekday) {
     return switch (weekday) {
-      DateTime.monday => 'M',
-      DateTime.tuesday => 'T',
-      DateTime.wednesday => 'W',
-      DateTime.thursday => 'T',
-      DateTime.friday => 'F',
-      DateTime.saturday => 'S',
-      _ => 'S',
+      DateTime.monday => 'Mon',
+      DateTime.tuesday => 'Tue',
+      DateTime.wednesday => 'Wed',
+      DateTime.thursday => 'Thu',
+      DateTime.friday => 'Fri',
+      DateTime.saturday => 'Sat',
+      _ => 'Sun',
     };
   }
 

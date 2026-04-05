@@ -4,11 +4,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
-  AppDatabase._();
+  AppDatabase();
 
-  static final AppDatabase instance = AppDatabase._();
   static const String _databaseName = 'timeflow.db';
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 3;
 
   Database? _database;
 
@@ -51,7 +50,7 @@ class AppDatabase {
       CREATE TABLE tasks(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         clubId TEXT NOT NULL,
-        status TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('todo', 'doing', 'done')),
         title TEXT NOT NULL,
         dueLabel TEXT NOT NULL,
         estimateMinutes INTEGER NOT NULL,
@@ -79,6 +78,52 @@ class AppDatabase {
     if (oldVersion < 2) {
       await _createSessionIndexes(db);
     }
+    if (oldVersion < 3) {
+      await _migrateTasksStatusConstraint(db);
+    }
+  }
+
+  Future<void> _migrateTasksStatusConstraint(Database db) async {
+    await db.transaction((txn) async {
+      await txn.execute('''
+        CREATE TABLE tasks_new(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          clubId TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('todo', 'doing', 'done')),
+          title TEXT NOT NULL,
+          dueLabel TEXT NOT NULL,
+          estimateMinutes INTEGER NOT NULL,
+          progress REAL NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        INSERT INTO tasks_new(
+          id,
+          clubId,
+          status,
+          title,
+          dueLabel,
+          estimateMinutes,
+          progress
+        )
+        SELECT
+          id,
+          clubId,
+          CASE
+            WHEN status IN ('todo', 'doing', 'done') THEN status
+            ELSE 'todo'
+          END,
+          title,
+          dueLabel,
+          estimateMinutes,
+          progress
+        FROM tasks
+      ''');
+
+      await txn.execute('DROP TABLE tasks');
+      await txn.execute('ALTER TABLE tasks_new RENAME TO tasks');
+    });
   }
 
   Future<void> _createSessionIndexes(Database db) async {

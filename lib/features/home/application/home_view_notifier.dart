@@ -23,93 +23,87 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
   DateTime? _sessionStartedAt;
   DateTime? _backgroundedAt;
   bool _observerAttached = false;
-  bool _persistenceEnabled = true;
+  final bool _persistenceEnabled = true;
   bool _keepScreenAwakeEnabled = true;
 
   @override
   Future<HomeViewState> build() async {
-    try {
-      _appSettingsService = ref.read(appSettingsServiceProvider);
-      _repository = TimerRepository(
-        database: ref.read(databaseHelperProvider),
-        preferences: ref.read(sharedPreferencesProvider),
-      );
-      _timerService = TimerService(
-        sensoryService: ref.read(sensoryServiceProvider),
-        notificationService: ref.read(notificationServiceProvider),
-      );
+    _appSettingsService = ref.read(appSettingsServiceProvider);
+    _repository = TimerRepository(
+      database: ref.read(databaseProvider),
+      preferences: ref.read(sharedPreferencesProvider),
+    );
+    _timerService = TimerService(
+      sensoryService: ref.read(sensoryServiceProvider),
+      notificationService: ref.read(notificationServiceProvider),
+    );
 
-      final AppSettingsSnapshot settings = await _appSettingsService.snapshot();
-      _keepScreenAwakeEnabled = settings.keepScreenAwake;
-      final Duration configuredDefaultTarget = Duration(
-        minutes: settings.defaultFocusMinutes,
-      );
+    final AppSettingsSnapshot settings = await _appSettingsService.snapshot();
+    _keepScreenAwakeEnabled = settings.keepScreenAwake;
+    final Duration configuredDefaultTarget = Duration(
+      minutes: settings.defaultFocusMinutes,
+    );
 
-      if (!_observerAttached) {
-        WidgetsBinding.instance.addObserver(this);
-        _observerAttached = true;
-      }
-
-      ref.onDispose(() {
-        unawaited(_timerService.dispose());
-        if (_observerAttached) {
-          WidgetsBinding.instance.removeObserver(this);
-          _observerAttached = false;
-        }
-      });
-
-      final List<SubjectCategory> categories =
-          await _repository.loadCategories();
-      final String? selectedCategoryId =
-          await _repository.loadSelectedCategoryId();
-      final SubjectCategory currentCategory = categories.firstWhere(
-        (SubjectCategory category) => category.id == selectedCategoryId,
-        orElse: () => categories.first,
-      );
-
-      final TimerSnapshot timer = await _repository.loadTimerSnapshot(
-        defaultTarget: configuredDefaultTarget,
-      );
-
-      final HomeStats stats = await _repository.loadHomeStats(
-        categories: categories,
-        currentCategoryId: currentCategory.id,
-      );
-
-      final HomeViewState initialState = HomeViewState(
-        categories: categories,
-        currentCategory: currentCategory,
-        stats: stats,
-        timer: timer,
-      );
-
-      if (timer.isRunning) {
-        _sessionStartElapsed = timer.sessionStartElapsed;
-        final DateTime? sessionStartTime = timer.sessionStartTime;
-        if (sessionStartTime != null) {
-          _sessionStartedAt = sessionStartTime.add(timer.sessionStartElapsed);
-        } else {
-          _sessionStartElapsed = timer.elapsed;
-          _sessionStartedAt = DateTime.now();
-        }
-
-        _timerService.startTicker(onTick: _tick);
-        await _timerService.updateWakelock(
-          _shouldEnableWakelockForCategory(currentCategory.id),
-        );
-        if (_persistenceEnabled) {
-          await _timerService.scheduleCompletion(
-            remaining: _remainingDuration(timer),
-            categoryTitle: currentCategory.title,
-          );
-        }
-      }
-
-      return initialState;
-    } catch (_) {
-      _persistenceEnabled = false;
-      return _fallbackState();
+    if (!_observerAttached) {
+      WidgetsBinding.instance.addObserver(this);
+      _observerAttached = true;
     }
+
+    ref.onDispose(() {
+      unawaited(_timerService.dispose());
+      if (_observerAttached) {
+        WidgetsBinding.instance.removeObserver(this);
+        _observerAttached = false;
+      }
+    });
+
+    final List<SubjectCategory> categories = await _repository.loadCategories();
+    final String? selectedCategoryId =
+        await _repository.loadSelectedCategoryId();
+    final SubjectCategory currentCategory = categories.firstWhere(
+      (SubjectCategory category) => category.id == selectedCategoryId,
+      orElse: () => categories.first,
+    );
+
+    final TimerSnapshot timer = await _repository.loadTimerSnapshot(
+      defaultTarget: configuredDefaultTarget,
+    );
+
+    final HomeStats stats = await _repository.loadHomeStats(
+      categories: categories,
+      currentCategoryId: currentCategory.id,
+    );
+
+    final HomeViewState initialState = HomeViewState(
+      categories: categories,
+      currentCategory: currentCategory,
+      stats: stats,
+      timer: timer,
+    );
+
+    if (timer.isRunning) {
+      _sessionStartElapsed = timer.sessionStartElapsed;
+      final DateTime? sessionStartTime = timer.sessionStartTime;
+      if (sessionStartTime != null) {
+        _sessionStartedAt = sessionStartTime.add(timer.sessionStartElapsed);
+      } else {
+        _sessionStartElapsed = timer.elapsed;
+        _sessionStartedAt = DateTime.now();
+      }
+
+      _timerService.startTicker(onTick: _tick);
+      await _timerService.updateWakelock(
+        _shouldEnableWakelockForCategory(currentCategory.id),
+      );
+      if (_persistenceEnabled) {
+        await _timerService.scheduleCompletion(
+          remaining: _remainingDuration(timer),
+          categoryTitle: currentCategory.title,
+        );
+      }
+    }
+
+    return initialState;
   }
 
   @override
@@ -553,61 +547,5 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       return Duration.zero;
     }
     return remaining;
-  }
-
-  HomeViewState _fallbackState() {
-    const List<SubjectCategory> categories = <SubjectCategory>[
-      SubjectCategory(
-        id: 'physics',
-        title: 'Physics',
-        icon: Icons.bolt_outlined,
-        accentColor: Color(0xFF3B82F6),
-        section: 'A/LEVELS',
-      ),
-      SubjectCategory(
-        id: 'maths',
-        title: 'Maths',
-        icon: Icons.calculate_outlined,
-        accentColor: Color(0xFFF43F5E),
-        section: 'A/LEVELS',
-      ),
-      SubjectCategory(
-        id: 'chemistry',
-        title: 'Chemistry',
-        icon: Icons.science_outlined,
-        accentColor: Color(0xFF22C55E),
-        section: 'A/LEVELS',
-      ),
-      SubjectCategory(
-        id: 'break',
-        title: 'Break',
-        icon: Icons.free_breakfast_outlined,
-        accentColor: Color(0xFF8554F8),
-        section: 'LIFESTYLE & OTHER',
-      ),
-      SubjectCategory(
-        id: 'idle',
-        title: 'Idle',
-        icon: Icons.hourglass_empty_rounded,
-        accentColor: Color(0xFF64748B),
-        section: 'LIFESTYLE & OTHER',
-      ),
-    ];
-
-    return HomeViewState(
-      categories: categories,
-      currentCategory: categories.first,
-      stats: HomeStats(
-        totalProductive: '4h 12m',
-        streak: '2h 00m',
-        next: 'Chemistry',
-      ),
-      timer: TimerSnapshot(
-        elapsed: Duration(hours: 2, minutes: 14, seconds: 45),
-        target: Duration(hours: 5),
-        isRunning: false,
-        sessionStartElapsed: Duration(hours: 2, minutes: 14, seconds: 45),
-      ),
-    );
   }
 }

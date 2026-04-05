@@ -17,13 +17,11 @@ void main() {
     expect(find.byType(Scaffold), findsWidgets);
 
     await tester.tap(find.byIcon(Icons.bar_chart_outlined));
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle(const Duration(milliseconds: 250));
 
-    expect(
-      find.text('Productivity Score').evaluate().isNotEmpty ||
-          find.textContaining('Unable to load analytics').evaluate().isNotEmpty,
-      isTrue,
-    );
+    expect(find.text('Daily Truth'), findsOneWidget);
     expect(find.text('Export Data'), findsOneWidget);
+    expect(find.byType(ErrorWidget), findsNothing);
+    expect(find.textContaining('Error'), findsNothing);
   });
 }

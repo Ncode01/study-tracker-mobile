@@ -1,3 +1,5 @@
+> [ARCHIVED] Out of date as of Phase 11. This document is retained for historical context and does not represent the current source of truth.
+
 # 01 UI Architecture - Current Reality (Verified)
 
 ## 1. App-Level Shell Structure

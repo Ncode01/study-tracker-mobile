@@ -15,33 +15,32 @@ class DailyTruthSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AnalyticsViewState state = ref.watch(analyticsViewProvider).maybeWhen(
-          data: (AnalyticsViewState state) => state,
-          orElse: () => const AnalyticsViewState(
-            periods: <String>['This Week', 'This Month', 'Term'],
-            selectedPeriod: 'This Week',
-            productivityScore: 0,
-            insights: <AnalyticsInsight>[],
-            distribution: <DistributionSlice>[],
-            weeklyTrend: <WeeklyTrendBar>[],
-            smartInsights: <SmartInsight>[],
-            totalTrackedLabel: 'Tracked',
-            totalTrackedMinutes: 0,
-          ),
-        );
+    final AnalyticsViewState? loadedState =
+        ref.read(analyticsViewProvider).valueOrNull;
+    final List<AnalyticsSession> sessions =
+        loadedState?.sessions ?? const <AnalyticsSession>[];
 
-    final List<_TruthBlock> planned = <_TruthBlock>[
-      const _TruthBlock('Physics', '08:00', 0.22),
-      const _TruthBlock('Maths', '10:15', 0.48),
-      const _TruthBlock('Chem', '13:00', 0.66),
-      const _TruthBlock('Break', '15:00', 0.84),
-    ];
-    final List<_TruthBlock> actual = <_TruthBlock>[
-      const _TruthBlock('Physics', '08:10', 0.18),
-      const _TruthBlock('Maths', '10:45', 0.54),
-      const _TruthBlock('Chem', '13:28', 0.74),
-      const _TruthBlock('Idle', '15:26', 0.91),
-    ];
+    final DateTime now = DateTime.now();
+    final DateTime startOfToday = DateTime(now.year, now.month, now.day);
+    final DateTime endOfToday = startOfToday.add(const Duration(days: 1));
+
+    final List<AnalyticsSession> todaySessions = sessions
+      .where(
+        (AnalyticsSession session) =>
+            !session.startedAt.isBefore(startOfToday) &&
+            session.startedAt.isBefore(endOfToday),
+      )
+      .toList(growable: false)..sort(
+      (AnalyticsSession a, AnalyticsSession b) =>
+          a.startedAt.compareTo(b.startedAt),
+    );
+
+    final int totalIdleSeconds = todaySessions
+        .where((AnalyticsSession session) => _isIdleOrBreak(session))
+        .fold<int>(0, (int sum, AnalyticsSession s) => sum + s.durationSeconds);
+
+    final _TimelineData timeline = _buildTimelineData(todaySessions);
+    final List<_SinkStat> topSinks = _buildTopSinks(todaySessions);
 
     return Material(
       color: Colors.transparent,
@@ -90,7 +89,7 @@ class DailyTruthSheet extends ConsumerWidget {
                             Expanded(
                               child: _MetricCard(
                                 title: 'Total Idle Time',
-                                value: '2h 14m',
+                                value: _formatDuration(totalIdleSeconds),
                                 accentColor: AppColors.textMuted,
                               ),
                             ),
@@ -98,7 +97,7 @@ class DailyTruthSheet extends ConsumerWidget {
                             Expanded(
                               child: _MetricCard(
                                 title: 'Time Drift',
-                                value: '24m',
+                                value: _formatDuration(timeline.driftSeconds),
                                 accentColor: AppColors.accentMaths,
                               ),
                             ),
@@ -115,8 +114,11 @@ class DailyTruthSheet extends ConsumerWidget {
                         const SizedBox(height: 12),
                         SizedBox(
                           height: 320,
-                          child:
-                              _DriftTimeline(planned: planned, actual: actual),
+                          child: _DriftTimeline(
+                            planned: timeline.planned,
+                            actual: timeline.actual,
+                            hasData: todaySessions.isNotEmpty,
+                          ),
                         ),
                         const SizedBox(height: 18),
                         Text(
@@ -127,19 +129,32 @@ class DailyTruthSheet extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        for (int index = 0;
-                            index < state.smartInsights.length;
-                            index++)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _SinkRow(
-                              index: index + 1,
-                              title: state.smartInsights[index].title,
-                              detail: state.smartInsights[index].detail,
-                              accentColor:
-                                  state.smartInsights[index].accentColor,
+                        if (topSinks.isEmpty)
+                          GlassContainer(
+                            borderRadius: BorderRadius.circular(20),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
                             ),
-                          ),
+                            child: Text(
+                              'No sessions recorded today yet.',
+                              style: AppTypography.display(
+                                color: AppColors.textMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          )
+                        else
+                          for (int index = 0; index < topSinks.length; index++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _SinkRow(
+                                index: index + 1,
+                                title: topSinks[index].title,
+                                detail: topSinks[index].detail,
+                                accentColor: topSinks[index].accentColor,
+                              ),
+                            ),
                       ],
                     ),
                   ),
@@ -150,6 +165,134 @@ class DailyTruthSheet extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  bool _isIdleOrBreak(AnalyticsSession session) {
+    final String id = session.categoryId.toLowerCase();
+    final String title = session.categoryTitle.toLowerCase();
+    return id == 'break' || id == 'idle' || title == 'break' || title == 'idle';
+  }
+
+  _TimelineData _buildTimelineData(List<AnalyticsSession> sessions) {
+    final List<AnalyticsSession> productiveSessions = sessions
+      .where((AnalyticsSession session) => !_isIdleOrBreak(session))
+      .toList(growable: false)..sort(
+      (AnalyticsSession a, AnalyticsSession b) =>
+          a.startedAt.compareTo(b.startedAt),
+    );
+
+    final List<_TruthBlock> actual = sessions
+        .map(
+          (AnalyticsSession session) => _TruthBlock(
+            title: session.categoryTitle,
+            timeLabel: _clockLabel(session.startedAt),
+          ),
+        )
+        .toList(growable: false);
+
+    if (productiveSessions.isEmpty) {
+      return _TimelineData(
+        planned: const <_TruthBlock>[],
+        actual: actual,
+        driftSeconds: 0,
+      );
+    }
+
+    final List<_TruthBlock> planned = <_TruthBlock>[];
+    final List<DateTime> plannedStarts = <DateTime>[];
+
+    DateTime cursor = productiveSessions.first.startedAt;
+    for (final AnalyticsSession session in productiveSessions) {
+      plannedStarts.add(cursor);
+      planned.add(
+        _TruthBlock(
+          title: session.categoryTitle,
+          timeLabel: _clockLabel(cursor),
+        ),
+      );
+      cursor = cursor.add(Duration(seconds: session.durationSeconds));
+    }
+
+    int driftSeconds = 0;
+    for (int i = 0; i < productiveSessions.length; i++) {
+      driftSeconds +=
+          productiveSessions[i].startedAt
+              .difference(plannedStarts[i])
+              .inSeconds
+              .abs();
+    }
+
+    return _TimelineData(
+      planned: planned,
+      actual: actual,
+      driftSeconds: driftSeconds,
+    );
+  }
+
+  List<_SinkStat> _buildTopSinks(List<AnalyticsSession> sessions) {
+    final Map<String, int> sinkSeconds = <String, int>{};
+
+    for (final AnalyticsSession session in sessions) {
+      if (!_isIdleOrBreak(session)) {
+        continue;
+      }
+      sinkSeconds[session.categoryTitle] =
+          (sinkSeconds[session.categoryTitle] ?? 0) + session.durationSeconds;
+    }
+
+    if (sinkSeconds.isEmpty) {
+      for (final AnalyticsSession session in sessions) {
+        sinkSeconds[session.categoryTitle] =
+            (sinkSeconds[session.categoryTitle] ?? 0) + session.durationSeconds;
+      }
+    }
+
+    final List<MapEntry<String, int>> sorted = sinkSeconds.entries.toList(
+      growable: false,
+    )..sort(
+      (MapEntry<String, int> a, MapEntry<String, int> b) =>
+          b.value.compareTo(a.value),
+    );
+
+    return sorted
+        .take(3)
+        .map((MapEntry<String, int> entry) {
+          final bool idleLike =
+              entry.key.toLowerCase() == 'break' ||
+              entry.key.toLowerCase() == 'idle';
+          final Color accent =
+              idleLike ? AppColors.accentMaths : AppColors.primaryPurple;
+          return _SinkStat(
+            title: entry.key,
+            detail: '${_formatDuration(entry.value)} today',
+            accentColor: accent,
+          );
+        })
+        .toList(growable: false);
+  }
+
+  static String _clockLabel(DateTime time) {
+    final String hour = time.hour.toString().padLeft(2, '0');
+    final String minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  static String _formatDuration(int durationSeconds) {
+    if (durationSeconds <= 0) {
+      return '0m';
+    }
+
+    final Duration duration = Duration(seconds: durationSeconds);
+    final int hours = duration.inHours;
+    final int minutes = duration.inMinutes.remainder(60);
+
+    if (hours == 0) {
+      return '${minutes}m';
+    }
+    if (minutes == 0) {
+      return '${hours}h';
+    }
+    return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
   }
 }
 
@@ -197,34 +340,61 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _TruthBlock {
-  const _TruthBlock(this.title, this.timeLabel, this.yFactor);
-
-  final String title;
-  final String timeLabel;
-  final double yFactor;
-}
-
-class _DriftTimeline extends StatelessWidget {
-  const _DriftTimeline({required this.planned, required this.actual});
+class _TimelineData {
+  const _TimelineData({
+    required this.planned,
+    required this.actual,
+    required this.driftSeconds,
+  });
 
   final List<_TruthBlock> planned;
   final List<_TruthBlock> actual;
+  final int driftSeconds;
+}
+
+class _TruthBlock {
+  const _TruthBlock({required this.title, required this.timeLabel});
+
+  final String title;
+  final String timeLabel;
+}
+
+class _DriftTimeline extends StatelessWidget {
+  const _DriftTimeline({
+    required this.planned,
+    required this.actual,
+    required this.hasData,
+  });
+
+  final List<_TruthBlock> planned;
+  final List<_TruthBlock> actual;
+  final bool hasData;
 
   @override
   Widget build(BuildContext context) {
+    if (!hasData) {
+      return GlassContainer(
+        borderRadius: BorderRadius.circular(22),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Center(
+          child: Text(
+            'No timeline data for today yet.',
+            style: AppTypography.display(
+              color: AppColors.textMuted,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      );
+    }
+
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return Stack(
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _DriftPainter(
-                  planned: planned,
-                  actual: actual,
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                ),
+                painter: _DriftPainter(planned: planned, actual: actual),
               ),
             ),
             Row(
@@ -232,9 +402,10 @@ class _DriftTimeline extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      _TimelineHeader(
-                          label: 'Planned',
-                          accentColor: AppColors.primaryPurple),
+                      const _TimelineHeader(
+                        label: 'Planned',
+                        accentColor: AppColors.primaryPurple,
+                      ),
                       const SizedBox(height: 10),
                       for (final _TruthBlock block in planned)
                         _TimelineBlock(
@@ -249,8 +420,10 @@ class _DriftTimeline extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      _TimelineHeader(
-                          label: 'Actual', accentColor: AppColors.accentMaths),
+                      const _TimelineHeader(
+                        label: 'Actual',
+                        accentColor: AppColors.accentMaths,
+                      ),
                       const SizedBox(height: 10),
                       for (final _TruthBlock block in actual)
                         _TimelineBlock(
@@ -283,10 +456,7 @@ class _TimelineHeader extends StatelessWidget {
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: accentColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Text(
@@ -348,50 +518,59 @@ class _TimelineBlock extends StatelessWidget {
 }
 
 class _DriftPainter extends CustomPainter {
-  const _DriftPainter({
-    required this.planned,
-    required this.actual,
-    required this.width,
-    required this.height,
-  });
+  const _DriftPainter({required this.planned, required this.actual});
 
   final List<_TruthBlock> planned;
   final List<_TruthBlock> actual;
-  final double width;
-  final double height;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..color = AppColors.accentMaths.withValues(alpha: 0.42);
+    final Paint paint =
+        Paint()
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke
+          ..color = AppColors.accentMaths.withValues(alpha: 0.42);
 
-    final double columnWidth = width / 2;
-    final double blockGap =
-        (height - 72) / math.max(planned.length, actual.length);
+    final double columnWidth = size.width / 2;
+    final int segmentCount = math.max(
+      math.min(planned.length, actual.length),
+      1,
+    );
+    final double blockGap = (size.height - 72) / segmentCount;
 
-    for (int index = 0;
-        index < math.min(planned.length, actual.length);
-        index++) {
+    for (
+      int index = 0;
+      index < math.min(planned.length, actual.length);
+      index++
+    ) {
       final double startY = 56 + index * blockGap + 18;
       final double endY = 56 + index * blockGap + 30;
-      final Path path = Path()
-        ..moveTo(columnWidth - 18, startY)
-        ..lineTo(columnWidth - 2, startY + 10)
-        ..lineTo(columnWidth + 2, endY - 6)
-        ..lineTo(columnWidth + 18, endY);
+      final Path path =
+          Path()
+            ..moveTo(columnWidth - 18, startY)
+            ..lineTo(columnWidth - 2, startY + 10)
+            ..lineTo(columnWidth + 2, endY - 6)
+            ..lineTo(columnWidth + 18, endY);
       canvas.drawPath(path, paint);
     }
   }
 
   @override
   bool shouldRepaint(covariant _DriftPainter oldDelegate) {
-    return oldDelegate.planned != planned ||
-        oldDelegate.actual != actual ||
-        oldDelegate.width != width ||
-        oldDelegate.height != height;
+    return oldDelegate.planned != planned || oldDelegate.actual != actual;
   }
+}
+
+class _SinkStat {
+  const _SinkStat({
+    required this.title,
+    required this.detail,
+    required this.accentColor,
+  });
+
+  final String title;
+  final String detail;
+  final Color accentColor;
 }
 
 class _SinkRow extends StatelessWidget {

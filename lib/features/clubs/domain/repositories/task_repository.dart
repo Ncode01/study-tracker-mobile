@@ -13,4 +13,51 @@ class TaskRepository {
         .map((Map<String, Object?> row) => StudyTask.fromMap(row))
         .toList(growable: false);
   }
+
+  Future<StudyTask> createTask({
+    required String clubId,
+    required String status,
+    required String title,
+    required String dueLabel,
+    required int estimateMinutes,
+    required double progress,
+  }) async {
+    final db = await _database.database;
+    final int id = await db.insert('tasks', <String, Object?>{
+      'clubId': clubId,
+      'status': status,
+      'title': title,
+      'dueLabel': dueLabel,
+      'estimateMinutes': estimateMinutes,
+      'progress': progress,
+    });
+
+    return StudyTask(
+      id: id,
+      clubId: clubId,
+      status: status,
+      title: title,
+      dueLabel: dueLabel,
+      estimateMinutes: estimateMinutes,
+      progress: progress,
+    );
+  }
+
+  Future<void> updateTaskStatus({
+    required int taskId,
+    required String status,
+  }) async {
+    final db = await _database.database;
+    await db.update(
+      'tasks',
+      <String, Object?>{'status': status},
+      where: 'id = ?',
+      whereArgs: <Object?>[taskId],
+    );
+  }
+
+  Future<void> deleteTask({required int taskId}) async {
+    final db = await _database.database;
+    await db.delete('tasks', where: 'id = ?', whereArgs: <Object?>[taskId]);
+  }
 }

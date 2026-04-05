@@ -113,7 +113,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _isWipingData = true;
     });
 
-    await ref.read(databaseHelperProvider).wipeAllData();
+    await ref.read(databaseProvider).wipeAllData();
     await ref.read(appSettingsServiceProvider).resetAll();
 
     ref.invalidate(homeViewNotifierProvider);

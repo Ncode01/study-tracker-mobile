@@ -75,7 +75,7 @@ class CalendarViewNotifier extends AsyncNotifier<CalendarViewState> {
   }
 
   Future<CalendarViewState> _loadState() async {
-    final db = await ref.read(databaseHelperProvider).database;
+    final db = await ref.read(databaseProvider).database;
     final List<Map<String, Object?>> rows = await db.rawQuery('''
       SELECT
         s.categoryId,
