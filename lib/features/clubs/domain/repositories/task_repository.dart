@@ -46,11 +46,12 @@ class TaskRepository {
   Future<void> updateTaskStatus({
     required int taskId,
     required String status,
+    required double progress,
   }) async {
     final db = await _database.database;
     await db.update(
       'tasks',
-      <String, Object?>{'status': status},
+      <String, Object?>{'status': status, 'progress': progress},
       where: 'id = ?',
       whereArgs: <Object?>[taskId],
     );

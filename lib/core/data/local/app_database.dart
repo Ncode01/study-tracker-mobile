@@ -7,7 +7,7 @@ class AppDatabase {
   AppDatabase();
 
   static const String _databaseName = 'timeflow.db';
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
 
   Database? _database;
 
@@ -81,7 +81,57 @@ class AppDatabase {
     if (oldVersion < 3) {
       await _migrateTasksStatusConstraint(db);
     }
+    if (oldVersion < 4) {
+      await _removeLegacySeededTasksIfPresent(db);
+    }
   }
+
+  Future<void> _removeLegacySeededTasksIfPresent(Database db) async {
+    final List<Map<String, Object?>> rows = await db.query(
+      'tasks',
+      columns: const <String>[
+        'clubId',
+        'status',
+        'title',
+        'dueLabel',
+        'estimateMinutes',
+      ],
+    );
+
+    if (rows.length != _legacyTaskSeedSignatures.length) {
+      return;
+    }
+
+    final Set<String> signatures =
+        rows.map((Map<String, Object?> row) => _taskSignature(row)).toSet();
+
+    if (signatures.length != _legacyTaskSeedSignatures.length) {
+      return;
+    }
+
+    if (!signatures.containsAll(_legacyTaskSeedSignatures)) {
+      return;
+    }
+
+    await db.delete('tasks');
+  }
+
+  String _taskSignature(Map<String, Object?> row) {
+    final String clubId = row['clubId'] as String? ?? '';
+    final String status = row['status'] as String? ?? '';
+    final String title = row['title'] as String? ?? '';
+    final String dueLabel = row['dueLabel'] as String? ?? '';
+    final int estimateMinutes = (row['estimateMinutes'] as num?)?.toInt() ?? 0;
+    return '$clubId|$status|$title|$dueLabel|$estimateMinutes';
+  }
+
+  static const Set<String> _legacyTaskSeedSignatures = <String>{
+    'robotics|doing|Test motor mount alignment|Due Fri|45',
+    'robotics|todo|Label prototype wiring|Due Sat|20',
+    'robotics|done|Assemble component kit|Completed|30',
+    'debate|doing|Build rebuttal deck|Due Thu|35',
+    'hackathon|todo|Polish demo copy|Due Mon|15',
+  };
 
   Future<void> _migrateTasksStatusConstraint(Database db) async {
     await db.transaction((txn) async {
@@ -139,9 +189,6 @@ class AppDatabase {
     final categoryCount = Sqflite.firstIntValue(
       await db.rawQuery('SELECT COUNT(*) FROM categories'),
     );
-    final taskCount = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM tasks'),
-    );
 
     if ((categoryCount ?? 0) == 0) {
       await db.insert('categories', <String, Object?>{
@@ -189,57 +236,6 @@ class AppDatabase {
         'section': 'LIFESTYLE & OTHER',
         'isDefault': 1,
       });
-    }
-
-    if ((taskCount ?? 0) == 0) {
-      final defaultTasks = <Map<String, Object?>>[
-        <String, Object?>{
-          'clubId': 'robotics',
-          'status': 'doing',
-          'title': 'Test motor mount alignment',
-          'dueLabel': 'Due Fri',
-          'estimateMinutes': 45,
-          'progress': 0.63,
-        },
-        <String, Object?>{
-          'clubId': 'robotics',
-          'status': 'todo',
-          'title': 'Label prototype wiring',
-          'dueLabel': 'Due Sat',
-          'estimateMinutes': 20,
-          'progress': 0.20,
-        },
-        <String, Object?>{
-          'clubId': 'robotics',
-          'status': 'done',
-          'title': 'Assemble component kit',
-          'dueLabel': 'Completed',
-          'estimateMinutes': 30,
-          'progress': 1.0,
-        },
-        <String, Object?>{
-          'clubId': 'debate',
-          'status': 'doing',
-          'title': 'Build rebuttal deck',
-          'dueLabel': 'Due Thu',
-          'estimateMinutes': 35,
-          'progress': 0.48,
-        },
-        <String, Object?>{
-          'clubId': 'hackathon',
-          'status': 'todo',
-          'title': 'Polish demo copy',
-          'dueLabel': 'Due Mon',
-          'estimateMinutes': 15,
-          'progress': 0.15,
-        },
-      ];
-
-      final batch = db.batch();
-      for (final task in defaultTasks) {
-        batch.insert('tasks', task);
-      }
-      await batch.commit(noResult: true);
     }
   }
 

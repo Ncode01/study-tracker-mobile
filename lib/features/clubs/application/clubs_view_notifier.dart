@@ -205,14 +205,12 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
     }
 
     final List<ClubTask> originalTasks = current.tasks;
+    final double nextProgress = _progressForStatus(status);
     final List<ClubTask> optimisticTasks = current.tasks
         .map(
           (ClubTask task) =>
               task.id == taskId
-                  ? task.copyWith(
-                    status: status,
-                    progress: _progressForStatus(status),
-                  )
+                  ? task.copyWith(status: status, progress: nextProgress)
                   : task,
         )
         .toList(growable: false);
@@ -223,6 +221,7 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
       await _repository.updateTaskStatus(
         taskId: taskId,
         status: _statusValue(status),
+        progress: nextProgress,
       );
     } catch (_) {
       state = AsyncData(current.copyWith(tasks: originalTasks));

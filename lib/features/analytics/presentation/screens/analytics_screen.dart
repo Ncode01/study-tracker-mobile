@@ -358,10 +358,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             loading: () => const SafeArea(child: _AnalyticsLoadingSkeleton()),
             error:
                 (Object error, StackTrace stackTrace) => SafeArea(
-                  child: Center(
-                    child: Text(
-                      'Unable to load analytics. $error',
-                      style: AppTypography.display(fontSize: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                    child: GlassEmptyState(
+                      icon: Icons.error_outline_rounded,
+                      title: 'Unable to load analytics',
+                      message:
+                          'We could not load your analytics data right now. Please try again.',
+                      buttonLabel: 'Try Again',
+                      onButtonTap: () => ref.invalidate(analyticsViewProvider),
                     ),
                   ),
                 ),

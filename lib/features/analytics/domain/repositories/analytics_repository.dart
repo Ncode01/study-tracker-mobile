@@ -74,6 +74,8 @@ class AnalyticsRepository {
     }
 
     final Map<String, int> byCategorySeconds = <String, int>{};
+    final Map<String, int> productiveByCategorySeconds = <String, int>{};
+    final Map<String, String> categoryTitlesById = <String, String>{};
     final List<AnalyticsSessionEntry> sessions = <AnalyticsSessionEntry>[];
     for (final Map<String, Object?> row in sessionRows) {
       final String categoryId = row['categoryId'] as String? ?? 'idle';
@@ -91,6 +93,11 @@ class AnalyticsRepository {
 
       byCategorySeconds[categoryId] =
           (byCategorySeconds[categoryId] ?? 0) + durationSeconds;
+      categoryTitlesById[categoryId] = categoryTitle;
+      if (isProductive) {
+        productiveByCategorySeconds[categoryId] =
+            (productiveByCategorySeconds[categoryId] ?? 0) + durationSeconds;
+      }
 
       sessions.add(
         AnalyticsSessionEntry(
@@ -126,6 +133,12 @@ class AnalyticsRepository {
             ? 0
             : ((productiveSeconds / totalSeconds) * 100).round().clamp(0, 100);
 
+    final int driftPercent = (100 - productivityScore).clamp(0, 100);
+    final String topFocusInsight = _buildTopFocusInsight(
+      productiveByCategorySeconds: productiveByCategorySeconds,
+      categoryTitlesById: categoryTitlesById,
+    );
+
     return AnalyticsDataBundle(
       selectedPeriod: selectedPeriod,
       daily: daily,
@@ -133,8 +146,8 @@ class AnalyticsRepository {
       totalTrackedMinutes: totalSeconds ~/ 60,
       productivityScore: productivityScore,
       smartInsightDetails: <String>[
-        'Break blocks are ${(100 - productivityScore).clamp(0, 100)}% of tracked time.',
-        'Most tracked minutes still cluster in your morning sessions.',
+        'Break or idle time is $driftPercent% of tracked sessions.',
+        topFocusInsight,
       ],
       sessions: sessions,
     );
@@ -213,6 +226,50 @@ class AnalyticsRepository {
                   : '${part[0].toUpperCase()}${part.substring(1)}',
         )
         .join(' ');
+  }
+
+  String _buildTopFocusInsight({
+    required Map<String, int> productiveByCategorySeconds,
+    required Map<String, String> categoryTitlesById,
+  }) {
+    if (productiveByCategorySeconds.isEmpty) {
+      return 'No productive sessions were logged in this period yet.';
+    }
+
+    String topCategoryId = productiveByCategorySeconds.keys.first;
+    int topSeconds = productiveByCategorySeconds[topCategoryId] ?? 0;
+
+    productiveByCategorySeconds.forEach((String categoryId, int seconds) {
+      if (seconds > topSeconds) {
+        topCategoryId = categoryId;
+        topSeconds = seconds;
+      }
+    });
+
+    final String topCategoryTitle =
+        categoryTitlesById[topCategoryId] ??
+        _titleFromCategoryId(topCategoryId);
+    return '$topCategoryTitle leads with ${_formatDuration(topSeconds)} productive time.';
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds <= 0) {
+      return '0m';
+    }
+
+    final Duration duration = Duration(seconds: seconds);
+    final int hours = duration.inHours;
+    final int minutes = duration.inMinutes.remainder(60);
+
+    if (hours == 0) {
+      return '${minutes}m';
+    }
+
+    if (minutes == 0) {
+      return '${hours}h';
+    }
+
+    return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
   }
 
   List<DistributionEntry> _buildDistribution(Map<String, int> byCategory) {

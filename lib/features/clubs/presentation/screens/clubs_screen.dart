@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/fading_skeleton.dart';
 import '../../../../core/widgets/glass_container.dart';
+import '../../../../core/widgets/glass_empty_state.dart';
 import '../../../home/presentation/widgets/ambient_background.dart';
 import '../../application/clubs_view_notifier.dart';
 import '../providers/clubs_providers.dart';
@@ -101,6 +103,22 @@ class ClubsScreen extends ConsumerWidget {
           const AmbientBackground(accentColor: AppColors.primaryPurple),
           asyncState.when(
             data: (ClubsViewState state) {
+              if (state.clubs.isEmpty) {
+                return SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                    child: GlassEmptyState(
+                      icon: Icons.groups_outlined,
+                      title: 'No clubs available yet',
+                      message:
+                          'Create your first club lane to start tracking tasks and deadlines.',
+                      buttonLabel: 'Refresh Clubs',
+                      onButtonTap: () => ref.invalidate(clubsViewProvider),
+                    ),
+                  ),
+                );
+              }
+
               List<ClubTask> tasksForStatus(ClubTaskStatus status) {
                 return state.tasks
                     .where(
@@ -220,20 +238,58 @@ class ClubsScreen extends ConsumerWidget {
                 ),
               );
             },
-            loading:
-                () => const SafeArea(
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+            loading: () => const SafeArea(child: _ClubsLoadingSkeleton()),
             error:
                 (Object error, StackTrace stackTrace) => SafeArea(
-                  child: Center(
-                    child: Text(
-                      'Unable to load clubs. $error',
-                      style: AppTypography.display(fontSize: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                    child: GlassEmptyState(
+                      icon: Icons.error_outline_rounded,
+                      title: 'Unable to load clubs',
+                      message:
+                          'Something went wrong while loading your task board. Please try again.',
+                      buttonLabel: 'Try Again',
+                      onButtonTap: () => ref.invalidate(clubsViewProvider),
                     ),
                   ),
                 ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClubsLoadingSkeleton extends StatelessWidget {
+  const _ClubsLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          FadingSkeletonBlock(width: 120, height: 32, borderRadius: 12),
+          SizedBox(height: 8),
+          FadingSkeletonBlock(width: 220, height: 16, borderRadius: 10),
+          SizedBox(height: 18),
+          Row(
+            children: [
+              FadingSkeletonBlock(width: 72, height: 96, borderRadius: 20),
+              SizedBox(width: 14),
+              FadingSkeletonBlock(width: 72, height: 96, borderRadius: 20),
+              SizedBox(width: 14),
+              FadingSkeletonBlock(width: 72, height: 96, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 20),
+          FadingSkeletonBlock(height: 190, borderRadius: 22),
+          SizedBox(height: 12),
+          FadingSkeletonBlock(height: 190, borderRadius: 22),
+          SizedBox(height: 12),
+          FadingSkeletonBlock(height: 190, borderRadius: 22),
         ],
       ),
     );

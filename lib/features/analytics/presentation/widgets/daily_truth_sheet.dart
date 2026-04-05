@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/fading_skeleton.dart';
 import '../../../../core/widgets/glass_button.dart';
 import '../../../../core/widgets/glass_container.dart';
 import '../../application/analytics_view_notifier.dart';
@@ -15,8 +16,13 @@ class DailyTruthSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AnalyticsViewState? loadedState =
-        ref.read(analyticsViewProvider).valueOrNull;
+    final AsyncValue<AnalyticsViewState> asyncState = ref.watch(
+      analyticsViewProvider,
+    );
+    final AnalyticsViewState? loadedState = asyncState.valueOrNull;
+    final bool isLoading = asyncState.isLoading && loadedState == null;
+    final bool hasBlockingError = asyncState.hasError && loadedState == null;
+
     final List<AnalyticsSession> sessions =
         loadedState?.sessions ?? const <AnalyticsSession>[];
 
@@ -84,77 +90,90 @@ class DailyTruthSheet extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 18),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _MetricCard(
-                                title: 'Total Idle Time',
-                                value: _formatDuration(totalIdleSeconds),
-                                accentColor: AppColors.textMuted,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _MetricCard(
-                                title: 'Time Drift',
-                                value: _formatDuration(timeline.driftSeconds),
-                                accentColor: AppColors.accentMaths,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          'Intent vs Reality',
-                          style: AppTypography.heading(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 320,
-                          child: _DriftTimeline(
-                            planned: timeline.planned,
-                            actual: timeline.actual,
-                            hasData: todaySessions.isNotEmpty,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          'Top Time Sinks',
-                          style: AppTypography.heading(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        if (topSinks.isEmpty)
-                          GlassContainer(
-                            borderRadius: BorderRadius.circular(20),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            child: Text(
-                              'No sessions recorded today yet.',
-                              style: AppTypography.display(
-                                color: AppColors.textMuted,
-                                fontSize: 12,
-                              ),
-                            ),
+                        if (isLoading)
+                          const _DailyTruthLoadingContent()
+                        else if (hasBlockingError)
+                          _DailyTruthErrorContent(
+                            onRetry:
+                                () => ref.invalidate(analyticsViewProvider),
                           )
-                        else
-                          for (int index = 0; index < topSinks.length; index++)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _SinkRow(
-                                index: index + 1,
-                                title: topSinks[index].title,
-                                detail: topSinks[index].detail,
-                                accentColor: topSinks[index].accentColor,
+                        else ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _MetricCard(
+                                  title: 'Total Idle Time',
+                                  value: _formatDuration(totalIdleSeconds),
+                                  accentColor: AppColors.textMuted,
+                                ),
                               ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _MetricCard(
+                                  title: 'Time Drift',
+                                  value: _formatDuration(timeline.driftSeconds),
+                                  accentColor: AppColors.accentMaths,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Intent vs Reality',
+                            style: AppTypography.heading(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 320,
+                            child: _DriftTimeline(
+                              planned: timeline.planned,
+                              actual: timeline.actual,
+                              hasData: todaySessions.isNotEmpty,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Top Time Sinks',
+                            style: AppTypography.heading(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          if (topSinks.isEmpty)
+                            GlassContainer(
+                              borderRadius: BorderRadius.circular(20),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              child: Text(
+                                'No sessions recorded today yet.',
+                                style: AppTypography.display(
+                                  color: AppColors.textMuted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            )
+                          else
+                            for (
+                              int index = 0;
+                              index < topSinks.length;
+                              index++
+                            )
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _SinkRow(
+                                  index: index + 1,
+                                  title: topSinks[index].title,
+                                  detail: topSinks[index].detail,
+                                  accentColor: topSinks[index].accentColor,
+                                ),
+                              ),
+                        ],
                       ],
                     ),
                   ),
@@ -293,6 +312,77 @@ class DailyTruthSheet extends ConsumerWidget {
       return '${hours}h';
     }
     return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+  }
+}
+
+class _DailyTruthLoadingContent extends StatelessWidget {
+  const _DailyTruthLoadingContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: FadingSkeletonBlock(height: 96, borderRadius: 22)),
+            SizedBox(width: 12),
+            Expanded(child: FadingSkeletonBlock(height: 96, borderRadius: 22)),
+          ],
+        ),
+        SizedBox(height: 18),
+        FadingSkeletonBlock(width: 170, height: 28, borderRadius: 10),
+        SizedBox(height: 12),
+        FadingSkeletonBlock(height: 320, borderRadius: 22),
+        SizedBox(height: 18),
+        FadingSkeletonBlock(width: 160, height: 28, borderRadius: 10),
+        SizedBox(height: 12),
+        FadingSkeletonBlock(height: 76, borderRadius: 20),
+        SizedBox(height: 10),
+        FadingSkeletonBlock(height: 76, borderRadius: 20),
+      ],
+    );
+  }
+}
+
+class _DailyTruthErrorContent extends StatelessWidget {
+  const _DailyTruthErrorContent({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Unable to load daily truth',
+            style: AppTypography.heading(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Daily analytics could not be fetched right now. Retry to refresh this report.',
+            style: AppTypography.display(
+              color: AppColors.textMuted,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GlassButton(
+            label: 'Retry',
+            icon: Icons.refresh_rounded,
+            onTap: onRetry,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+        ],
+      ),
+    );
   }
 }
 

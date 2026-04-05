@@ -126,17 +126,15 @@ class HubScreen extends ConsumerWidget {
                   ),
               loading: () => const _HubLoadingSkeleton(),
               error:
-                  (Object error, StackTrace stackTrace) => Center(
-                    child: GlassContainer(
-                      borderRadius: BorderRadius.circular(18),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      child: Text(
-                        'Unable to load Hub. $error',
-                        style: AppTypography.display(fontSize: 12),
-                      ),
+                  (Object error, StackTrace stackTrace) => Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                    child: GlassEmptyState(
+                      icon: Icons.error_outline_rounded,
+                      title: 'Unable to load hub',
+                      message:
+                          'Hub data could not be loaded right now. Please try again.',
+                      buttonLabel: 'Try Again',
+                      onButtonTap: () => ref.invalidate(hubViewProvider),
                     ),
                   ),
             ),
