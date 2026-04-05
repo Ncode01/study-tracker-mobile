@@ -2,58 +2,50 @@
 
 ## 1. Diagnostics Snapshot
 
-Latest command results captured after Phase 6 stabilization:
+Latest command results captured after Phase 8 implementation:
 
 - `flutter analyze`: no issues
 - `flutter test`: pass
 
-Previous audit notes still applicable:
+## 2. Phase 8 Completed
 
-- `dart analyze`: 2 included-file lint warnings from `lints-5.1.1` rule recognition
-- `flutter pub outdated`: multiple direct/transitive dependencies behind latest versions
+### 2.1 Product Polish and Edge Cases
 
-## 2. Phase 6 Completed
+- Hub, Calendar, and Analytics now include glassmorphic empty states with CTA routing to Home.
+- Async loading states now use subtle fading skeleton blocks (no harsh spinner usage on key surfaces).
+- Hub and Calendar now read persisted SQLite sessions/categories for state generation.
 
-### 2.1 Data Integrity and Persistence
+### 2.2 Home Customization and Settings
 
-- SQLite migration pipeline is now active (`timeflow.db` v2 with `onUpgrade`).
-- Session query indexes added (`endedAt`, `categoryId`).
-- Timer snapshot now persists absolute session anchors (`sessionStartTime`, `sessionStartElapsed`).
-- Cold-start continuity uses real elapsed recomputation from persisted absolute start time.
+- `SwitchContextSheet` now supports validated Create New flow via `CreateCategoryDialog`.
+- Custom categories are persisted to SQLite and reflected instantly in Home UI state.
+- Home top area now includes settings entry and dedicated `SettingsSheet`.
+- Settings (`Enable Haptics`, `Enable Sound`, `Keep Screen Awake`) are persisted via SharedPreferences.
+- `SensoryService` now respects settings before triggering haptics/audio.
 
-### 2.2 Home Stabilization
+### 2.3 Motion and Routing Polish
 
-- stale Home nav state removed (`selectedBottomNav`)
-- unused derived timer providers removed
-- side-effect orchestration extracted into `TimerService` (ticker, wakelock, notifications, sensory)
-- `HomeViewNotifier` now coordinates state/persistence while delegating side effects
+- Hero transition added between active Home category icon and matching icon in `SwitchContextSheet`.
+- Hub and Analytics card/chart entry motion now staggers with 50ms fade timing.
+- First-run onboarding flow is now in place and persisted via SharedPreferences completion flag.
 
-### 2.3 Analytics Truth Alignment
+## 3. Remaining Gaps
 
-- period dropdown now maps to concrete date boundaries (`since`)
-- repository enforces period boundaries in SQL (`WHERE endedAt >= ?`)
-- totals/distribution/productivity are now computed from period-filtered rows
-
-## 3. What Is Still Mock-Backed or Incomplete
-
-- Calendar: static day/event data in notifier
-- Hub: static countdown/subject/session data in notifier
-- Daily Truth sheet: mostly placeholder blocks/metrics
-- Clubs: read-only task board (no create/edit/move/complete flow)
+- Daily Truth sheet remains mostly placeholder and still needs computed metrics from persisted sessions.
+- Clubs feature remains read-only (no create/edit/move/complete workflow yet).
 
 ## 4. Residual Risks
 
-1. Test depth remains low:
-	coverage is still mostly smoke/reachability, with no deep notifier/repository regression suites for new timer and analytics paths.
+1. Test depth remains limited:
+	coverage is still mostly smoke/reachability, with low notifier/repository regression depth.
 2. Dependency lag remains:
 	multiple direct/transitive packages are still behind latest versions.
-3. Performance risk remains:
-	heavy glass/blur rendering can become expensive on lower-end devices.
+3. Rendering cost risk remains:
+	heavy glass/blur composition may still be expensive on lower-end devices.
 
-## 5. Phase 7 Priority Backlog
+## 5. Suggested Next Phase Focus
 
-- repository-backed Calendar and Hub state
-- Daily Truth computed from persisted sessions
-- Clubs task mutation flows
-- notifier/repository-focused automated tests
-- dependency upgrade wave
+- Daily Truth computation and narrative quality from real session aggregates
+- Clubs mutation flows (CRUD + task movement persistence)
+- notifier/repository targeted automated test expansion
+- dependency upgrade wave with compatibility verification

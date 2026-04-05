@@ -3,11 +3,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/fading_skeleton.dart';
 import '../../../../core/widgets/glass_button.dart';
 import '../../../../core/widgets/glass_container.dart';
+import '../../../../core/widgets/glass_empty_state.dart';
 import '../../../home/presentation/widgets/ambient_background.dart';
 import '../../application/hub_view_notifier.dart';
 import '../providers/hub_providers.dart';
@@ -17,7 +20,7 @@ class HubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final HubViewState state = ref.watch(hubViewProvider);
+    final AsyncValue<HubViewState> asyncState = ref.watch(hubViewProvider);
     final HubViewNotifier notifier = ref.read(hubViewProvider.notifier);
 
     return Scaffold(
@@ -25,76 +28,153 @@ class HubScreen extends ConsumerWidget {
         children: [
           const AmbientBackground(accentColor: AppColors.primaryPurple),
           SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'A/Level Hub',
-                            style: AppTypography.heading(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w700,
+            child: asyncState.when(
+              data:
+                  (HubViewState state) => SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'A/Level Hub',
+                                  style: AppTypography.heading(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Countdowns and session flow',
+                                  style: AppTypography.display(
+                                    color: AppColors.textMuted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            GlassContainer(
+                              borderRadius: BorderRadius.circular(16),
+                              padding: const EdgeInsets.all(12),
+                              child: const Icon(
+                                Icons.more_vert_rounded,
+                                color: AppColors.textMain,
+                              ),
+                            ),
+                          ],
+                        ).animate().fade(duration: 400.ms).slideY(begin: 0.05),
+                        const SizedBox(height: 18),
+                        if (state.subjects.isEmpty) ...[
+                          GlassEmptyState(
+                            icon: Icons.auto_awesome_rounded,
+                            title: 'Hub is waiting for your first sprint',
+                            message:
+                                'No sessions logged today. Start a focus block to unlock your study hub timeline.',
+                            buttonLabel: 'Start a Focus Session',
+                            onButtonTap: () => context.go('/'),
+                          ),
+                        ] else ...[
+                          SizedBox(
+                            height: 72,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: state.countdowns.length,
+                              separatorBuilder:
+                                  (_, __) => const SizedBox(width: 12),
+                              itemBuilder: (BuildContext context, int index) {
+                                final HubCountdown countdown =
+                                    state.countdowns[index];
+                                return _CountdownPill(countdown: countdown)
+                                    .animate(delay: (50 * index).ms)
+                                    .fade(duration: 280.ms)
+                                    .scaleXY(begin: 0.94);
+                              },
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Countdowns and session flow',
-                            style: AppTypography.display(
-                              color: AppColors.textMuted,
-                              fontSize: 13,
+                          const SizedBox(height: 18),
+                          for (
+                            int index = 0;
+                            index < state.subjects.length;
+                            index++
+                          )
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: _GlassExpansionTile(
+                                    subject: state.subjects[index],
+                                    expanded:
+                                        state.expandedSubjectId ==
+                                        state.subjects[index].id,
+                                    onTap:
+                                        () => notifier.toggleSubjectExpansion(
+                                          state.subjects[index].id,
+                                        ),
+                                  )
+                                  .animate(delay: (50 * index).ms)
+                                  .fade(duration: 320.ms)
+                                  .slideY(begin: 0.045),
                             ),
-                          ),
                         ],
-                      ),
-                      GlassContainer(
-                        borderRadius: BorderRadius.circular(16),
-                        padding: const EdgeInsets.all(12),
-                        child: const Icon(
-                          Icons.more_vert_rounded,
-                          color: AppColors.textMain,
-                        ),
-                      ),
-                    ],
-                  ).animate().fade(duration: 400.ms).slideY(begin: 0.05),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    height: 72,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: state.countdowns.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (BuildContext context, int index) {
-                        final HubCountdown countdown = state.countdowns[index];
-                        return _CountdownPill(countdown: countdown)
-                            .animate(delay: (50 * index).ms)
-                            .scaleXY(begin: 0.94);
-                      },
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  for (final HubSubject subject in state.subjects)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: _GlassExpansionTile(
-                        subject: subject,
-                        expanded: state.expandedSubjectId == subject.id,
-                        onTap: () =>
-                            notifier.toggleSubjectExpansion(subject.id),
-                      ).animate(delay: 80.ms).fade(duration: 350.ms),
+              loading: () => const _HubLoadingSkeleton(),
+              error:
+                  (Object error, StackTrace stackTrace) => Center(
+                    child: GlassContainer(
+                      borderRadius: BorderRadius.circular(18),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: Text(
+                        'Unable to load Hub. $error',
+                        style: AppTypography.display(fontSize: 12),
+                      ),
                     ),
-                ],
-              ),
+                  ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HubLoadingSkeleton extends StatelessWidget {
+  const _HubLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          FadingSkeletonBlock(width: 170, height: 32, borderRadius: 12),
+          SizedBox(height: 8),
+          FadingSkeletonBlock(width: 210, height: 16, borderRadius: 10),
+          SizedBox(height: 18),
+          Row(
+            children: [
+              FadingSkeletonBlock(width: 120, height: 72, borderRadius: 20),
+              SizedBox(width: 12),
+              FadingSkeletonBlock(width: 120, height: 72, borderRadius: 20),
+              SizedBox(width: 12),
+              FadingSkeletonBlock(width: 90, height: 72, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 18),
+          FadingSkeletonBlock(height: 140, borderRadius: 26),
+          SizedBox(height: 12),
+          FadingSkeletonBlock(height: 140, borderRadius: 26),
         ],
       ),
     );
@@ -227,8 +307,10 @@ class _CollapsedSubject extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.keyboard_arrow_down_rounded,
-            color: AppColors.textMuted),
+        const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: AppColors.textMuted,
+        ),
       ],
     );
   }
@@ -389,21 +471,28 @@ class _SubjectRingPainter extends CustomPainter {
     final double radius = (size.width / 2) - 10;
     final Rect arcRect = Rect.fromCircle(center: center, radius: radius);
 
-    final Paint trackPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 7
-      ..color = AppColors.glassBorder;
+    final Paint trackPaint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 7
+          ..color = AppColors.glassBorder;
 
-    final Paint progressPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 6
-      ..color = accentColor;
+    final Paint progressPaint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 6
+          ..color = accentColor;
 
     canvas.drawArc(arcRect, 0, math.pi * 2, false, trackPaint);
     canvas.drawArc(
-        arcRect, -math.pi / 2, math.pi * 2 * progress, false, progressPaint);
+      arcRect,
+      -math.pi / 2,
+      math.pi * 2 * progress,
+      false,
+      progressPaint,
+    );
   }
 
   @override

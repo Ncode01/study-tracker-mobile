@@ -9,6 +9,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/glass_container.dart';
 import '../../domain/models/subject_category.dart';
 import '../providers/home_providers.dart';
+import 'category_hero_tag.dart';
+import 'create_category_dialog.dart';
 
 class SwitchContextSheet extends ConsumerStatefulWidget {
   const SwitchContextSheet({super.key});
@@ -20,11 +22,35 @@ class SwitchContextSheet extends ConsumerStatefulWidget {
 class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
   String _query = '';
 
+  Future<void> _handleCreateNew() async {
+    final CreateCategoryResult? payload =
+        await showDialog<CreateCategoryResult>(
+          context: context,
+          builder: (_) => const CreateCategoryDialog(),
+        );
+
+    if (!mounted || payload == null) {
+      return;
+    }
+
+    final SubjectCategory? created = await ref
+        .read(homeViewNotifierProvider.notifier)
+        .createCategory(title: payload.title, accentColor: payload.accentColor);
+
+    if (!mounted || created == null) {
+      return;
+    }
+
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<SubjectCategory> categories = ref.watch(categoryListProvider);
-    final Map<String, List<SubjectCategory>> grouped =
-        _groupBySection(categories);
+    final String currentCategoryId = ref.watch(currentCategoryProvider).id;
+    final Map<String, List<SubjectCategory>> grouped = _groupBySection(
+      categories,
+    );
 
     return SafeArea(
       top: false,
@@ -60,6 +86,7 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
                       _SectionGrid(
                         title: section,
                         categories: _applyFilter(grouped[section] ?? const []),
+                        currentCategoryId: currentCategoryId,
                         onSelect: (SubjectCategory category) {
                           unawaited(
                             ref
@@ -68,6 +95,7 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
                           );
                           Navigator.of(context).pop();
                         },
+                        onCreateNew: _handleCreateNew,
                       ),
                     const SizedBox(height: 8),
                   ],
@@ -85,8 +113,10 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
       return categories;
     }
     return categories
-        .where((SubjectCategory category) =>
-            category.title.toLowerCase().contains(_query))
+        .where(
+          (SubjectCategory category) =>
+              category.title.toLowerCase().contains(_query),
+        )
         .toList(growable: false);
   }
 
@@ -134,12 +164,16 @@ class _SectionGrid extends StatelessWidget {
   const _SectionGrid({
     required this.title,
     required this.categories,
+    required this.currentCategoryId,
     required this.onSelect,
+    required this.onCreateNew,
   });
 
   final String title;
   final List<SubjectCategory> categories;
+  final String currentCategoryId;
   final ValueChanged<SubjectCategory> onSelect;
+  final VoidCallback onCreateNew;
 
   @override
   Widget build(BuildContext context) {
@@ -175,9 +209,10 @@ class _SectionGrid extends StatelessWidget {
               for (final SubjectCategory category in categories)
                 GlassCard(
                   category: category,
+                  isActive: category.id == currentCategoryId,
                   onTap: () => onSelect(category),
                 ),
-              const _CreateNewCard(),
+              _CreateNewCard(onTap: onCreateNew),
             ],
           ),
         ],
@@ -190,10 +225,12 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.category,
+    required this.isActive,
     required this.onTap,
   });
 
   final SubjectCategory category;
+  final bool isActive;
   final VoidCallback onTap;
 
   @override
@@ -202,11 +239,29 @@ class GlassCard extends StatelessWidget {
       onTap: onTap,
       child: GlassContainer(
         borderRadius: BorderRadius.circular(16),
+        borderColor:
+            isActive
+                ? category.accentColor.withValues(alpha: 0.55)
+                : AppColors.glassBorder,
+        backgroundColor:
+            isActive
+                ? category.accentColor.withValues(alpha: 0.09)
+                : AppColors.glassBackground,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(category.icon, color: category.accentColor, size: 20),
+            Hero(
+              tag: categoryHeroTag(category.id),
+              child: Material(
+                color: Colors.transparent,
+                child: Icon(
+                  category.icon,
+                  color: category.accentColor,
+                  size: 20,
+                ),
+              ),
+            ),
             const Spacer(),
             Text(
               category.title,
@@ -234,21 +289,26 @@ class GlassCard extends StatelessWidget {
 }
 
 class _CreateNewCard extends StatelessWidget {
-  const _CreateNewCard();
+  const _CreateNewCard({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DashedBorder(
-      borderRadius: BorderRadius.circular(16),
-      color: AppColors.glassBorder,
-      child: Center(
-        child: Text(
-          'Create New',
-          textAlign: TextAlign.center,
-          style: AppTypography.display(
-            color: AppColors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: DashedBorder(
+        borderRadius: BorderRadius.circular(16),
+        color: AppColors.glassBorder,
+        child: Center(
+          child: Text(
+            'Create New',
+            textAlign: TextAlign.center,
+            style: AppTypography.display(
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -285,10 +345,7 @@ class DashedBorder extends StatelessWidget {
 }
 
 class _DashedBorderPainter extends CustomPainter {
-  const _DashedBorderPainter({
-    required this.borderRadius,
-    required this.color,
-  });
+  const _DashedBorderPainter({required this.borderRadius, required this.color});
 
   final BorderRadius borderRadius;
   final Color color;
@@ -301,10 +358,11 @@ class _DashedBorderPainter extends CustomPainter {
     const double dashWidth = 6;
     const double dashSpace = 4;
 
-    final Paint paint = Paint()
-      ..color = color
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+    final Paint paint =
+        Paint()
+          ..color = color
+          ..strokeWidth = 1
+          ..style = PaintingStyle.stroke;
 
     for (final PathMetric metric in path.computeMetrics()) {
       double distance = 0;

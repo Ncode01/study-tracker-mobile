@@ -10,8 +10,8 @@ class TimerRepository {
   TimerRepository({
     required AppDatabase database,
     required SharedPreferences preferences,
-  })  : _database = database,
-        _preferences = preferences;
+  }) : _database = database,
+       _preferences = preferences;
 
   static const String _selectedCategoryKey = 'selected_category_id';
   static const String _timerElapsedKey = 'timer_elapsed_seconds';
@@ -33,6 +33,26 @@ class TimerRepository {
         .toList(growable: false);
   }
 
+  Future<void> insertCategory(SubjectCategory category) async {
+    final db = await _database.database;
+    await db.insert('categories', <String, Object?>{
+      ...category.toMap(),
+      'isDefault': 0,
+    });
+  }
+
+  Future<bool> categoryIdExists(String categoryId) async {
+    final db = await _database.database;
+    final List<Map<String, Object?>> rows = await db.query(
+      'categories',
+      columns: const <String>['id'],
+      where: 'id = ?',
+      whereArgs: <Object?>[categoryId],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
+  }
+
   Future<String?> loadSelectedCategoryId() async {
     return _preferences.getString(_selectedCategoryKey);
   }
@@ -49,22 +69,25 @@ class TimerRepository {
         _preferences.getInt(_timerTargetKey) ?? defaultTarget.inSeconds;
     final bool wasRunning = _preferences.getBool(_timerRunningKey) ?? false;
     final int? lastUpdateMs = _preferences.getInt(_timerLastUpdateKey);
-    final DateTime? savedSessionStartTime =
-        _loadDateTime(_timerSessionStartTimeKey);
+    final DateTime? savedSessionStartTime = _loadDateTime(
+      _timerSessionStartTimeKey,
+    );
     final int sessionStartElapsedSeconds =
         _preferences.getInt(_timerSessionStartElapsedKey) ?? elapsedSeconds;
 
     Duration elapsed = Duration(seconds: elapsedSeconds);
     final Duration target = Duration(seconds: targetSeconds);
-    Duration sessionStartElapsed =
-        Duration(seconds: sessionStartElapsedSeconds);
+    Duration sessionStartElapsed = Duration(
+      seconds: sessionStartElapsedSeconds,
+    );
 
     DateTime? effectiveSessionStartTime = savedSessionStartTime;
 
     if (wasRunning) {
       if (savedSessionStartTime != null) {
-        final Duration trueElapsed =
-            DateTime.now().difference(savedSessionStartTime);
+        final Duration trueElapsed = DateTime.now().difference(
+          savedSessionStartTime,
+        );
         if (!trueElapsed.isNegative) {
           elapsed = trueElapsed;
         }
@@ -174,24 +197,28 @@ class TimerRepository {
       }
     }
 
-    final SubjectCategory fallback = categories.isNotEmpty
-        ? categories.first
-        : const SubjectCategory(
-            id: 'physics',
-            title: 'Physics',
-            icon: Icons.bolt_outlined,
-            accentColor: Color(0xFF3B82F6),
-            section: 'A/LEVELS',
-          );
+    final SubjectCategory fallback =
+        categories.isNotEmpty
+            ? categories.first
+            : const SubjectCategory(
+              id: 'physics',
+              title: 'Physics',
+              icon: Icons.bolt_outlined,
+              accentColor: Color(0xFF3B82F6),
+              section: 'A/LEVELS',
+            );
 
-    final SubjectCategory nextCategory = categories
-        .where((SubjectCategory c) =>
-            c.id != currentCategoryId && c.section == 'A/LEVELS')
-        .cast<SubjectCategory?>()
-        .firstWhere(
-          (SubjectCategory? c) => c != null,
-          orElse: () => fallback,
-        )!;
+    final SubjectCategory nextCategory =
+        categories
+            .where(
+              (SubjectCategory c) =>
+                  c.id != currentCategoryId && c.section == 'A/LEVELS',
+            )
+            .cast<SubjectCategory?>()
+            .firstWhere(
+              (SubjectCategory? c) => c != null,
+              orElse: () => fallback,
+            )!;
 
     return HomeStats(
       totalProductive: _formatDuration(totalProductiveSeconds),

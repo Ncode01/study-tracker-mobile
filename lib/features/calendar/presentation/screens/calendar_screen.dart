@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/fading_skeleton.dart';
 import '../../../../core/widgets/glass_container.dart';
+import '../../../../core/widgets/glass_empty_state.dart';
 import '../../../home/presentation/widgets/ambient_background.dart';
 import '../../application/calendar_view_notifier.dart';
 import '../providers/calendar_providers.dart';
@@ -17,124 +20,196 @@ class CalendarScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final CalendarDay selectedDay = ref.watch(selectedCalendarDayProvider);
-    final List<CalendarDay> days = ref.watch(calendarDaysProvider);
-    final CalendarViewNotifier notifier =
-        ref.read(calendarViewProvider.notifier);
+    final AsyncValue<CalendarViewState> asyncState = ref.watch(
+      calendarViewProvider,
+    );
+    final CalendarViewNotifier notifier = ref.read(
+      calendarViewProvider.notifier,
+    );
 
     return Scaffold(
       body: Stack(
         children: [
           const AmbientBackground(accentColor: AppColors.primaryPurple),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: asyncState.when(
+              data: (CalendarViewState state) {
+                final CalendarDay? selectedDay = state.selectedDay;
+                final List<CalendarDay> days = state.days;
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Calendar',
-                            style: AppTypography.heading(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            DateFormat('EEEE, MMM d').format(selectedDay.date),
-                            style: AppTypography.display(
-                              color: AppColors.textMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      GlassContainer(
-                        borderRadius: BorderRadius.circular(16),
-                        padding: const EdgeInsets.all(12),
-                        child: const Icon(
-                          Icons.view_week_rounded,
-                          color: AppColors.textMain,
-                        ),
-                      ),
-                    ],
-                  ).animate().fade(duration: 400.ms).slideY(begin: 0.06),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    height: 92,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: days.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (BuildContext context, int index) {
-                        final CalendarDay day = days[index];
-                        final bool selected = index ==
-                            ref.watch(calendarViewProvider.select(
-                              (CalendarViewState state) =>
-                                  state.selectedDayIndex,
-                            ));
-                        return _DayChip(
-                          day: day,
-                          selected: selected,
-                          onTap: () => notifier.selectDay(index),
-                        ).animate(delay: (40 * index).ms).scaleXY(begin: 0.96);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Expanded(
-                    child: GlassContainer(
-                      borderRadius: BorderRadius.circular(28),
-                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Timeline',
+                                'Calendar',
                                 style: AppTypography.heading(
-                                  fontSize: 18,
+                                  fontSize: 26,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
+                              const SizedBox(height: 4),
                               Text(
-                                '${selectedDay.events.length} blocks',
+                                DateFormat(
+                                  'EEEE, MMM d',
+                                ).format(selectedDay?.date ?? DateTime.now()),
                                 style: AppTypography.display(
                                   color: AppColors.textMuted,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              child: SizedBox(
-                                height: 16 * 84,
-                                child:
-                                    _TimelineGrid(events: selectedDay.events),
-                              ),
+                          GlassContainer(
+                            borderRadius: BorderRadius.circular(16),
+                            padding: const EdgeInsets.all(12),
+                            child: const Icon(
+                              Icons.view_week_rounded,
+                              color: AppColors.textMain,
                             ),
                           ),
                         ],
+                      ).animate().fade(duration: 400.ms).slideY(begin: 0.06),
+                      const SizedBox(height: 18),
+                      if (days.isNotEmpty)
+                        SizedBox(
+                          height: 92,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: days.length,
+                            separatorBuilder:
+                                (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (BuildContext context, int index) {
+                              final CalendarDay day = days[index];
+                              final bool selected =
+                                  index == state.selectedDayIndex;
+                              return _DayChip(
+                                    day: day,
+                                    selected: selected,
+                                    onTap: () => notifier.selectDay(index),
+                                  )
+                                  .animate(delay: (40 * index).ms)
+                                  .scaleXY(begin: 0.96);
+                            },
+                          ),
+                        ),
+                      if (days.isNotEmpty) const SizedBox(height: 18),
+                      Expanded(
+                        child: GlassContainer(
+                          borderRadius: BorderRadius.circular(28),
+                          padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Timeline',
+                                    style: AppTypography.heading(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${selectedDay?.events.length ?? 0} blocks',
+                                    style: AppTypography.display(
+                                      color: AppColors.textMuted,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Expanded(
+                                child:
+                                    selectedDay == null ||
+                                            selectedDay.events.isEmpty
+                                        ? GlassEmptyState(
+                                          icon: Icons.auto_awesome_rounded,
+                                          title: 'Nothing scheduled yet',
+                                          message:
+                                              'No sessions logged today. Start a focus session and your timeline will appear here.',
+                                          buttonLabel: 'Start a Focus Session',
+                                          onButtonTap: () => context.go('/'),
+                                        )
+                                        : SingleChildScrollView(
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          child: SizedBox(
+                                            height: 16 * 84,
+                                            child: _TimelineGrid(
+                                              events: selectedDay.events,
+                                            ),
+                                          ),
+                                        ),
+                              ),
+                            ],
+                          ),
+                        ).animate().fade(duration: 450.ms).slideY(begin: 0.05),
                       ),
-                    ).animate().fade(duration: 450.ms).slideY(begin: 0.05),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
+              loading: () => const _CalendarLoadingSkeleton(),
+              error:
+                  (Object error, StackTrace stackTrace) => Center(
+                    child: GlassContainer(
+                      borderRadius: BorderRadius.circular(18),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: Text(
+                        'Unable to load calendar. $error',
+                        style: AppTypography.display(fontSize: 12),
+                      ),
+                    ),
+                  ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarLoadingSkeleton extends StatelessWidget {
+  const _CalendarLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          FadingSkeletonBlock(width: 150, height: 32, borderRadius: 12),
+          SizedBox(height: 8),
+          FadingSkeletonBlock(width: 190, height: 16, borderRadius: 10),
+          SizedBox(height: 18),
+          Row(
+            children: [
+              FadingSkeletonBlock(width: 92, height: 92, borderRadius: 22),
+              SizedBox(width: 12),
+              FadingSkeletonBlock(width: 92, height: 92, borderRadius: 22),
+              SizedBox(width: 12),
+              FadingSkeletonBlock(width: 92, height: 92, borderRadius: 22),
+            ],
+          ),
+          SizedBox(height: 18),
+          Expanded(child: FadingSkeletonBlock(height: 260, borderRadius: 28)),
         ],
       ),
     );
@@ -161,29 +236,31 @@ class _DayChip extends StatelessWidget {
         width: 94,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          gradient: selected
-              ? LinearGradient(
-                  colors: <Color>[
-                    AppColors.primaryPurple.withValues(alpha: 0.48),
-                    AppColors.primaryPurple.withValues(alpha: 0.14),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
+          gradient:
+              selected
+                  ? LinearGradient(
+                    colors: <Color>[
+                      AppColors.primaryPurple.withValues(alpha: 0.48),
+                      AppColors.primaryPurple.withValues(alpha: 0.14),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                  : null,
           color: selected ? null : AppColors.glassBackground,
           border: Border.all(
             color: selected ? AppColors.primaryPurple : AppColors.glassBorder,
           ),
-          boxShadow: selected
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.primaryPurple.withValues(alpha: 0.35),
-                    blurRadius: 18,
-                    spreadRadius: 2,
-                  ),
-                ]
-              : null,
+          boxShadow:
+              selected
+                  ? <BoxShadow>[
+                    BoxShadow(
+                      color: AppColors.primaryPurple.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                  : null,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -270,7 +347,8 @@ class _TimelineGrid extends StatelessWidget {
           ),
         for (final CalendarEvent event in events)
           Positioned(
-            top: ((event.start.hour + event.start.minute / 60) - startHour) *
+            top:
+                ((event.start.hour + event.start.minute / 60) - startHour) *
                     hourHeight +
                 6,
             left: 58,
@@ -341,13 +419,7 @@ class _TimelineBlock extends StatelessWidget {
     }
 
     return block
-        .animate(
-          onPlay: (controller) => controller.repeat(reverse: true),
-        )
-        .scaleXY(
-          begin: 0.99,
-          end: 1.02,
-          duration: 1400.ms,
-        );
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .scaleXY(begin: 0.99, end: 1.02, duration: 1400.ms);
   }
 }

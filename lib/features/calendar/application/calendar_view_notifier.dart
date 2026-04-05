@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../../core/data/local/app_database.dart';
 
 class CalendarEvent {
   const CalendarEvent({
@@ -34,20 +37,20 @@ class CalendarDay {
 }
 
 class CalendarViewState {
-  const CalendarViewState({
-    required this.days,
-    required this.selectedDayIndex,
-  });
+  const CalendarViewState({required this.days, required this.selectedDayIndex});
 
   final List<CalendarDay> days;
   final int selectedDayIndex;
 
-  CalendarDay get selectedDay => days[selectedDayIndex];
+  CalendarDay? get selectedDay {
+    if (days.isEmpty) {
+      return null;
+    }
+    final int safeIndex = selectedDayIndex.clamp(0, days.length - 1);
+    return days[safeIndex];
+  }
 
-  CalendarViewState copyWith({
-    List<CalendarDay>? days,
-    int? selectedDayIndex,
-  }) {
+  CalendarViewState copyWith({List<CalendarDay>? days, int? selectedDayIndex}) {
     return CalendarViewState(
       days: days ?? this.days,
       selectedDayIndex: selectedDayIndex ?? this.selectedDayIndex,
@@ -55,80 +58,105 @@ class CalendarViewState {
   }
 }
 
-class CalendarViewNotifier extends Notifier<CalendarViewState> {
+class CalendarViewNotifier extends AsyncNotifier<CalendarViewState> {
   @override
-  CalendarViewState build() {
-    final DateTime today = DateTime(2026, 4, 12);
-
-    final List<CalendarDay> days = <CalendarDay>[
-      CalendarDay(
-        date: today,
-        label: 'Mon 12',
-        isToday: true,
-        events: <CalendarEvent>[
-          CalendarEvent(
-            title: 'Physics Paper Review',
-            start: DateTime(2026, 4, 12, 8, 0),
-            duration: const Duration(minutes: 75),
-            accentColor: const Color(0xFF3B82F6),
-            note: 'Library pod · past papers',
-          ),
-          CalendarEvent(
-            title: 'Maths Drill',
-            start: DateTime(2026, 4, 12, 11, 0),
-            duration: const Duration(minutes: 60),
-            accentColor: const Color(0xFFF43F5E),
-            note: 'Differentiation set',
-          ),
-          CalendarEvent(
-            title: 'Chemistry Lab Prep',
-            start: DateTime(2026, 4, 12, 15, 0),
-            duration: const Duration(minutes: 90),
-            accentColor: const Color(0xFF22C55E),
-            note: 'Mock practical',
-            isCurrent: true,
-          ),
-        ],
-      ),
-      CalendarDay(
-        date: DateTime(2026, 4, 13),
-        label: 'Tue 13',
-        events: <CalendarEvent>[
-          CalendarEvent(
-            title: 'Tutor Check-in',
-            start: DateTime(2026, 4, 13, 9, 0),
-            duration: const Duration(minutes: 45),
-            accentColor: const Color(0xFF8554F8),
-            note: 'Revision plan review',
-          ),
-          CalendarEvent(
-            title: 'Focus Block',
-            start: DateTime(2026, 4, 13, 13, 30),
-            duration: const Duration(minutes: 120),
-            accentColor: const Color(0xFF3B82F6),
-            note: 'Physics + Maths',
-          ),
-        ],
-      ),
-      CalendarDay(
-        date: DateTime(2026, 4, 14),
-        label: 'Wed 14',
-        events: <CalendarEvent>[
-          CalendarEvent(
-            title: 'Club Meeting',
-            start: DateTime(2026, 4, 14, 16, 0),
-            duration: const Duration(minutes: 50),
-            accentColor: const Color(0xFFF59E0B),
-            note: 'Robotics stand-up',
-          ),
-        ],
-      ),
-    ];
-
-    return CalendarViewState(days: days, selectedDayIndex: 0);
+  Future<CalendarViewState> build() async {
+    return _loadState();
   }
 
   void selectDay(int index) {
-    state = state.copyWith(selectedDayIndex: index);
+    final CalendarViewState? current = state.valueOrNull;
+    if (current == null || current.days.isEmpty) {
+      return;
+    }
+
+    final int clamped = index.clamp(0, current.days.length - 1);
+    state = AsyncData(current.copyWith(selectedDayIndex: clamped));
+  }
+
+  Future<CalendarViewState> _loadState() async {
+    final db = await AppDatabase.instance.database;
+    final List<Map<String, Object?>> rows = await db.rawQuery('''
+      SELECT
+        s.categoryId,
+        s.startedAt,
+        s.durationSeconds,
+        c.title AS categoryTitle,
+        c.accentColorValue AS accentColorValue
+      FROM sessions s
+      LEFT JOIN categories c ON c.id = s.categoryId
+      ORDER BY s.startedAt ASC
+    ''');
+
+    if (rows.isEmpty) {
+      return const CalendarViewState(
+        days: <CalendarDay>[],
+        selectedDayIndex: 0,
+      );
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final Map<DateTime, List<CalendarEvent>> byDay =
+        <DateTime, List<CalendarEvent>>{};
+
+    for (final Map<String, Object?> row in rows) {
+      final DateTime start = DateTime.parse(row['startedAt'] as String);
+      final int durationSeconds = row['durationSeconds'] as int? ?? 0;
+      if (durationSeconds <= 0) {
+        continue;
+      }
+
+      final Duration duration = Duration(seconds: durationSeconds);
+      final DateTime end = start.add(duration);
+      final DateTime dayKey = DateTime(start.year, start.month, start.day);
+      final String categoryTitle = row['categoryTitle'] as String? ?? 'Study';
+      final Color color = Color(row['accentColorValue'] as int? ?? 0xFF64748B);
+
+      byDay
+          .putIfAbsent(dayKey, () => <CalendarEvent>[])
+          .add(
+            CalendarEvent(
+              title: '$categoryTitle Session',
+              start: start,
+              duration: duration,
+              accentColor: color,
+              note:
+                  '${DateFormat('HH:mm').format(start)} - ${DateFormat('HH:mm').format(end)}',
+              isCurrent: now.isAfter(start) && now.isBefore(end),
+            ),
+          );
+    }
+
+    final List<DateTime> orderedDays = byDay.keys.toList(growable: false)
+      ..sort((DateTime a, DateTime b) => a.compareTo(b));
+
+    final List<CalendarDay> days = orderedDays
+        .map((DateTime date) {
+          final List<CalendarEvent> events = List<CalendarEvent>.from(
+            byDay[date] ?? const <CalendarEvent>[],
+          )..sort(
+            (CalendarEvent a, CalendarEvent b) => a.start.compareTo(b.start),
+          );
+
+          return CalendarDay(
+            date: date,
+            label: DateFormat('EEE d').format(date),
+            events: events,
+            isToday: _isSameDate(date, today),
+          );
+        })
+        .toList(growable: false);
+
+    final int todayIndex = days.indexWhere((CalendarDay day) => day.isToday);
+
+    return CalendarViewState(
+      days: days,
+      selectedDayIndex: todayIndex >= 0 ? todayIndex : days.length - 1,
+    );
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }

@@ -65,11 +65,13 @@ class AnalyticsRepository {
       );
     }
 
-    final List<DistributionEntry> distribution =
-        _buildDistribution(byCategorySeconds);
-    final int productivityScore = totalMinutes == 0
-        ? 0
-        : ((productiveMinutes / totalMinutes) * 100).round().clamp(0, 100);
+    final List<DistributionEntry> distribution = _buildDistribution(
+      byCategorySeconds,
+    );
+    final int productivityScore =
+        totalMinutes == 0
+            ? 0
+            : ((productiveMinutes / totalMinutes) * 100).round().clamp(0, 100);
 
     return AnalyticsDataBundle(
       selectedPeriod: selectedPeriod,
@@ -128,24 +130,18 @@ class AnalyticsRepository {
 
   List<DistributionEntry> _buildDistribution(Map<String, int> byCategory) {
     if (byCategory.isEmpty) {
-      return const <DistributionEntry>[
-        DistributionEntry(
-            label: 'Physics', value: 42, color: Color(0xFF3B82F6)),
-        DistributionEntry(label: 'Maths', value: 30, color: Color(0xFFF43F5E)),
-        DistributionEntry(label: 'Chem', value: 18, color: Color(0xFF22C55E)),
-        DistributionEntry(label: 'Idle', value: 10, color: Color(0xFF64748B)),
-      ];
+      return const <DistributionEntry>[];
     }
 
     final int total = byCategory.values.fold<int>(0, (int a, int b) => a + b);
     final Map<String, ({String label, Color color})> metadata =
         <String, ({String label, Color color})>{
-      'physics': (label: 'Physics', color: const Color(0xFF3B82F6)),
-      'maths': (label: 'Maths', color: const Color(0xFFF43F5E)),
-      'chemistry': (label: 'Chem', color: const Color(0xFF22C55E)),
-      'break': (label: 'Break', color: const Color(0xFF8554F8)),
-      'idle': (label: 'Idle', color: const Color(0xFF64748B)),
-    };
+          'physics': (label: 'Physics', color: const Color(0xFF3B82F6)),
+          'maths': (label: 'Maths', color: const Color(0xFFF43F5E)),
+          'chemistry': (label: 'Chem', color: const Color(0xFF22C55E)),
+          'break': (label: 'Break', color: const Color(0xFF8554F8)),
+          'idle': (label: 'Idle', color: const Color(0xFF64748B)),
+        };
 
     final List<DistributionEntry> entries = <DistributionEntry>[];
     byCategory.forEach((String key, int value) {

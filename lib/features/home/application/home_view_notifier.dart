@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/app_settings_service.dart';
 import '../../../core/data/local/app_database.dart';
 import '../domain/models/home_stats.dart';
 import '../domain/models/home_view_state.dart';
@@ -23,6 +24,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
   DateTime? _backgroundedAt;
   bool _observerAttached = false;
   bool _persistenceEnabled = true;
+  bool _keepScreenAwakeEnabled = true;
 
   @override
   Future<HomeViewState> build() async {
@@ -31,6 +33,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
         database: AppDatabase.instance,
         preferences: await SharedPreferences.getInstance(),
       );
+
+      final settings = await AppSettingsService.instance.snapshot();
+      _keepScreenAwakeEnabled = settings.keepScreenAwake;
 
       if (!_observerAttached) {
         WidgetsBinding.instance.addObserver(this);
@@ -82,7 +87,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
 
         _timerService.startTicker(onTick: _tick);
         await _timerService.updateWakelock(
-          _isDeepWorkCategoryId(currentCategory.id),
+          _shouldEnableWakelockForCategory(currentCategory.id),
         );
         if (_persistenceEnabled) {
           await _timerService.scheduleCompletion(
@@ -138,7 +143,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
 
     await _timerService.onSessionStarted(
       remaining: _remainingDuration(nextTimer),
-      enableWakelock: _isDeepWorkCategoryId(next.currentCategory.id),
+      enableWakelock: _shouldEnableWakelockForCategory(next.currentCategory.id),
       categoryTitle: next.currentCategory.title,
     );
 
@@ -156,7 +161,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     state = AsyncData(current.copyWith(currentCategory: category));
     unawaited(_timerService.onCategorySwitched());
     if (current.timer.isRunning) {
-      await _timerService.updateWakelock(_isDeepWorkCategoryId(category.id));
+      await _timerService.updateWakelock(
+        _shouldEnableWakelockForCategory(category.id),
+      );
       await _timerService.scheduleCompletion(
         remaining: _remainingDuration(current.timer),
         categoryTitle: category.title,
@@ -178,6 +185,81 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     final SubjectCategory? breakCategory = _categoryById('break');
     if (breakCategory != null) {
       await switchCategory(breakCategory);
+    }
+  }
+
+  Future<SubjectCategory?> createCategory({
+    required String title,
+    required Color accentColor,
+  }) async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null) {
+      return null;
+    }
+
+    final String trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) {
+      return null;
+    }
+
+    final String categoryId = await _generateUniqueCategoryId(trimmedTitle);
+    final SubjectCategory category = SubjectCategory(
+      id: categoryId,
+      title: trimmedTitle,
+      icon: Icons.auto_awesome_rounded,
+      accentColor: accentColor,
+      section: 'CUSTOM',
+    );
+
+    if (_persistenceEnabled) {
+      await _repository.insertCategory(category);
+      await _repository.saveSelectedCategoryId(category.id);
+    }
+
+    final List<SubjectCategory> nextCategories = <SubjectCategory>[
+      ...current.categories,
+      category,
+    ];
+
+    final HomeStats nextStats =
+        _persistenceEnabled
+            ? await _repository.loadHomeStats(
+              categories: nextCategories,
+              currentCategoryId: category.id,
+            )
+            : current.stats.copyWith(next: category.title);
+
+    final HomeViewState nextState = current.copyWith(
+      categories: nextCategories,
+      currentCategory: category,
+      stats: nextStats,
+    );
+
+    state = AsyncData(nextState);
+    unawaited(_timerService.onCategorySwitched());
+
+    if (current.timer.isRunning) {
+      await _timerService.updateWakelock(
+        _shouldEnableWakelockForCategory(category.id),
+      );
+      await _timerService.scheduleCompletion(
+        remaining: _remainingDuration(current.timer),
+        categoryTitle: category.title,
+      );
+    }
+
+    return category;
+  }
+
+  Future<void> setKeepScreenAwakeEnabled(bool enabled) async {
+    _keepScreenAwakeEnabled = enabled;
+    await AppSettingsService.instance.setKeepScreenAwake(enabled);
+
+    final HomeViewState? current = state.valueOrNull;
+    if (current != null && current.timer.isRunning) {
+      await _timerService.updateWakelock(
+        _shouldEnableWakelockForCategory(current.currentCategory.id),
+      );
     }
   }
 
@@ -224,12 +306,13 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       endElapsed: nextTimer.elapsed,
     );
 
-    final HomeStats stats = _persistenceEnabled
-        ? await _repository.loadHomeStats(
-            categories: current.categories,
-            currentCategoryId: current.currentCategory.id,
-          )
-        : current.stats;
+    final HomeStats stats =
+        _persistenceEnabled
+            ? await _repository.loadHomeStats(
+              categories: current.categories,
+              currentCategoryId: current.currentCategory.id,
+            )
+            : current.stats;
 
     final HomeViewState next = current.copyWith(timer: nextTimer, stats: stats);
     state = AsyncData(next);
@@ -249,8 +332,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       sessionStartElapsed: current.timer.elapsed,
     );
 
-    final HomeViewState completedState =
-        current.copyWith(timer: completedTimer);
+    final HomeViewState completedState = current.copyWith(
+      timer: completedTimer,
+    );
     state = AsyncData(completedState);
     if (_persistenceEnabled) {
       await _repository.saveTimerSnapshot(completedTimer);
@@ -261,12 +345,13 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       endElapsed: completedState.timer.elapsed,
     );
 
-    final HomeStats stats = _persistenceEnabled
-        ? await _repository.loadHomeStats(
-            categories: completedState.categories,
-            currentCategoryId: completedState.currentCategory.id,
-          )
-        : completedState.stats;
+    final HomeStats stats =
+        _persistenceEnabled
+            ? await _repository.loadHomeStats(
+              categories: completedState.categories,
+              currentCategoryId: completedState.currentCategory.id,
+            )
+            : completedState.stats;
 
     state = AsyncData(completedState.copyWith(stats: stats));
   }
@@ -327,8 +412,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
 
     Duration nextElapsed = current.timer.elapsed;
     if (current.timer.sessionStartTime != null) {
-      final Duration absoluteElapsed =
-          DateTime.now().difference(current.timer.sessionStartTime!);
+      final Duration absoluteElapsed = DateTime.now().difference(
+        current.timer.sessionStartTime!,
+      );
       if (!absoluteElapsed.isNegative) {
         nextElapsed = absoluteElapsed;
       }
@@ -385,6 +471,32 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
 
   bool _isDeepWorkCategoryId(String categoryId) {
     return categoryId != 'break' && categoryId != 'idle';
+  }
+
+  bool _shouldEnableWakelockForCategory(String categoryId) {
+    return _keepScreenAwakeEnabled && _isDeepWorkCategoryId(categoryId);
+  }
+
+  String _slugify(String value) {
+    final String lowered = value.toLowerCase();
+    final String slug = lowered.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final String trimmed = slug.replaceAll(RegExp(r'^-+|-+$'), '');
+    return trimmed.isEmpty ? 'category' : trimmed;
+  }
+
+  Future<String> _generateUniqueCategoryId(String title) async {
+    final String base = _slugify(title);
+    String candidate = base;
+    int suffix = 2;
+
+    while (_categoryById(candidate) != null ||
+        (_persistenceEnabled &&
+            await _repository.categoryIdExists(candidate))) {
+      candidate = '$base-$suffix';
+      suffix += 1;
+    }
+
+    return candidate;
   }
 
   Duration _remainingDuration(TimerSnapshot timer) {
