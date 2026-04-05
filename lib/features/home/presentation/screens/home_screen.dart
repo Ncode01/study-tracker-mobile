@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../core/services/app_settings_service.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/fading_skeleton.dart';
 import '../../../../core/widgets/glass_container.dart';
@@ -14,7 +15,6 @@ import '../widgets/category_hero_tag.dart';
 import '../widgets/category_context_row.dart';
 import '../widgets/onboarding_flow_sheet.dart';
 import '../widgets/quick_switch_chips.dart';
-import '../widgets/settings_sheet.dart';
 import '../widgets/timer_ring.dart';
 import '../widgets/top_stats_bar.dart';
 
@@ -40,7 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _showOnboardingIfNeeded() async {
-    final settings = await AppSettingsService.instance.snapshot();
+    final settings = await ref.read(appSettingsServiceProvider).snapshot();
     if (!mounted || settings.onboardingCompleted) {
       return;
     }
@@ -130,19 +130,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                           Icons.settings_rounded,
                                           color: Colors.white,
                                         ),
-                                        onPressed: () {
-                                          showModalBottomSheet<void>(
-                                            context: context,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
-                                            builder:
-                                                (_) =>
-                                                    const FractionallySizedBox(
-                                                      heightFactor: 0.58,
-                                                      child: SettingsSheet(),
-                                                    ),
-                                          );
-                                        },
+                                        onPressed:
+                                            () => context.push('/settings'),
                                       ),
                                     ),
                                   ],

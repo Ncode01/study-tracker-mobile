@@ -6,14 +6,21 @@ import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/clubs/presentation/screens/clubs_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/hub/presentation/screens/hub_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../widgets/app_shell.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/',
   routes: <RouteBase>[
     StatefulShellRoute.indexedStack(
-      builder: (BuildContext context, GoRouterState state,
-          StatefulNavigationShell navigationShell) {
+      builder: (
+        BuildContext context,
+        GoRouterState state,
+        StatefulNavigationShell navigationShell,
+      ) {
         return AppShell(navigationShell: navigationShell);
       },
       branches: <StatefulShellBranch>[
@@ -68,6 +75,13 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/settings',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        return const SettingsScreen();
+      },
     ),
   ],
 );

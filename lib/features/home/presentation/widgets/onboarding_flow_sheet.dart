@@ -1,23 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/app_settings_service.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/glass_button.dart';
 import '../../../../core/widgets/glass_container.dart';
 
-class OnboardingFlowSheet extends StatefulWidget {
+class OnboardingFlowSheet extends ConsumerStatefulWidget {
   const OnboardingFlowSheet({super.key, required this.onFinished});
 
   final Future<void> Function() onFinished;
 
   @override
-  State<OnboardingFlowSheet> createState() => _OnboardingFlowSheetState();
+  ConsumerState<OnboardingFlowSheet> createState() =>
+      _OnboardingFlowSheetState();
 }
 
-class _OnboardingFlowSheetState extends State<OnboardingFlowSheet> {
+class _OnboardingFlowSheetState extends ConsumerState<OnboardingFlowSheet> {
   late final PageController _controller;
   int _pageIndex = 0;
   bool _finishing = false;
@@ -64,7 +66,7 @@ class _OnboardingFlowSheetState extends State<OnboardingFlowSheet> {
       _finishing = true;
     });
 
-    await AppSettingsService.instance.setOnboardingCompleted(true);
+    await ref.read(appSettingsServiceProvider).setOnboardingCompleted(true);
     await widget.onFinished();
 
     if (mounted) {

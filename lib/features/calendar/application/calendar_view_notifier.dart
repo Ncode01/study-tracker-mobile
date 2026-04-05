@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/data/local/app_database.dart';
+import '../../../core/providers/core_providers.dart';
 
 class CalendarEvent {
   const CalendarEvent({
@@ -75,7 +75,7 @@ class CalendarViewNotifier extends AsyncNotifier<CalendarViewState> {
   }
 
   Future<CalendarViewState> _loadState() async {
-    final db = await AppDatabase.instance.database;
+    final db = await ref.read(databaseHelperProvider).database;
     final List<Map<String, Object?>> rows = await db.rawQuery('''
       SELECT
         s.categoryId,

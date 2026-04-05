@@ -2,6 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+typedef NotificationTapHandler = void Function(String? payload);
+
 class NotificationService {
   NotificationService._();
 
@@ -13,8 +15,11 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+  NotificationTapHandler? _tapHandler;
 
-  Future<void> init() async {
+  Future<void> init({NotificationTapHandler? onTap}) async {
+    _tapHandler = onTap ?? _tapHandler;
+
     if (_initialized) {
       return;
     }
@@ -27,19 +32,34 @@ class NotificationService {
       macOS: DarwinInitializationSettings(),
     );
 
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: _handleNotificationResponse,
+    );
+
+    final NotificationAppLaunchDetails? launchDetails =
+        await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      _dispatchPayload(launchDetails?.notificationResponse?.payload);
+    }
 
     await _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
 
     await _plugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
+          IOSFlutterLocalNotificationsPlugin
+        >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
 
     _initialized = true;
+  }
+
+  void setTapHandler(NotificationTapHandler handler) {
+    _tapHandler = handler;
   }
 
   Future<void> scheduleTimerCompletion({
@@ -67,6 +87,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: 'timer_complete',
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
@@ -76,5 +97,13 @@ class NotificationService {
       return;
     }
     await _plugin.cancel(_timerNotificationId);
+  }
+
+  void _handleNotificationResponse(NotificationResponse response) {
+    _dispatchPayload(response.payload);
+  }
+
+  void _dispatchPayload(String? payload) {
+    _tapHandler?.call(payload);
   }
 }

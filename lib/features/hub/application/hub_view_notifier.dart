@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/data/local/app_database.dart';
+import '../../../core/providers/core_providers.dart';
 
 class HubCountdown {
   const HubCountdown({
@@ -83,7 +83,7 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
   }
 
   Future<HubViewState> _loadState() async {
-    final db = await AppDatabase.instance.database;
+    final db = await ref.read(databaseHelperProvider).database;
 
     final List<Map<String, Object?>> categoryRows = await db.query(
       'categories',

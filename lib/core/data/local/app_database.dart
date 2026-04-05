@@ -197,4 +197,15 @@ class AppDatabase {
       await batch.commit(noResult: true);
     }
   }
+
+  Future<void> wipeAllData() async {
+    final Database db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('sessions');
+      await txn.delete('tasks');
+      await txn.delete('categories');
+    });
+
+    await _seedDefaultsIfNeeded(db);
+  }
 }

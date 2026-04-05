@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import '../../../core/data/local/app_database.dart';
+import '../../../core/providers/core_providers.dart';
 import '../domain/repositories/analytics_repository.dart';
 
 class AnalyticsInsight {
@@ -35,10 +35,7 @@ class DistributionSlice {
 }
 
 class WeeklyTrendBar {
-  const WeeklyTrendBar({
-    required this.day,
-    required this.value,
-  });
+  const WeeklyTrendBar({required this.day, required this.value});
 
   final String day;
   final double value;
@@ -111,7 +108,9 @@ class AnalyticsViewNotifier extends AsyncNotifier<AnalyticsViewState> {
 
   @override
   Future<AnalyticsViewState> build() async {
-    _repository = AnalyticsRepository(database: AppDatabase.instance);
+    _repository = AnalyticsRepository(
+      database: ref.read(databaseHelperProvider),
+    );
     const String defaultPeriod = 'This Week';
     final AnalyticsDataBundle bundle = await _repository.loadBundle(
       selectedPeriod: defaultPeriod,

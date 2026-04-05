@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/providers/core_providers.dart';
 import '../../../core/services/app_settings_service.dart';
-import '../../../core/data/local/app_database.dart';
 import '../domain/models/home_stats.dart';
 import '../domain/models/home_view_state.dart';
 import '../domain/models/subject_category.dart';
@@ -15,10 +14,11 @@ import 'timer_service.dart';
 
 class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     with WidgetsBindingObserver {
-  static const Duration _defaultTarget = Duration(hours: 5);
+  static const Duration _fallbackTarget = Duration(minutes: 60);
 
-  late final TimerRepository _repository;
-  final TimerService _timerService = TimerService();
+  late TimerRepository _repository;
+  late TimerService _timerService;
+  late AppSettingsService _appSettingsService;
   Duration _sessionStartElapsed = Duration.zero;
   DateTime? _sessionStartedAt;
   DateTime? _backgroundedAt;
@@ -29,13 +29,21 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
   @override
   Future<HomeViewState> build() async {
     try {
+      _appSettingsService = ref.read(appSettingsServiceProvider);
       _repository = TimerRepository(
-        database: AppDatabase.instance,
-        preferences: await SharedPreferences.getInstance(),
+        database: ref.read(databaseHelperProvider),
+        preferences: ref.read(sharedPreferencesProvider),
+      );
+      _timerService = TimerService(
+        sensoryService: ref.read(sensoryServiceProvider),
+        notificationService: ref.read(notificationServiceProvider),
       );
 
-      final settings = await AppSettingsService.instance.snapshot();
+      final AppSettingsSnapshot settings = await _appSettingsService.snapshot();
       _keepScreenAwakeEnabled = settings.keepScreenAwake;
+      final Duration configuredDefaultTarget = Duration(
+        minutes: settings.defaultFocusMinutes,
+      );
 
       if (!_observerAttached) {
         WidgetsBinding.instance.addObserver(this);
@@ -60,7 +68,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       );
 
       final TimerSnapshot timer = await _repository.loadTimerSnapshot(
-        defaultTarget: _defaultTarget,
+        defaultTarget: configuredDefaultTarget,
       );
 
       final HomeStats stats = await _repository.loadHomeStats(
@@ -253,12 +261,52 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
 
   Future<void> setKeepScreenAwakeEnabled(bool enabled) async {
     _keepScreenAwakeEnabled = enabled;
-    await AppSettingsService.instance.setKeepScreenAwake(enabled);
+    await _appSettingsService.setKeepScreenAwake(enabled);
 
     final HomeViewState? current = state.valueOrNull;
     if (current != null && current.timer.isRunning) {
       await _timerService.updateWakelock(
         _shouldEnableWakelockForCategory(current.currentCategory.id),
+      );
+    }
+  }
+
+  Future<void> updateDefaultFocusDurationMinutes(int minutes) async {
+    final int normalizedMinutes = switch (minutes) {
+      25 || 60 || 90 => minutes,
+      _ => _fallbackTarget.inMinutes,
+    };
+
+    await _appSettingsService.setDefaultFocusMinutes(normalizedMinutes);
+
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+
+    final Duration nextTarget = Duration(minutes: normalizedMinutes);
+    final Duration nextElapsed =
+        current.timer.elapsed > nextTarget ? nextTarget : current.timer.elapsed;
+
+    final TimerSnapshot nextTimer = current.timer.copyWith(
+      target: nextTarget,
+      elapsed: nextElapsed,
+      sessionStartElapsed:
+          current.timer.sessionStartElapsed > nextElapsed
+              ? nextElapsed
+              : current.timer.sessionStartElapsed,
+    );
+
+    state = AsyncData(current.copyWith(timer: nextTimer));
+
+    if (_persistenceEnabled) {
+      await _repository.saveTimerSnapshot(nextTimer);
+    }
+
+    if (nextTimer.isRunning) {
+      await _timerService.scheduleCompletion(
+        remaining: _remainingDuration(nextTimer),
+        categoryTitle: current.currentCategory.title,
       );
     }
   }

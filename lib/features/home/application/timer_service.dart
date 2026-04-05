@@ -6,6 +6,14 @@ import '../../../core/services/notification_service.dart';
 import '../../../core/services/sensory_service.dart';
 
 class TimerService {
+  TimerService({
+    required SensoryService sensoryService,
+    required NotificationService notificationService,
+  }) : _sensoryService = sensoryService,
+       _notificationService = notificationService;
+
+  final SensoryService _sensoryService;
+  final NotificationService _notificationService;
   Timer? _ticker;
 
   void startTicker({required Future<void> Function() onTick}) {
@@ -26,7 +34,7 @@ class TimerService {
     required bool enableWakelock,
     required String categoryTitle,
   }) async {
-    unawaited(SensoryService.instance.sessionStarted());
+    unawaited(_sensoryService.sessionStarted());
     await _setWakelockEnabled(enableWakelock);
     await _scheduleCompletionIfNeeded(
       remaining: remaining,
@@ -35,19 +43,19 @@ class TimerService {
   }
 
   Future<void> onSessionStopped() async {
-    unawaited(SensoryService.instance.sessionStopped());
+    unawaited(_sensoryService.sessionStopped());
     await _setWakelockEnabled(false);
-    await NotificationService.instance.cancelTimerCompletion();
+    await _notificationService.cancelTimerCompletion();
   }
 
   Future<void> onCategorySwitched() async {
-    unawaited(SensoryService.instance.tap());
+    unawaited(_sensoryService.tap());
   }
 
   Future<void> onSessionCompleted() async {
-    unawaited(SensoryService.instance.sessionCompleted());
+    unawaited(_sensoryService.sessionCompleted());
     await _setWakelockEnabled(false);
-    await NotificationService.instance.cancelTimerCompletion();
+    await _notificationService.cancelTimerCompletion();
   }
 
   Future<void> updateWakelock(bool enabled) async {
@@ -73,11 +81,11 @@ class TimerService {
     required Duration remaining,
     required String categoryTitle,
   }) async {
-    await NotificationService.instance.cancelTimerCompletion();
+    await _notificationService.cancelTimerCompletion();
     if (remaining <= Duration.zero) {
       return;
     }
-    await NotificationService.instance.scheduleTimerCompletion(
+    await _notificationService.scheduleTimerCompletion(
       delay: remaining,
       categoryTitle: categoryTitle,
     );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/data/local/app_database.dart';
+import '../../../core/providers/core_providers.dart';
 import '../domain/models/study_task.dart';
 import '../domain/repositories/task_repository.dart';
 
@@ -73,7 +73,7 @@ class ClubsViewNotifier extends AsyncNotifier<ClubsViewState> {
 
   @override
   Future<ClubsViewState> build() async {
-    _repository = TaskRepository(database: AppDatabase.instance);
+    _repository = TaskRepository(database: ref.read(databaseHelperProvider));
     final List<StudyTask> tasks = await _repository.loadTasks();
 
     final List<ClubOption> clubs = const <ClubOption>[

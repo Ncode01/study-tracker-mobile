@@ -2,39 +2,47 @@
 
 ## 1. Diagnostics Snapshot
 
-Latest command results captured after Phase 8 implementation:
+Latest command results captured after Phase 9 implementation:
 
 - `flutter analyze`: no issues
 - `flutter test`: pass
 
-## 2. Phase 8 Completed
+## 2. Phase 9 Completed
 
-### 2.1 Product Polish and Edge Cases
+### 2.1 Dependency Injection Hardening
 
-- Hub, Calendar, and Analytics now include glassmorphic empty states with CTA routing to Home.
-- Async loading states now use subtle fading skeleton blocks (no harsh spinner usage on key surfaces).
-- Hub and Calendar now read persisted SQLite sessions/categories for state generation.
+- Added central provider wiring in `lib/core/providers/core_providers.dart`.
+- SharedPreferences is now bootstrapped in `main.dart` and injected via `ProviderScope` overrides.
+- Home, Hub, Calendar, Analytics, and Clubs notifiers now read database/settings/prefs via Riverpod providers instead of direct singleton access.
 
-### 2.2 Home Customization and Settings
+### 2.2 Settings Hub and Profile UX
 
-- `SwitchContextSheet` now supports validated Create New flow via `CreateCategoryDialog`.
-- Custom categories are persisted to SQLite and reflected instantly in Home UI state.
-- Home top area now includes settings entry and dedicated `SettingsSheet`.
-- Settings (`Enable Haptics`, `Enable Sound`, `Keep Screen Awake`) are persisted via SharedPreferences.
-- `SensoryService` now respects settings before triggering haptics/audio.
+- Added full-screen routed `SettingsScreen` at `/settings` with glassmorphic profile header.
+- Preferences section now controls Haptics, Audio, and Keep Screen Awake via app settings provider.
+- Added Pomodoro default focus duration controls (25m / 60m / 90m).
+- Added danger-zone wipe flow that truncates SQLite tables, resets SharedPreferences, and invalidates app state.
 
-### 2.3 Motion and Routing Polish
+### 2.3 Deep Linking and Native Polish
 
-- Hero transition added between active Home category icon and matching icon in `SwitchContextSheet`.
-- Hub and Analytics card/chart entry motion now staggers with 50ms fade timing.
-- First-run onboarding flow is now in place and persisted via SharedPreferences completion flag.
+- Local notification taps now route to Home tab using shell router deep-link handling.
+- Timer completion notifications now include payload routing metadata (`timer_complete`).
+- Native app icon and splash generation tooling added and executed:
+	- `flutter_launcher_icons`
+	- `flutter_native_splash`
 
 ## 3. Remaining Gaps
 
 - Daily Truth sheet remains mostly placeholder and still needs computed metrics from persisted sessions.
 - Clubs feature remains read-only (no create/edit/move/complete workflow yet).
 
-## 4. Residual Risks
+## 4. Phase 10 Pending
+
+- Cloud Sync and Multiplayer prep:
+	- account/session identity model
+	- sync-safe data contracts and conflict strategy
+	- collaborative/competitive scaffolding for shared study flows
+
+## 5. Residual Risks
 
 1. Test depth remains limited:
 	coverage is still mostly smoke/reachability, with low notifier/repository regression depth.
@@ -43,9 +51,9 @@ Latest command results captured after Phase 8 implementation:
 3. Rendering cost risk remains:
 	heavy glass/blur composition may still be expensive on lower-end devices.
 
-## 5. Suggested Next Phase Focus
+## 6. Suggested Next Phase Focus
 
-- Daily Truth computation and narrative quality from real session aggregates
-- Clubs mutation flows (CRUD + task movement persistence)
+- Cloud sync architecture (transport, cache, conflict policy)
+- auth/session primitives for multi-device continuity
+- realtime/multiplayer baseline for shared focus sessions
 - notifier/repository targeted automated test expansion
-- dependency upgrade wave with compatibility verification
