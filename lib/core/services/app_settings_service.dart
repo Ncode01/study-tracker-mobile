@@ -108,6 +108,7 @@ class AppSettingsService {
   }
 
   Future<void> _update({
+    required AppSettingsSnapshot next,
     required Future<bool> Function(SharedPreferences prefs) persist,
   }) async {
     final SharedPreferences prefs =
