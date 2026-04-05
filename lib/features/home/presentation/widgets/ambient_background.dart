@@ -34,45 +34,50 @@ class _AmbientBackgroundState extends State<AmbientBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        const Positioned.fill(
-          child: ColoredBox(color: AppColors.backgroundDark),
-        ),
-        Positioned.fill(
-          child: Center(
-            child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (BuildContext context, Widget? child) {
-                  final double t =
-                      Curves.easeInOut.transform(_controller.value);
-                  final double scale = 0.92 + (0.14 * t);
-                  final double opacity = 0.18 + (0.16 * t);
+    return ExcludeSemantics(
+      child: Stack(
+        children: <Widget>[
+          const Positioned.fill(
+            child: ColoredBox(color: AppColors.backgroundDark),
+          ),
+          Positioned.fill(
+            child: Center(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (BuildContext context, Widget? child) {
+                    final double t = Curves.easeInOut.transform(
+                      _controller.value,
+                    );
+                    final double scale = 0.92 + (0.14 * t);
+                    final double opacity = 0.18 + (0.16 * t);
 
-                  return Transform.scale(
-                    scale: scale,
-                    child: ImageFiltered(
-                      imageFilter: ImageFilter.blur(
-                        sigmaX: 70 + (22 * t),
-                        sigmaY: 70 + (22 * t),
-                      ),
-                      child: Container(
-                        width: 310,
-                        height: 310,
-                        decoration: BoxDecoration(
-                          color: widget.accentColor.withValues(alpha: opacity),
-                          shape: BoxShape.circle,
+                    return Transform.scale(
+                      scale: scale,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(
+                          sigmaX: 70 + (22 * t),
+                          sigmaY: 70 + (22 * t),
+                        ),
+                        child: Container(
+                          width: 310,
+                          height: 310,
+                          decoration: BoxDecoration(
+                            color: widget.accentColor.withValues(
+                              alpha: opacity,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

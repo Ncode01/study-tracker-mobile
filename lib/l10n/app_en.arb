@@ -1,0 +1,63 @@
+{
+  "@@locale": "en",
+  "appTitle": "TimeFlow",
+  "switchCategoryAction": "Switch Category...",
+  "navHome": "Home",
+  "navCalendar": "Calendar",
+  "navHub": "Hub",
+  "navClubs": "Clubs",
+  "navAnalytics": "Analytics",
+  "openSettingsAction": "Open settings",
+  "homeTimerLabel": "TIME SPENT",
+  "homeTimerSemanticsLabel": "Focus timer: {timeText}",
+  "@homeTimerSemanticsLabel": {
+    "placeholders": {
+      "timeText": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTimerSemanticsHint": "Double tap to start or pause the timer.",
+  "homeQuickMaths": "Maths",
+  "homeQuickBreak": "Break",
+  "homeStatsTotalProd": "TOTAL PROD",
+  "homeStatsStreak": "STREAK",
+  "homeStatsNext": "NEXT",
+  "homeLoadError": "Unable to load home data.\\n{errorMessage}",
+  "@homeLoadError": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsProfilePlanTitle": "Student Plan",
+  "settingsProfileSubtitle": "Focus-first productivity profile",
+  "settingsGroupPreferences": "Preferences",
+  "settingsHapticsTitle": "Haptics",
+  "settingsHapticsSubtitle": "Tactile feedback for interactions",
+  "settingsAudioTitle": "Audio",
+  "settingsAudioSubtitle": "Session start/completion sounds",
+  "settingsKeepAwakeTitle": "Keep Screen Awake",
+  "settingsKeepAwakeSubtitle": "Prevent sleep during active focus",
+  "settingsGroupPomodoroDefaults": "Pomodoro Defaults",
+  "settingsDefaultFocusDuration": "Default Focus Duration",
+  "settingsMinutesShort": "{minutes}m",
+  "@settingsMinutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsGroupDataManagement": "Data Management",
+  "settingsDangerZone": "Danger Zone",
+  "settingsDangerZoneDescription": "Erase all local progress and restore defaults.",
+  "settingsWipeAllData": "Wipe All Data",
+  "settingsWiping": "Wiping...",
+  "settingsDialogWipeTitle": "Wipe All Data?",
+  "settingsDialogWipeMessage": "This removes all sessions, custom categories, tasks, and preferences. This cannot be undone.",
+  "settingsCancel": "Cancel",
+  "settingsWipe": "Wipe"
+}

@@ -7,10 +7,14 @@ import '../../../../core/widgets/glass_button.dart';
 class QuickSwitchChips extends StatelessWidget {
   const QuickSwitchChips({
     super.key,
+    required this.mathsLabel,
+    required this.breakLabel,
     required this.onMathsTap,
     required this.onBreakTap,
   });
 
+  final String mathsLabel;
+  final String breakLabel;
   final VoidCallback onMathsTap;
   final VoidCallback onBreakTap;
 
@@ -20,7 +24,7 @@ class QuickSwitchChips extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GlassButton(
-          label: 'Maths',
+          label: mathsLabel,
           onTap: onMathsTap,
           icon: Icons.calculate_outlined,
           iconColor: AppColors.accentMaths,
@@ -32,7 +36,7 @@ class QuickSwitchChips extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         GlassButton(
-          label: 'Break',
+          label: breakLabel,
           onTap: onBreakTap,
           icon: Icons.free_breakfast_outlined,
           iconColor: AppColors.idleGrey,

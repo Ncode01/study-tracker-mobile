@@ -246,19 +246,35 @@ class _GlassExpansionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassContainer(
-        borderRadius: BorderRadius.circular(28),
-        padding: const EdgeInsets.all(16),
-        backgroundColor: subject.accentColor.withValues(alpha: 0.05),
-        borderColor: subject.accentColor.withValues(alpha: 0.18),
-        child: AnimatedCrossFade(
-          duration: 280.ms,
-          crossFadeState:
-              expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-          firstChild: _CollapsedSubject(subject: subject),
-          secondChild: _ExpandedSubject(subject: subject),
+    final int progressPercent = (subject.progress * 100).round();
+
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        container: true,
+        label:
+            '${subject.title}. ${subject.goalLabel}. $progressPercent percent of goal.',
+        hint:
+            expanded
+                ? 'Double tap to collapse subject details.'
+                : 'Double tap to expand subject details.',
+        child: GestureDetector(
+          onTap: onTap,
+          child: GlassContainer(
+            borderRadius: BorderRadius.circular(28),
+            padding: const EdgeInsets.all(16),
+            backgroundColor: subject.accentColor.withValues(alpha: 0.05),
+            borderColor: subject.accentColor.withValues(alpha: 0.18),
+            child: AnimatedCrossFade(
+              duration: 280.ms,
+              crossFadeState:
+                  expanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+              firstChild: _CollapsedSubject(subject: subject),
+              secondChild: _ExpandedSubject(subject: subject),
+            ),
+          ),
         ),
       ),
     );
@@ -360,51 +376,63 @@ class _ExpandedSubject extends StatelessWidget {
         for (final HubSession session in subject.sessions)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: GlassContainer(
-              borderRadius: BorderRadius.circular(18),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: subject.accentColor,
-                      shape: BoxShape.circle,
+            child: MergeSemantics(
+              child: Semantics(
+                container: true,
+                label:
+                    '${session.title}. ${session.timeLabel}. Duration ${session.durationLabel}.',
+                child: ExcludeSemantics(
+                  child: GlassContainer(
+                    borderRadius: BorderRadius.circular(18),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          session.title,
-                          style: AppTypography.display(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: subject.accentColor,
+                            shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                session.title,
+                                style: AppTypography.display(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                session.timeLabel,
+                                style: AppTypography.display(
+                                  color: AppColors.textMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         Text(
-                          session.timeLabel,
-                          style: AppTypography.display(
-                            color: AppColors.textMuted,
-                            fontSize: 11,
+                          session.durationLabel,
+                          style: AppTypography.mono(
+                            color: AppColors.textMain,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Text(
-                    session.durationLabel,
-                    style: AppTypography.mono(
-                      color: AppColors.textMain,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -435,20 +463,22 @@ class _SubjectRing extends StatelessWidget {
     return SizedBox(
       width: 84,
       height: 84,
-      child: CustomPaint(
-        painter: _SubjectRingPainter(
-          accentColor: subject.accentColor,
-          progress: subject.progress,
-        ),
-        child: Center(
-          child: Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: subject.accentColor.withValues(alpha: 0.12),
+      child: ExcludeSemantics(
+        child: CustomPaint(
+          painter: _SubjectRingPainter(
+            accentColor: subject.accentColor,
+            progress: subject.progress,
+          ),
+          child: Center(
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: subject.accentColor.withValues(alpha: 0.12),
+              ),
+              child: Icon(subject.icon, color: subject.accentColor),
             ),
-            child: Icon(subject.icon, color: subject.accentColor),
           ),
         ),
       ),

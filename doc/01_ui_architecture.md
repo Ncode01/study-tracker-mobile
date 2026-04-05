@@ -2,7 +2,7 @@
 
 ## 1. App-Level Shell Structure
 
-The app is now a 5-branch shell built with `go_router` and `StatefulShellRoute.indexedStack`.
+The app remains a 5-branch shell built with `go_router` and `StatefulShellRoute.indexedStack`.
 
 Actual branch routing:
 
@@ -12,12 +12,12 @@ Actual branch routing:
 - `/clubs` -> Clubs
 - `/analytics` -> Analytics
 
-`AppShell` wraps `navigationShell` and overlays a shared bottom control (`BottomActionsNav`) with:
+`AppShell` is now adaptive:
 
-- a global `Switch Category...` button (opens `SwitchContextSheet`)
-- branch switching icons (`goBranch(index)`)
+- compact widths: floating `BottomActionsNav` + `Switch Category...`
+- larger widths: `NavigationRail` layout with preserved branch state and rail-level `Switch Category...`
 
-Important: `BottomActionsNav` is the real navigation source. Home-local `selectedBottomNav` state is not used by this shell.
+Important: branch switching is shell-driven (`goBranch(index)`), not Home-local navigation state.
 
 ## 2. Core UI System
 
@@ -26,71 +26,79 @@ Shared design primitives are centralized in `lib/core`:
 - `core/theme`: `AppColors`, `AppTypography`, `AppTheme`
 - `core/widgets`: `GlassContainer`, `GlassPanel`, `GlassButton`
 
-Glass implementation uses:
+Glass composition remains consistent:
 
 1. rounded clipping (`ClipRRect`)
 2. backdrop blur (`BackdropFilter`)
 3. translucent fill + border
 
-This is consistent across all feature screens.
-
 ## 3. Screen Composition by Feature
 
 ### 3.1 Home
 
-Home is the most complete interactive screen.
+Home remains the primary interaction loop with:
 
-Main UI stack:
-
-- animated `AmbientBackground` (breathing orb)
+- animated `AmbientBackground`
 - `TopStatsBar`
 - `CategoryContextRow`
-- `TimerRing` (tap starts/stops timer)
+- `TimerRing`
 - `QuickSwitchChips`
 
-`SwitchContextSheet` is sectioned and searchable, and category taps update notifier state.
+Home text is now localization-backed and timer/settings affordances include stronger semantics.
 
 ### 3.2 Calendar
 
-Calendar UI is polished, but data is static and hardcoded in notifier state (`DateTime(2026, 4, 12)` and nearby dates). No repository-backed events yet.
+Calendar UI is polished, but event content is still mostly static/hardcoded and not fully repository-driven.
 
 ### 3.3 Hub
 
-Hub has rich UI (countdowns, expandable cards, custom ring), but all subject/session/countdown data is static in `HubViewNotifier`.
+Hub remains presentation-rich (countdowns, expandable cards, custom ring) with static/mock-heavy subject data, now with merged semantic containers on key cards.
 
 ### 3.4 Clubs
 
-Clubs UI is functional (selector + kanban sections). Data is loaded from SQLite `tasks` table, but currently read-only from the app UI (no create/update/drag/status mutation flows).
+Clubs still reads from SQLite `tasks`, but now adapts between:
+
+- stacked Kanban sections on compact screens
+- multi-column Kanban board on larger screens
+
+Task cards now expose merged semantic summaries for screen readers.
 
 ### 3.5 Analytics
 
-Analytics UI includes charts, period dropdown, smart cards, and export CTA.
+Analytics now adapts by width:
 
-Real vs placeholder split:
+- compact: insight carousel + stacked chart cards
+- larger widths: insight grid + side-by-side distribution/trend chart cards
 
-- real: session CSV export pipeline and weekly session aggregation from DB
-- placeholder: key insight cards and Daily Truth timeline/metrics are mostly static text/sample blocks
+Data fidelity caveat remains: portions of insight storytelling still contain placeholders.
 
-## 4. Responsiveness and Rendering
+## 4. Adaptive Layout Strategy
 
-What is in place:
+Current breakpoint behavior:
 
-- widespread `SafeArea`
-- `LayoutBuilder` on Home
-- constrained chart/ring areas
-- `RepaintBoundary` around animated areas (`AmbientBackground`, `TimerRing`)
+- `< 600`: compact shell controls
+- `>= 600`: rail shell controls
+- wider analytics/clubs breakpoints: multi-column content layouts
 
-Current rendering risk:
+This reduces tablet/foldable dead space while preserving existing mobile interaction flows.
 
-- heavy stacked `BackdropFilter` usage across full-screen compositions can become GPU-expensive on lower-end devices.
+## 5. Localization and Accessibility Architecture
 
-## 5. UI Architecture Gaps
+Localization foundation now includes:
 
-1. Shell and feature state are not fully harmonized:
-   Home still carries a local bottom-nav field that no longer drives navigation.
-2. Mock-heavy screens:
-   Calendar and Hub are presentation-complete but data-incomplete.
-3. Analytics truth gap:
-   visual sophistication exceeds data fidelity in Daily Truth/insight blocks.
-4. Missing user customization flows:
-   `Create New` category card is visual-only, not wired to persistence.
+- `flutter_localizations` integration
+- generated localizations (`l10n.yaml`, `app_en.arb`)
+- app-level delegates + supported locales in `MaterialApp.router`
+
+Accessibility updates include:
+
+- explicit semantics for nav controls
+- `ExcludeSemantics` on decorative visuals
+- merged semantics on Hub and Clubs card containers
+
+## 6. Rendering and Quality Risks
+
+1. Heavy blur/layer composition can still be GPU-expensive on lower-end devices.
+2. Calendar/Hub data realism remains behind UI maturity.
+3. Clubs interaction model is still read-only from the user perspective.
+4. Localization currently ships with English only; multi-locale rollout is pending.

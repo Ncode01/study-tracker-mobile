@@ -7,11 +7,17 @@ import '../../../../core/widgets/glass_panel.dart';
 class TopStatsBar extends StatelessWidget {
   const TopStatsBar({
     super.key,
+    required this.totalProductiveLabel,
+    required this.streakLabel,
+    required this.nextLabel,
     required this.totalProductive,
     required this.streak,
     required this.next,
   });
 
+  final String totalProductiveLabel;
+  final String streakLabel;
+  final String nextLabel;
   final String totalProductive;
   final String streak;
   final String next;
@@ -23,11 +29,15 @@ class TopStatsBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-              child: _StatItem(title: 'TOTAL PROD', value: totalProductive)),
+            child: _StatItem(
+              title: totalProductiveLabel,
+              value: totalProductive,
+            ),
+          ),
           _StatDivider(),
-          Expanded(child: _StatItem(title: 'STREAK', value: streak)),
+          Expanded(child: _StatItem(title: streakLabel, value: streak)),
           _StatDivider(),
-          Expanded(child: _StatItem(title: 'NEXT', value: next)),
+          Expanded(child: _StatItem(title: nextLabel, value: next)),
         ],
       ),
     );
@@ -78,10 +88,6 @@ class _StatDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 34,
-      color: AppColors.glassBorder,
-    );
+    return Container(width: 1, height: 34, color: AppColors.glassBorder);
   }
 }

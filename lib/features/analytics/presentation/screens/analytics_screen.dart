@@ -57,412 +57,302 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           asyncState.when(
             data:
                 (AnalyticsViewState state) => SafeArea(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 42),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  child: LayoutBuilder(
+                    builder: (
+                      BuildContext context,
+                      BoxConstraints constraints,
+                    ) {
+                      final bool useInsightGrid = constraints.maxWidth >= 800;
+                      final bool useDualChartLayout =
+                          constraints.maxWidth >= 980;
+
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 42),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: GlassContainer(
-                                borderRadius: BorderRadius.circular(18),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: state.selectedPeriod,
-                                    isExpanded: true,
-                                    dropdownColor: const Color(0xFF11131A),
-                                    borderRadius: BorderRadius.circular(18),
-                                    iconEnabledColor: AppColors.textMain,
-                                    items: [
-                                      for (final String period in state.periods)
-                                        DropdownMenuItem<String>(
-                                          value: period,
-                                          child: Text(
-                                            period,
-                                            style: AppTypography.display(
-                                              color: AppColors.textMain,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                    onChanged: (String? value) {
-                                      if (value != null) {
-                                        unawaited(notifier.selectPeriod(value));
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            GlassButton(
-                              label: 'Daily Truth',
-                              icon: Icons.auto_graph_rounded,
-                              onTap: () {
-                                showModalBottomSheet<void>(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => const DailyTruthSheet(),
-                                );
-                              },
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            GlassButton(
-                              label:
-                                  _isExporting ? 'Exporting...' : 'Export Data',
-                              icon: Icons.ios_share_rounded,
-                              onTap:
-                                  _isExporting
-                                      ? () {}
-                                      : () => unawaited(_exportAnalytics()),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                            ),
-                          ],
-                        ).animate().fade(duration: 400.ms).slideY(begin: 0.05),
-                        if (state.totalTrackedMinutes == 0) ...[
-                          const SizedBox(height: 24),
-                          GlassEmptyState(
-                            icon: Icons.auto_awesome_rounded,
-                            title: 'No analytics yet',
-                            message:
-                                'No sessions logged today. Complete one focus session to unlock your charts.',
-                            buttonLabel: 'Start a Focus Session',
-                            onButtonTap: () => context.go('/'),
-                          ),
-                        ] else ...[
-                          const SizedBox(height: 18),
-                          Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  ShaderMask(
-                                    shaderCallback: (Rect bounds) {
-                                      return const LinearGradient(
-                                        colors: <Color>[
-                                          Color(0xFFFFFFFF),
-                                          Color(0xFF8554F8),
-                                        ],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                      ).createShader(bounds);
-                                    },
-                                    child: Text(
-                                      '${state.productivityScore}',
-                                      style: AppTypography.heading(
-                                        fontSize: 84,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white,
-                                        height: 0.95,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 14),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Icon(
-                                          Icons.trending_up_rounded,
-                                          color: Color(0xFF22C55E),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Productivity Score',
-                                          style: AppTypography.display(
-                                            color: AppColors.textMuted,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              )
-                              .animate(delay: 50.ms)
-                              .fade(duration: 300.ms)
-                              .slideY(begin: 0.04),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 192,
-                            child: PageView.builder(
-                              controller: _insightController,
-                              itemCount: state.insights.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                final AnalyticsInsight insight =
-                                    state.insights[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: _InsightCard(insight: insight)
-                                      .animate(delay: (50 * index).ms)
-                                      .fade(duration: 280.ms)
-                                      .slideY(begin: 0.05)
-                                      .scaleXY(begin: 0.96),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          GlassContainer(
-                                borderRadius: BorderRadius.circular(28),
-                                padding: const EdgeInsets.all(18),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Time Distribution',
-                                          style: AppTypography.heading(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                          ),
+                                    Expanded(
+                                      child: GlassContainer(
+                                        borderRadius: BorderRadius.circular(18),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
                                         ),
-                                        Text(
-                                          state.totalTrackedLabel,
-                                          style: AppTypography.display(
-                                            color: AppColors.textMuted,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 18),
-                                    SizedBox(
-                                      height: 220,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          PieChart(
-                                            PieChartData(
-                                              centerSpaceRadius: 66,
-                                              sectionsSpace: 3,
-                                              startDegreeOffset: -90,
-                                              sections: [
-                                                for (final DistributionSlice
-                                                    slice
-                                                    in state.distribution)
-                                                  PieChartSectionData(
-                                                    value: slice.value,
-                                                    color: slice.color,
-                                                    radius: 22,
-                                                    showTitle: false,
-                                                  ),
-                                              ],
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: state.selectedPeriod,
+                                            isExpanded: true,
+                                            dropdownColor: const Color(
+                                              0xFF11131A,
                                             ),
-                                          ),
-                                          Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                '${(state.totalTrackedMinutes / 60).floor()}h ${(state.totalTrackedMinutes % 60).toString().padLeft(2, '0')}m',
-                                                style: AppTypography.mono(
-                                                  color: AppColors.textMain,
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Tracked',
-                                                style: AppTypography.display(
-                                                  color: AppColors.textMuted,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    Wrap(
-                                      spacing: 14,
-                                      runSpacing: 10,
-                                      children: [
-                                        for (final DistributionSlice slice
-                                            in state.distribution)
-                                          _LegendChip(slice: slice),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              )
-                              .animate(delay: (50 * state.insights.length).ms)
-                              .fade(duration: 320.ms)
-                              .slideY(begin: 0.04),
-                          const SizedBox(height: 18),
-                          GlassContainer(
-                                borderRadius: BorderRadius.circular(28),
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  18,
-                                  16,
-                                  14,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Weekly Trend',
-                                      style: AppTypography.heading(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    SizedBox(
-                                      height: 220,
-                                      child: BarChart(
-                                        BarChartData(
-                                          maxY: 10,
-                                          alignment:
-                                              BarChartAlignment.spaceAround,
-                                          gridData: const FlGridData(
-                                            show: false,
-                                          ),
-                                          titlesData: FlTitlesData(
-                                            topTitles: const AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: false,
-                                              ),
+                                            borderRadius: BorderRadius.circular(
+                                              18,
                                             ),
-                                            rightTitles: const AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: false,
-                                              ),
-                                            ),
-                                            leftTitles: const AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: false,
-                                              ),
-                                            ),
-                                            bottomTitles: AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: true,
-                                                reservedSize: 28,
-                                                getTitlesWidget: (
-                                                  double value,
-                                                  TitleMeta meta,
-                                                ) {
-                                                  final int index =
-                                                      value.toInt();
-                                                  if (index < 0 ||
-                                                      index >=
-                                                          state
-                                                              .weeklyTrend
-                                                              .length) {
-                                                    return const SizedBox.shrink();
-                                                  }
-                                                  return SideTitleWidget(
-                                                    meta: meta,
-                                                    child: Text(
-                                                      state
-                                                          .weeklyTrend[index]
-                                                          .day,
-                                                      style:
-                                                          AppTypography.display(
-                                                            color:
-                                                                AppColors
-                                                                    .textMuted,
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          borderData: FlBorderData(show: false),
-                                          barGroups: [
-                                            for (
-                                              int index = 0;
-                                              index < state.weeklyTrend.length;
-                                              index++
-                                            )
-                                              BarChartGroupData(
-                                                x: index,
-                                                barRods: [
-                                                  BarChartRodData(
-                                                    toY:
-                                                        state
-                                                            .weeklyTrend[index]
-                                                            .value,
-                                                    width: 16,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                    color:
-                                                        AppColors.primaryPurple,
-                                                    backDrawRodData:
-                                                        BackgroundBarChartRodData(
-                                                          show: true,
-                                                          toY: 10,
+                                            iconEnabledColor:
+                                                AppColors.textMain,
+                                            items: [
+                                              for (final String period
+                                                  in state.periods)
+                                                DropdownMenuItem<String>(
+                                                  value: period,
+                                                  child: Text(
+                                                    period,
+                                                    style:
+                                                        AppTypography.display(
                                                           color:
                                                               AppColors
-                                                                  .glassBorder,
+                                                                  .textMain,
+                                                          fontSize: 14,
                                                         ),
                                                   ),
-                                                ],
+                                                ),
+                                            ],
+                                            onChanged: (String? value) {
+                                              if (value != null) {
+                                                unawaited(
+                                                  notifier.selectPeriod(value),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    GlassButton(
+                                      label: 'Daily Truth',
+                                      icon: Icons.auto_graph_rounded,
+                                      onTap: () {
+                                        showModalBottomSheet<void>(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder:
+                                              (_) => const DailyTruthSheet(),
+                                        );
+                                      },
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GlassButton(
+                                      label:
+                                          _isExporting
+                                              ? 'Exporting...'
+                                              : 'Export Data',
+                                      icon: Icons.ios_share_rounded,
+                                      onTap:
+                                          _isExporting
+                                              ? () {}
+                                              : () =>
+                                                  unawaited(_exportAnalytics()),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                                .animate()
+                                .fade(duration: 400.ms)
+                                .slideY(begin: 0.05),
+                            if (state.totalTrackedMinutes == 0) ...[
+                              const SizedBox(height: 24),
+                              GlassEmptyState(
+                                icon: Icons.auto_awesome_rounded,
+                                title: 'No analytics yet',
+                                message:
+                                    'No sessions logged today. Complete one focus session to unlock your charts.',
+                                buttonLabel: 'Start a Focus Session',
+                                onButtonTap: () => context.go('/'),
+                              ),
+                            ] else ...[
+                              const SizedBox(height: 18),
+                              Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (Rect bounds) {
+                                          return const LinearGradient(
+                                            colors: <Color>[
+                                              Color(0xFFFFFFFF),
+                                              Color(0xFF8554F8),
+                                            ],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                          ).createShader(bounds);
+                                        },
+                                        child: Text(
+                                          '${state.productivityScore}',
+                                          style: AppTypography.heading(
+                                            fontSize: 84,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                            height: 0.95,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 14,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Icon(
+                                              Icons.trending_up_rounded,
+                                              color: Color(0xFF22C55E),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              'Productivity Score',
+                                              style: AppTypography.display(
+                                                color: AppColors.textMuted,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
                                               ),
+                                            ),
                                           ],
                                         ),
                                       ),
+                                    ],
+                                  )
+                                  .animate(delay: 50.ms)
+                                  .fade(duration: 300.ms)
+                                  .slideY(begin: 0.04),
+                              const SizedBox(height: 16),
+                              if (useInsightGrid)
+                                GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: state.insights.length,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount:
+                                            constraints.maxWidth >= 1220
+                                                ? 3
+                                                : 2,
+                                        mainAxisSpacing: 12,
+                                        crossAxisSpacing: 12,
+                                        childAspectRatio: 1.6,
+                                      ),
+                                  itemBuilder: (
+                                    BuildContext context,
+                                    int index,
+                                  ) {
+                                    final AnalyticsInsight insight =
+                                        state.insights[index];
+                                    return _InsightCard(insight: insight)
+                                        .animate(delay: (50 * index).ms)
+                                        .fade(duration: 280.ms)
+                                        .slideY(begin: 0.05)
+                                        .scaleXY(begin: 0.96);
+                                  },
+                                )
+                              else
+                                SizedBox(
+                                  height: 192,
+                                  child: PageView.builder(
+                                    controller: _insightController,
+                                    itemCount: state.insights.length,
+                                    itemBuilder: (
+                                      BuildContext context,
+                                      int index,
+                                    ) {
+                                      final AnalyticsInsight insight =
+                                          state.insights[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 12,
+                                        ),
+                                        child: _InsightCard(insight: insight)
+                                            .animate(delay: (50 * index).ms)
+                                            .fade(duration: 280.ms)
+                                            .slideY(begin: 0.05)
+                                            .scaleXY(begin: 0.96),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              const SizedBox(height: 18),
+                              if (useDualChartLayout)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _TimeDistributionCard(state: state)
+                                          .animate(
+                                            delay:
+                                                (50 * state.insights.length).ms,
+                                          )
+                                          .fade(duration: 320.ms)
+                                          .slideY(begin: 0.04),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: _WeeklyTrendCard(state: state)
+                                          .animate(
+                                            delay:
+                                                (50 *
+                                                        (state.insights.length +
+                                                            1))
+                                                    .ms,
+                                          )
+                                          .fade(duration: 320.ms)
+                                          .slideY(begin: 0.04),
                                     ),
                                   ],
+                                )
+                              else ...[
+                                _TimeDistributionCard(state: state)
+                                    .animate(
+                                      delay: (50 * state.insights.length).ms,
+                                    )
+                                    .fade(duration: 320.ms)
+                                    .slideY(begin: 0.04),
+                                const SizedBox(height: 18),
+                                _WeeklyTrendCard(state: state)
+                                    .animate(
+                                      delay:
+                                          (50 * (state.insights.length + 1)).ms,
+                                    )
+                                    .fade(duration: 320.ms)
+                                    .slideY(begin: 0.04),
+                              ],
+                              const SizedBox(height: 18),
+                              for (
+                                int index = 0;
+                                index < state.smartInsights.length;
+                                index++
+                              )
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _SmartInsightCard(
+                                        insight: state.smartInsights[index],
+                                      )
+                                      .animate(
+                                        delay:
+                                            (50 *
+                                                    (state.insights.length +
+                                                        2 +
+                                                        index))
+                                                .ms,
+                                      )
+                                      .fade(duration: 260.ms)
+                                      .slideY(begin: 0.03),
                                 ),
-                              )
-                              .animate(
-                                delay: (50 * (state.insights.length + 1)).ms,
-                              )
-                              .fade(duration: 320.ms)
-                              .slideY(begin: 0.04),
-                          const SizedBox(height: 18),
-                          for (
-                            int index = 0;
-                            index < state.smartInsights.length;
-                            index++
-                          )
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _SmartInsightCard(
-                                    insight: state.smartInsights[index],
-                                  )
-                                  .animate(
-                                    delay:
-                                        (50 *
-                                                (state.insights.length +
-                                                    2 +
-                                                    index))
-                                            .ms,
-                                  )
-                                  .fade(duration: 260.ms)
-                                  .slideY(begin: 0.03),
-                            ),
-                        ],
-                      ],
-                    ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
             loading: () => const SafeArea(child: _AnalyticsLoadingSkeleton()),
@@ -613,6 +503,190 @@ class _InsightCard extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimeDistributionCard extends StatelessWidget {
+  const _TimeDistributionCard({required this.state});
+
+  final AnalyticsViewState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      borderRadius: BorderRadius.circular(28),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Time Distribution',
+                style: AppTypography.heading(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                state.totalTrackedLabel,
+                style: AppTypography.display(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 220,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PieChart(
+                  PieChartData(
+                    centerSpaceRadius: 66,
+                    sectionsSpace: 3,
+                    startDegreeOffset: -90,
+                    sections: [
+                      for (final DistributionSlice slice in state.distribution)
+                        PieChartSectionData(
+                          value: slice.value,
+                          color: slice.color,
+                          radius: 22,
+                          showTitle: false,
+                        ),
+                    ],
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${(state.totalTrackedMinutes / 60).floor()}h ${(state.totalTrackedMinutes % 60).toString().padLeft(2, '0')}m',
+                      style: AppTypography.mono(
+                        color: AppColors.textMain,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tracked',
+                      style: AppTypography.display(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 14,
+            runSpacing: 10,
+            children: [
+              for (final DistributionSlice slice in state.distribution)
+                _LegendChip(slice: slice),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeeklyTrendCard extends StatelessWidget {
+  const _WeeklyTrendCard({required this.state});
+
+  final AnalyticsViewState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      borderRadius: BorderRadius.circular(28),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Weekly Trend',
+            style: AppTypography.heading(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 220,
+            child: BarChart(
+              BarChartData(
+                maxY: 10,
+                alignment: BarChartAlignment.spaceAround,
+                gridData: const FlGridData(show: false),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 28,
+                      getTitlesWidget: (double value, TitleMeta meta) {
+                        final int index = value.toInt();
+                        if (index < 0 || index >= state.weeklyTrend.length) {
+                          return const SizedBox.shrink();
+                        }
+                        return SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            state.weeklyTrend[index].day,
+                            style: AppTypography.display(
+                              color: AppColors.textMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: [
+                  for (int index = 0; index < state.weeklyTrend.length; index++)
+                    BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: state.weeklyTrend[index].value,
+                          width: 16,
+                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.primaryPurple,
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: 10,
+                            color: AppColors.glassBorder,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

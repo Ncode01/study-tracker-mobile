@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/core_providers.dart';
@@ -59,6 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final AsyncValue<HomeViewState> asyncState = ref.watch(
       homeViewNotifierProvider,
     );
@@ -116,6 +118,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   children: [
                                     Expanded(
                                       child: TopStatsBar(
+                                        totalProductiveLabel:
+                                            l10n.homeStatsTotalProd,
+                                        streakLabel: l10n.homeStatsStreak,
+                                        nextLabel: l10n.homeStatsNext,
                                         totalProductive:
                                             state.stats.totalProductive,
                                         streak: state.stats.streak,
@@ -125,13 +131,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     const SizedBox(width: 10),
                                     GlassContainer(
                                       borderRadius: BorderRadius.circular(16),
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.settings_rounded,
-                                          color: Colors.white,
+                                      child: Semantics(
+                                        button: true,
+                                        label: l10n.openSettingsAction,
+                                        child: IconButton(
+                                          tooltip: l10n.openSettingsAction,
+                                          icon: const Icon(
+                                            Icons.settings_rounded,
+                                            color: Colors.white,
+                                          ),
+                                          onPressed:
+                                              () => context.push('/settings'),
                                         ),
-                                        onPressed:
-                                            () => context.push('/settings'),
                                       ),
                                     ),
                                   ],
@@ -153,6 +164,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       SizedBox(height: verticalGap),
                                       TimerRing(
                                         timeText: timerText,
+                                        timeSpentLabel: l10n.homeTimerLabel,
+                                        semanticsLabel: l10n
+                                            .homeTimerSemanticsLabel(timerText),
+                                        semanticsHint:
+                                            l10n.homeTimerSemanticsHint,
                                         progress: timerProgress,
                                         accentColor:
                                             state.currentCategory.accentColor,
@@ -164,6 +180,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ),
                                       SizedBox(height: verticalGap),
                                       QuickSwitchChips(
+                                        mathsLabel: l10n.homeQuickMaths,
+                                        breakLabel: l10n.homeQuickBreak,
                                         onMathsTap:
                                             () => unawaited(
                                               notifier.quickSwitchToMaths(),
@@ -235,12 +253,14 @@ class _AsyncBodyError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: GlassContainer(
         borderRadius: BorderRadius.circular(20),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Text(
-          'Unable to load home data.\n$message',
+          l10n.homeLoadError(message),
           textAlign: TextAlign.center,
           style: AppTypography.display(fontSize: 12),
         ),

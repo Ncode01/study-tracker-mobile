@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/core_providers.dart';
@@ -80,24 +81,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _wipeAllData() async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF11131A),
-          title: const Text('Wipe All Data?'),
-          content: const Text(
-            'This removes all sessions, custom categories, tasks, and preferences. This cannot be undone.',
-          ),
+          title: Text(l10n.settingsDialogWipeTitle),
+          content: Text(l10n.settingsDialogWipeMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.settingsCancel),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Wipe'),
+              child: Text(l10n.settingsWipe),
             ),
           ],
         );
@@ -134,6 +135,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     final AppSettingsSnapshot settings =
         _settings ??
         const AppSettingsSnapshot(
@@ -166,7 +169,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Settings',
+                        l10n.settingsTitle,
                         style: AppTypography.heading(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
@@ -220,7 +223,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Student Plan',
+                                l10n.settingsProfilePlanTitle,
                                 style: AppTypography.heading(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -228,7 +231,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Focus-first productivity profile',
+                                l10n.settingsProfileSubtitle,
                                 style: AppTypography.display(
                                   color: AppColors.textMuted,
                                   fontSize: 12,
@@ -242,28 +245,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 18),
                   _GroupCard(
-                    title: 'Preferences',
+                    title: l10n.settingsGroupPreferences,
                     child: Column(
                       children: [
                         _PreferenceRow(
-                          title: 'Haptics',
-                          subtitle: 'Tactile feedback for interactions',
+                          title: l10n.settingsHapticsTitle,
+                          subtitle: l10n.settingsHapticsSubtitle,
                           value: settings.enableHaptics,
                           onChanged:
                               (bool value) => unawaited(_toggleHaptics(value)),
                         ),
                         const SizedBox(height: 10),
                         _PreferenceRow(
-                          title: 'Audio',
-                          subtitle: 'Session start/completion sounds',
+                          title: l10n.settingsAudioTitle,
+                          subtitle: l10n.settingsAudioSubtitle,
                           value: settings.enableSound,
                           onChanged:
                               (bool value) => unawaited(_toggleAudio(value)),
                         ),
                         const SizedBox(height: 10),
                         _PreferenceRow(
-                          title: 'Keep Screen Awake',
-                          subtitle: 'Prevent sleep during active focus',
+                          title: l10n.settingsKeepAwakeTitle,
+                          subtitle: l10n.settingsKeepAwakeSubtitle,
                           value: settings.keepScreenAwake,
                           onChanged:
                               (bool value) =>
@@ -274,12 +277,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
                   _GroupCard(
-                    title: 'Pomodoro Defaults',
+                    title: l10n.settingsGroupPomodoroDefaults,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Default Focus Duration',
+                          l10n.settingsDefaultFocusDuration,
                           style: AppTypography.display(
                             color: AppColors.textMuted,
                             fontSize: 12,
@@ -295,7 +298,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     right: minutes == 90 ? 0 : 10,
                                   ),
                                   child: _FocusMinutesChip(
-                                    minutes: minutes,
+                                    label: l10n.settingsMinutesShort(minutes),
                                     selected:
                                         settings.defaultFocusMinutes == minutes,
                                     onTap:
@@ -312,12 +315,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
                   _GroupCard(
-                    title: 'Data Management',
+                    title: l10n.settingsGroupDataManagement,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Danger Zone',
+                          l10n.settingsDangerZone,
                           style: AppTypography.display(
                             color: Colors.redAccent,
                             fontSize: 12,
@@ -326,7 +329,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Erase all local progress and restore defaults.',
+                          l10n.settingsDangerZoneDescription,
                           style: AppTypography.display(
                             color: AppColors.textMuted,
                             fontSize: 12,
@@ -334,7 +337,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 14),
                         GlassButton(
-                          label: _isWipingData ? 'Wiping...' : 'Wipe All Data',
+                          label:
+                              _isWipingData
+                                  ? l10n.settingsWiping
+                                  : l10n.settingsWipeAllData,
                           icon: Icons.delete_forever_rounded,
                           onTap:
                               _isWipingData
@@ -444,12 +450,12 @@ class _PreferenceRow extends StatelessWidget {
 
 class _FocusMinutesChip extends StatelessWidget {
   const _FocusMinutesChip({
-    required this.minutes,
+    required this.label,
     required this.selected,
     required this.onTap,
   });
 
-  final int minutes;
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
@@ -475,7 +481,7 @@ class _FocusMinutesChip extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            '${minutes}m',
+            label,
             style: AppTypography.mono(
               color: selected ? AppColors.textMain : AppColors.textMuted,
               fontWeight: FontWeight.w700,
