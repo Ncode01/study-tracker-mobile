@@ -1,11 +1,11 @@
-# 03 Current Status (Continuous Flow Verified)
+# 03 Current Status (Phase 14 Timeline Verified)
 
 ## 1. Validation Snapshot
 
-Latest verification after Phase 13 paradigm shift:
+Latest verification after Phase 14 timeline integration:
 
 - `flutter analyze`: no issues
-- `flutter test`: pass
+- `flutter test`: pass (18 tests)
 
 ## 2. Phase 13 Completed
 
@@ -69,3 +69,69 @@ Latest verification after Phase 13 paradigm shift:
 
 Continuous Flow paradigm has been successfully implemented and validated.
 Manual pause/stop target-era tech debt in Home timer runtime has been eradicated.
+
+Phase 14 Calendar timeline architecture is now implemented with day-accurate rendering,
+live-session continuity, and deterministic time-to-pixel mapping.
+
+## 5. Plan vs Reality (Calendar)
+
+- Calendar now supports dual streams:
+  - planned timeline blocks from `planned_items`
+  - actual timeline blocks from persisted `sessions`
+- Daily summary now reports:
+  - planned duration
+  - actual duration
+  - variance (`actual - planned`)
+  - per-category breakdown
+  - aligned overlap time between planned and actual blocks
+- Planner CRUD is now available directly from Calendar:
+  - create, edit, delete planned items
+  - validation enforces non-empty title and `end > start`
+  - overlaps are allowed but explicitly surfaced in the form and timeline
+
+### 5.1 Architectural Guardrail
+
+- Home timer philosophy remains unchanged:
+  - no manual play/pause/stop controls
+  - context switching remains the only session commit boundary
+  - continuous elapsed timing remains anchored to persisted `sessionStartTime`
+
+## 6. Phase 14 Completed (Pixel-Perfect Calendar)
+
+### 6.1 Day-Scoped Data Pipeline
+
+- Calendar loading is now selected-day scoped.
+- SQLite queries now include cross-midnight overlap logic for both streams:
+  - actual sessions: `startedAt < dayEnd` and `(endedAt IS NULL OR endedAt > dayStart)`
+  - planned blocks: `startAt < dayEnd` and `endAt > dayStart`
+- Rendered start/end values are clamped to the selected day envelope (`00:00` to `24:00`).
+
+### 6.2 Active Session Integration
+
+- Active continuous timer session is injected into calendar actual sessions using persisted:
+  - selected category id
+  - timer session start timestamp
+- Active session renders as a live block with dynamic end time (`now`) and breathing visual state.
+
+### 6.3 Timeline Rendering Contract
+
+- Timeline now uses strict fixed geometry:
+  - `hourHeight = 96.0`
+  - 24-hour canvas = `2304 px`
+- Block positioning now follows exact math:
+  - `top = minutesFromMidnight(start) * (hourHeight / 60)`
+  - `height = (durationMinutes) * (hourHeight / 60)`
+- Current-time indicator renders on top of the stack and updates every minute.
+
+### 6.4 Calendar UX Shell
+
+- Sticky schedule header and add button are now fixed above the timeline viewport.
+- Horizontal date carousel supports `today - 7` to `today + 7` with selected-day highlighting.
+- Timeline mode filtering supports Planned, Actual, and Both.
+- Timeline scroll area includes bottom padding to prevent clipping behind floating navigation.
+
+### 6.5 Validation
+
+- Updated calendar repository and notifier tests for day-scoped API contracts.
+- `flutter analyze` clean after refactor.
+- `flutter test` green after refactor.

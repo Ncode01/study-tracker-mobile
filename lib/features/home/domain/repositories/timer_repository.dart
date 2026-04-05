@@ -125,12 +125,23 @@ class TimerRepository {
     required Duration duration,
     required bool isProductive,
   }) async {
+    final Duration normalizedDuration =
+        duration.isNegative ? Duration.zero : duration;
+    if (normalizedDuration <= Duration.zero) {
+      return;
+    }
+
+    final DateTime normalizedEndedAt =
+        endedAt.isAfter(startedAt)
+            ? endedAt
+            : startedAt.add(normalizedDuration);
+
     final db = await _database.database;
     await db.insert('sessions', <String, Object?>{
       'categoryId': categoryId,
       'startedAt': startedAt.toIso8601String(),
-      'endedAt': endedAt.toIso8601String(),
-      'durationSeconds': duration.inSeconds,
+      'endedAt': normalizedEndedAt.toIso8601String(),
+      'durationSeconds': normalizedDuration.inSeconds,
       'isProductive': isProductive ? 1 : 0,
     });
   }

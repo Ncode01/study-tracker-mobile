@@ -64,7 +64,6 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
   @override
   Future<HomeViewState> build() async {
     final AppSettingsService settingsService = _settingsService;
-    _sensory;
 
     final AppSettingsSnapshot settings = await settingsService.snapshot();
     _keepScreenAwakeEnabled = settings.keepScreenAwake;
@@ -150,11 +149,6 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
       );
     }
 
-    await _sensory.playSessionStart();
-    if (_settingsService.enableHaptics) {
-      await HapticFeedback.heavyImpact();
-    }
-
     final TimerSnapshot nextTimer = TimerSnapshot(
       sessionStartTime: now,
       elapsed: Duration.zero,
@@ -175,6 +169,8 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
         stats: nextStats,
       ),
     );
+
+    unawaited(_playSwitchFeedbackSafely());
 
     await _tickerService.updateWakelock(
       _shouldEnableWakelockForCategory(category.id),
@@ -265,7 +261,19 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     final Duration normalizedElapsed =
         elapsed.isNegative ? Duration.zero : elapsed;
 
-    if (normalizedElapsed.inSeconds == current.timer.elapsed.inSeconds) {
+    final HomeViewState? latest = state.valueOrNull;
+    if (latest == null) {
+      return;
+    }
+
+    final DateTime latestSessionStart = _resolveSessionStartTime(latest.timer);
+    if (latest.currentCategory.id != current.currentCategory.id ||
+        latestSessionStart.millisecondsSinceEpoch !=
+            sessionStartTime.millisecondsSinceEpoch) {
+      return;
+    }
+
+    if (normalizedElapsed.inSeconds == latest.timer.elapsed.inSeconds) {
       return;
     }
 
@@ -273,10 +281,39 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
       sessionStartTime: sessionStartTime,
       elapsed: normalizedElapsed,
     );
-    state = AsyncData(current.copyWith(timer: nextTimer));
+    state = AsyncData(latest.copyWith(timer: nextTimer));
 
     if (_persistenceEnabled && normalizedElapsed.inSeconds % 30 == 0) {
       await _repo.saveTimerSnapshot(nextTimer);
+    }
+  }
+
+  Future<void> _playSwitchFeedbackSafely() async {
+    if (!_canUsePlatformFeedback()) {
+      return;
+    }
+
+    try {
+      await _sensory.playSessionStart();
+    } catch (_) {
+      // Feedback side effects must never block the session switch path.
+    }
+
+    try {
+      if (_settingsService.enableHaptics) {
+        await HapticFeedback.heavyImpact();
+      }
+    } catch (_) {
+      // Haptics can fail on some platforms and should be ignored safely.
+    }
+  }
+
+  bool _canUsePlatformFeedback() {
+    try {
+      ServicesBinding.instance;
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

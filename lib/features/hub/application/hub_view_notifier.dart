@@ -1,31 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/providers/core_providers.dart';
+import '../../calendar/presentation/providers/calendar_providers.dart';
+import '../domain/models/hub_class_schedule.dart';
+import '../domain/repositories/hub_repository.dart';
 
-class HubCountdown {
-  const HubCountdown({
-    required this.title,
-    required this.daysRemaining,
-    required this.accentColor,
+class HubClassEntry {
+  const HubClassEntry({
+    required this.id,
+    required this.subjectId,
+    required this.teacherName,
+    required this.weekday,
+    required this.startMinutes,
+    required this.durationMinutes,
+    required this.attendanceStatus,
+    required this.recordingPlannedAt,
+    required this.recordingDurationMinutes,
+    required this.recordingCompleted,
   });
 
-  final String title;
-  final int daysRemaining;
-  final Color accentColor;
-}
+  final int id;
+  final String subjectId;
+  final String teacherName;
+  final int weekday;
+  final int startMinutes;
+  final int durationMinutes;
+  final HubAttendanceStatus attendanceStatus;
+  final DateTime? recordingPlannedAt;
+  final int? recordingDurationMinutes;
+  final bool recordingCompleted;
 
-class HubSession {
-  const HubSession({
-    required this.title,
-    required this.timeLabel,
-    required this.durationLabel,
-  });
-
-  final String title;
-  final String timeLabel;
-  final String durationLabel;
+  bool get canPlanRecording => attendanceStatus == HubAttendanceStatus.missed;
 }
 
 class HubSubject {
@@ -34,33 +40,75 @@ class HubSubject {
     required this.title,
     required this.icon,
     required this.accentColor,
-    required this.goalLabel,
-    required this.progress,
-    required this.sessions,
+    required this.classes,
   });
 
   final String id;
   final String title;
   final IconData icon;
   final Color accentColor;
-  final String goalLabel;
-  final double progress;
-  final List<HubSession> sessions;
+  final List<HubClassEntry> classes;
+
+  int get attendedCount {
+    return classes
+        .where(
+          (HubClassEntry item) =>
+              item.attendanceStatus == HubAttendanceStatus.attended,
+        )
+        .length;
+  }
+
+  int get missedCount {
+    return classes
+        .where(
+          (HubClassEntry item) =>
+              item.attendanceStatus == HubAttendanceStatus.missed,
+        )
+        .length;
+  }
+
+  int get pendingCount {
+    return classes
+        .where(
+          (HubClassEntry item) =>
+              item.attendanceStatus == HubAttendanceStatus.pending,
+        )
+        .length;
+  }
 }
 
 class HubViewState {
-  const HubViewState({
-    required this.countdowns,
-    required this.subjects,
-    required this.expandedSubjectId,
-  });
+  const HubViewState({required this.subjects, required this.expandedSubjectId});
 
-  final List<HubCountdown> countdowns;
   final List<HubSubject> subjects;
   final String? expandedSubjectId;
+
+  HubViewState copyWith({
+    List<HubSubject>? subjects,
+    String? expandedSubjectId,
+  }) {
+    return HubViewState(
+      subjects: subjects ?? this.subjects,
+      expandedSubjectId: expandedSubjectId ?? this.expandedSubjectId,
+    );
+  }
 }
 
 class HubViewNotifier extends AsyncNotifier<HubViewState> {
+  static const List<String> _subjectOrder = <String>[
+    'maths',
+    'physics',
+    'chemistry',
+  ];
+
+  HubRepository? _repository;
+
+  HubRepository get _repo {
+    return _repository ??= SqliteHubRepository(
+      database: ref.read(databaseProvider),
+    );
+  }
+
   @override
   Future<HubViewState> build() async {
     return _loadState();
@@ -73,202 +121,252 @@ class HubViewNotifier extends AsyncNotifier<HubViewState> {
     }
 
     state = AsyncData(
-      HubViewState(
-        countdowns: current.countdowns,
-        subjects: current.subjects,
+      current.copyWith(
         expandedSubjectId:
             current.expandedSubjectId == subjectId ? null : subjectId,
       ),
     );
   }
 
-  Future<HubViewState> _loadState() async {
+  Future<void> refresh() async {
+    final HubViewState? current = state.valueOrNull;
+    await _reload(preferredExpandedSubjectId: current?.expandedSubjectId);
+  }
+
+  Future<void> addClassSession({
+    required String subjectId,
+    required String teacherName,
+    required int weekday,
+    required int startMinutes,
+    required int durationMinutes,
+  }) async {
+    final String normalizedTeacher = teacherName.trim();
+    if (normalizedTeacher.isEmpty) {
+      throw const FormatException('Teacher name cannot be empty.');
+    }
+    if (weekday < 1 || weekday > 7) {
+      throw const FormatException('Weekday must be between Monday and Sunday.');
+    }
+    if (startMinutes < 0 || startMinutes > 1439) {
+      throw const FormatException('Class start time is invalid.');
+    }
+    if (durationMinutes <= 0) {
+      throw const FormatException('Class duration must be greater than zero.');
+    }
+
+    await _runMutation(() {
+      return _repo.addClassSchedule(
+        subjectId: subjectId,
+        teacherName: normalizedTeacher,
+        weekday: weekday,
+        startMinutes: startMinutes,
+        durationMinutes: durationMinutes,
+      );
+    });
+  }
+
+  Future<void> updateAttendance({
+    required int classId,
+    required HubAttendanceStatus status,
+  }) async {
+    await _runMutation(() {
+      return _repo.updateClassAttendance(classId: classId, status: status);
+    });
+  }
+
+  Future<void> planRecording({
+    required int classId,
+    required DateTime plannedAt,
+    required int durationMinutes,
+  }) async {
+    if (durationMinutes <= 0) {
+      throw const FormatException(
+        'Recording duration must be greater than zero.',
+      );
+    }
+
+    await _runMutation(() {
+      return _repo.scheduleRecording(
+        classId: classId,
+        plannedAt: plannedAt,
+        durationMinutes: durationMinutes,
+      );
+    });
+  }
+
+  Future<void> setRecordingCompleted({
+    required int classId,
+    required bool completed,
+  }) async {
+    await _runMutation(() {
+      return _repo.setRecordingCompleted(
+        classId: classId,
+        completed: completed,
+      );
+    });
+  }
+
+  Future<void> deleteClassSession({required int classId}) async {
+    await _runMutation(() {
+      return _repo.deleteClassSchedule(classId);
+    });
+  }
+
+  Future<void> _runMutation(Future<Object?> Function() mutation) async {
+    final HubViewState? current = state.valueOrNull;
+    final String? expandedId = current?.expandedSubjectId;
+
+    await mutation();
+    await _reload(preferredExpandedSubjectId: expandedId);
+    ref.invalidate(calendarViewProvider);
+  }
+
+  Future<void> _reload({String? preferredExpandedSubjectId}) async {
+    state = const AsyncLoading<HubViewState>().copyWithPrevious(state);
+
+    try {
+      final HubViewState loaded = await _loadState(
+        preferredExpandedSubjectId: preferredExpandedSubjectId,
+      );
+      state = AsyncData(loaded);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+    }
+  }
+
+  Future<HubViewState> _loadState({String? preferredExpandedSubjectId}) async {
     final db = await ref.read(databaseProvider).database;
 
     final List<Map<String, Object?>> categoryRows = await db.query(
       'categories',
       orderBy: 'rowid ASC',
     );
-    final List<Map<String, Object?>> sessionRows = await db.query(
-      'sessions',
-      orderBy: 'endedAt DESC',
-      limit: 180,
-    );
+    final List<HubClassSchedule> schedules = await _repo.loadClassSchedules();
 
-    if (sessionRows.isEmpty) {
-      return const HubViewState(
-        countdowns: <HubCountdown>[],
-        subjects: <HubSubject>[],
-        expandedSubjectId: null,
-      );
-    }
-
-    final Map<String, ({String title, IconData icon, Color color})>
-    categoryMeta = <String, ({String title, IconData icon, Color color})>{
+    final Map<String, _HubSubjectMeta> categoryMeta = <String, _HubSubjectMeta>{
       for (final Map<String, Object?> row in categoryRows)
-        (row['id'] as String): (
+        (row['id'] as String? ?? ''): _HubSubjectMeta(
           title: row['title'] as String? ?? 'Study',
           icon: IconData(
             row['iconCodePoint'] as int? ??
                 Icons.auto_awesome_rounded.codePoint,
             fontFamily: row['iconFontFamily'] as String? ?? 'MaterialIcons',
           ),
-          color: Color(row['accentColorValue'] as int? ?? 0xFF64748B),
+          accentColor: Color(row['accentColorValue'] as int? ?? 0xFF64748B),
         ),
     };
 
-    final DateTime now = DateTime.now();
-    final DateTime startOfToday = DateTime(now.year, now.month, now.day);
-
-    final Map<String, List<_HubSessionRow>> sessionsByCategory =
-        <String, List<_HubSessionRow>>{};
-    for (final Map<String, Object?> row in sessionRows) {
-      final String categoryId = row['categoryId'] as String? ?? 'idle';
-      final int durationSeconds = row['durationSeconds'] as int? ?? 0;
-      if (durationSeconds <= 0) {
-        continue;
-      }
-
-      final DateTime endedAt = DateTime.parse(row['endedAt'] as String);
-      sessionsByCategory
-          .putIfAbsent(categoryId, () => <_HubSessionRow>[])
-          .add(
-            _HubSessionRow(endedAt: endedAt, durationSeconds: durationSeconds),
-          );
+    final Map<String, List<HubClassSchedule>> bySubject =
+        <String, List<HubClassSchedule>>{};
+    for (final HubClassSchedule schedule in schedules) {
+      bySubject
+          .putIfAbsent(schedule.subjectId, () => <HubClassSchedule>[])
+          .add(schedule);
     }
 
     final List<HubSubject> subjects = <HubSubject>[];
-    final Map<String, int> trackedSecondsByCategory = <String, int>{};
+    for (final String subjectId in _subjectOrder) {
+      final _HubSubjectMeta meta =
+          categoryMeta[subjectId] ?? _fallbackMetaForSubject(subjectId);
 
-    sessionsByCategory.forEach((String categoryId, List<_HubSessionRow> rows) {
-      final meta =
-          categoryMeta[categoryId] ??
-          (
-            title: _titleFromId(categoryId),
-            icon: Icons.auto_awesome_rounded,
-            color: const Color(0xFF64748B),
-          );
-
-      int todaySeconds = 0;
-      int totalSeconds = 0;
-      for (final _HubSessionRow row in rows) {
-        totalSeconds += row.durationSeconds;
-        if (!row.endedAt.isBefore(startOfToday)) {
-          todaySeconds += row.durationSeconds;
+      final List<HubClassEntry> classes = (bySubject[subjectId] ??
+            const <HubClassSchedule>[])
+        .map(_mapSchedule)
+        .toList(growable: true)..sort((HubClassEntry a, HubClassEntry b) {
+        final int dayCompare = a.weekday.compareTo(b.weekday);
+        if (dayCompare != 0) {
+          return dayCompare;
         }
-      }
-
-      trackedSecondsByCategory[categoryId] = totalSeconds;
-
-      final List<HubSession> sessions = rows
-          .take(3)
-          .map(
-            (_HubSessionRow row) => HubSession(
-              title: '${meta.title} focus block',
-              timeLabel: _timeLabelFor(row.endedAt, startOfToday),
-              durationLabel: _formatDuration(row.durationSeconds),
-            ),
-          )
-          .toList(growable: false);
-
-      final double progress = (todaySeconds / (2.5 * 3600)).clamp(0.0, 1.0);
+        return a.startMinutes.compareTo(b.startMinutes);
+      });
 
       subjects.add(
         HubSubject(
-          id: categoryId,
+          id: subjectId,
           title: meta.title,
           icon: meta.icon,
-          accentColor: meta.color,
-          goalLabel:
-              todaySeconds == 0
-                  ? 'No sessions logged today'
-                  : 'Today ${_formatDuration(todaySeconds)}',
-          progress: progress,
-          sessions: sessions,
+          accentColor: meta.accentColor,
+          classes: classes,
         ),
       );
-    });
+    }
 
-    subjects.sort((HubSubject a, HubSubject b) {
-      final int aSeconds = trackedSecondsByCategory[a.id] ?? 0;
-      final int bSeconds = trackedSecondsByCategory[b.id] ?? 0;
-      return bSeconds.compareTo(aSeconds);
-    });
-
-    final List<HubCountdown> countdowns = subjects
-        .take(4)
-        .map((HubSubject s) {
-          final int trackedSeconds = trackedSecondsByCategory[s.id] ?? 0;
-          final int focusedHours = trackedSeconds ~/ 3600;
-          final int nextMilestoneHours = ((focusedHours ~/ 5) + 1) * 5;
-          final int daysRemaining = ((nextMilestoneHours - focusedHours) / 2)
-              .ceil()
-              .clamp(1, 30);
-
-          return HubCountdown(
-            title: s.title,
-            daysRemaining: daysRemaining,
-            accentColor: s.accentColor,
-          );
-        })
-        .toList(growable: false);
+    final String? expandedSubjectId = _resolveExpandedSubjectId(
+      subjects: subjects,
+      preferredExpandedSubjectId: preferredExpandedSubjectId,
+    );
 
     return HubViewState(
-      countdowns: countdowns,
       subjects: subjects,
-      expandedSubjectId: subjects.isEmpty ? null : subjects.first.id,
+      expandedSubjectId: expandedSubjectId,
     );
   }
 
-  static String _timeLabelFor(DateTime dateTime, DateTime startOfToday) {
-    final String prefix =
-        dateTime.isBefore(startOfToday)
-            ? DateFormat('MMM d').format(dateTime)
-            : 'Today';
-    return '$prefix · ${DateFormat('HH:mm').format(dateTime)}';
+  HubClassEntry _mapSchedule(HubClassSchedule schedule) {
+    return HubClassEntry(
+      id: schedule.id,
+      subjectId: schedule.subjectId,
+      teacherName: schedule.teacherName,
+      weekday: schedule.weekday,
+      startMinutes: schedule.startMinutes,
+      durationMinutes: schedule.durationMinutes,
+      attendanceStatus: schedule.attendanceStatus,
+      recordingPlannedAt: schedule.recordingPlannedAt,
+      recordingDurationMinutes: schedule.recordingDurationMinutes,
+      recordingCompleted: schedule.recordingCompleted,
+    );
   }
 
-  static String _formatDuration(int seconds) {
-    final Duration duration = Duration(seconds: seconds);
-    final int hours = duration.inHours;
-    final int minutes = duration.inMinutes.remainder(60);
-
-    if (hours <= 0) {
-      return '${minutes}m';
+  String? _resolveExpandedSubjectId({
+    required List<HubSubject> subjects,
+    required String? preferredExpandedSubjectId,
+  }) {
+    if (subjects.isEmpty) {
+      return null;
     }
 
-    if (minutes == 0) {
-      return '${hours}h';
+    if (preferredExpandedSubjectId != null &&
+        subjects.any((HubSubject s) => s.id == preferredExpandedSubjectId)) {
+      return preferredExpandedSubjectId;
     }
 
-    return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
+    return subjects.first.id;
   }
 
-  static String _titleFromId(String categoryId) {
-    if (categoryId.isEmpty) {
-      return 'Study';
-    }
-
-    final String withSpaces = categoryId.replaceAll('-', ' ').trim();
-    if (withSpaces.isEmpty) {
-      return 'Study';
-    }
-
-    return withSpaces
-        .split(' ')
-        .map(
-          (String word) =>
-              word.isEmpty
-                  ? ''
-                  : '${word[0].toUpperCase()}${word.substring(1)}',
-        )
-        .join(' ');
+  _HubSubjectMeta _fallbackMetaForSubject(String subjectId) {
+    return switch (subjectId) {
+      'maths' => const _HubSubjectMeta(
+        title: 'Maths',
+        icon: Icons.calculate_outlined,
+        accentColor: Color(0xFFF43F5E),
+      ),
+      'physics' => const _HubSubjectMeta(
+        title: 'Physics',
+        icon: Icons.bolt_outlined,
+        accentColor: Color(0xFF3B82F6),
+      ),
+      'chemistry' => const _HubSubjectMeta(
+        title: 'Chemistry',
+        icon: Icons.science_outlined,
+        accentColor: Color(0xFF22C55E),
+      ),
+      _ => const _HubSubjectMeta(
+        title: 'Study',
+        icon: Icons.auto_awesome_rounded,
+        accentColor: Color(0xFF64748B),
+      ),
+    };
   }
 }
 
-class _HubSessionRow {
-  const _HubSessionRow({required this.endedAt, required this.durationSeconds});
+class _HubSubjectMeta {
+  const _HubSubjectMeta({
+    required this.title,
+    required this.icon,
+    required this.accentColor,
+  });
 
-  final DateTime endedAt;
-  final int durationSeconds;
+  final String title;
+  final IconData icon;
+  final Color accentColor;
 }

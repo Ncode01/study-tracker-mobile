@@ -7,7 +7,7 @@ class AppDatabase {
   AppDatabase();
 
   static const String _databaseName = 'timeflow.db';
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 6;
 
   Database? _database;
 
@@ -26,6 +26,10 @@ class AppDatabase {
       onUpgrade: _onUpgrade,
       onOpen: (Database db) async {
         await _createSessionIndexes(db);
+        await _createPlannedItemsTable(db);
+        await _createPlannedItemIndexes(db);
+        await _createHubClassesTable(db);
+        await _createHubClassIndexes(db);
         await _seedDefaultsIfNeeded(db);
       },
     );
@@ -69,7 +73,12 @@ class AppDatabase {
       )
     ''');
 
+    await _createPlannedItemsTable(db);
+    await _createHubClassesTable(db);
+
     await _createSessionIndexes(db);
+    await _createPlannedItemIndexes(db);
+    await _createHubClassIndexes(db);
 
     await _seedDefaultsIfNeeded(db);
   }
@@ -84,6 +93,73 @@ class AppDatabase {
     if (oldVersion < 4) {
       await _removeLegacySeededTasksIfPresent(db);
     }
+    if (oldVersion < 5) {
+      await _createPlannedItemsTable(db);
+      await _createPlannedItemIndexes(db);
+    }
+    if (oldVersion < 6) {
+      await _createHubClassesTable(db);
+      await _createHubClassIndexes(db);
+    }
+  }
+
+  Future<void> _createPlannedItemsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS planned_items(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        categoryId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        startAt TEXT NOT NULL,
+        endAt TEXT NOT NULL,
+        notes TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _createPlannedItemIndexes(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_planned_items_start_at ON planned_items (startAt);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_planned_items_end_at ON planned_items (endAt);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_planned_items_category_id ON planned_items (categoryId);',
+    );
+  }
+
+  Future<void> _createHubClassesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS hub_classes(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subjectId TEXT NOT NULL,
+        teacherName TEXT NOT NULL,
+        weekday INTEGER NOT NULL,
+        startMinutes INTEGER NOT NULL,
+        durationMinutes INTEGER NOT NULL,
+        attendanceStatus TEXT NOT NULL DEFAULT 'pending'
+          CHECK(attendanceStatus IN ('pending', 'attended', 'missed')),
+        recordingPlannedAt TEXT,
+        recordingDurationMinutes INTEGER,
+        recordingCompleted INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _createHubClassIndexes(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_classes_subject_id ON hub_classes (subjectId);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_classes_weekday ON hub_classes (weekday);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_hub_classes_recording_planned_at ON hub_classes (recordingPlannedAt);',
+    );
   }
 
   Future<void> _removeLegacySeededTasksIfPresent(Database db) async {
@@ -243,10 +319,24 @@ class AppDatabase {
     final Database db = await database;
     await db.transaction((txn) async {
       await txn.delete('sessions');
+      await txn.delete('planned_items');
+      await txn.delete('hub_classes');
       await txn.delete('tasks');
       await txn.delete('categories');
     });
 
     await _seedDefaultsIfNeeded(db);
+  }
+
+  Future<void> createSchemaForTest(Database db) async {
+    await _onCreate(db, _databaseVersion);
+  }
+
+  Future<void> upgradeSchemaForTest({
+    required Database db,
+    required int oldVersion,
+    required int newVersion,
+  }) async {
+    await _onUpgrade(db, oldVersion, newVersion);
   }
 }
