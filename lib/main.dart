@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/data/local/app_database.dart';
@@ -29,21 +28,7 @@ Future<void> main() async {
   final AppDatabase appDatabase = AppDatabase();
   final NotificationService notificationService = NotificationService();
 
-  await notificationService.init(
-    onTap: (String? payload) {
-      if (payload != 'timer_complete') {
-        return;
-      }
-
-      final BuildContext? context = rootNavigatorKey.currentContext;
-      if (context != null) {
-        context.go('/');
-        return;
-      }
-
-      appRouter.go('/');
-    },
-  );
+  await notificationService.init();
 
   runApp(
     ProviderScope(

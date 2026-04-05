@@ -344,12 +344,14 @@ class _ClubSelector extends StatelessWidget {
               ),
               child: Icon(club.icon, color: club.accentColor, size: 28),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               club.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.display(
                 color: selected ? AppColors.textMain : AppColors.textMuted,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/core_providers.dart';
 import '../../../core/services/app_settings_service.dart';
+import '../../../core/services/sensory_service.dart';
 import '../domain/models/home_stats.dart';
 import '../domain/models/home_view_state.dart';
 import '../domain/models/subject_category.dart';
@@ -12,64 +14,83 @@ import '../domain/models/timer_snapshot.dart';
 import '../domain/repositories/timer_repository.dart';
 import 'timer_service.dart';
 
-class HomeViewNotifier extends AsyncNotifier<HomeViewState>
-    with WidgetsBindingObserver {
-  static const Duration _fallbackTarget = Duration(minutes: 60);
+class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
+  static const SubjectCategory _fallbackCategory = SubjectCategory(
+    id: 'physics',
+    title: 'Physics',
+    icon: Icons.bolt_outlined,
+    accentColor: Color(0xFF3B82F6),
+    section: 'A/LEVELS',
+  );
 
-  late TimerRepository _repository;
-  late TimerService _timerService;
-  late AppSettingsService _appSettingsService;
-  Duration _sessionStartElapsed = Duration.zero;
-  DateTime? _sessionStartedAt;
-  DateTime? _backgroundedAt;
-  bool _observerAttached = false;
+  TimerRepository? _repository;
+  TimerService? _timerService;
+  AppSettingsService? _appSettingsService;
+  SensoryService? _sensoryService;
   final bool _persistenceEnabled = true;
   bool _keepScreenAwakeEnabled = true;
 
-  @override
-  Future<HomeViewState> build() async {
-    _appSettingsService = ref.read(appSettingsServiceProvider);
-    _repository = TimerRepository(
+  TimerRepository get _repo {
+    return _repository ??= TimerRepository(
       database: ref.read(databaseProvider),
       preferences: ref.read(sharedPreferencesProvider),
     );
-    _timerService = TimerService(
-      sensoryService: ref.read(sensoryServiceProvider),
-      notificationService: ref.read(notificationServiceProvider),
-    );
+  }
 
-    final AppSettingsSnapshot settings = await _appSettingsService.snapshot();
-    _keepScreenAwakeEnabled = settings.keepScreenAwake;
-    final Duration configuredDefaultTarget = Duration(
-      minutes: settings.defaultFocusMinutes,
-    );
+  TimerService get _tickerService {
+    return _timerService ??= TimerService();
+  }
 
-    if (!_observerAttached) {
-      WidgetsBinding.instance.addObserver(this);
-      _observerAttached = true;
+  AppSettingsService get _settingsService {
+    final AppSettingsService? cached = _appSettingsService;
+    if (cached != null) {
+      return cached;
     }
+    final AppSettingsService created = ref.read(appSettingsServiceProvider);
+    _appSettingsService = created;
+    return created;
+  }
+
+  SensoryService get _sensory {
+    final SensoryService? cached = _sensoryService;
+    if (cached != null) {
+      return cached;
+    }
+    final SensoryService created = ref.read(sensoryServiceProvider);
+    _sensoryService = created;
+    return created;
+  }
+
+  @override
+  Future<HomeViewState> build() async {
+    final AppSettingsService settingsService = _settingsService;
+    _sensory;
+
+    final AppSettingsSnapshot settings = await settingsService.snapshot();
+    _keepScreenAwakeEnabled = settings.keepScreenAwake;
 
     ref.onDispose(() {
-      unawaited(_timerService.dispose());
-      if (_observerAttached) {
-        WidgetsBinding.instance.removeObserver(this);
-        _observerAttached = false;
+      final TimerService? timerService = _timerService;
+      if (timerService != null) {
+        unawaited(timerService.dispose());
       }
     });
 
-    final List<SubjectCategory> categories = await _repository.loadCategories();
-    final String? selectedCategoryId =
-        await _repository.loadSelectedCategoryId();
+    final List<SubjectCategory> loadedCategories = await _repo.loadCategories();
+    final List<SubjectCategory> categories =
+        loadedCategories.isEmpty
+            ? const <SubjectCategory>[_fallbackCategory]
+            : loadedCategories;
+
+    final String? selectedCategoryId = await _repo.loadSelectedCategoryId();
     final SubjectCategory currentCategory = categories.firstWhere(
       (SubjectCategory category) => category.id == selectedCategoryId,
       orElse: () => categories.first,
     );
 
-    final TimerSnapshot timer = await _repository.loadTimerSnapshot(
-      defaultTarget: configuredDefaultTarget,
-    );
+    final TimerSnapshot timer = await _repo.loadTimerSnapshot();
 
-    final HomeStats stats = await _repository.loadHomeStats(
+    final HomeStats stats = await _repo.loadHomeStats(
       categories: categories,
       currentCategoryId: currentCategory.id,
     );
@@ -81,77 +102,19 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       timer: timer,
     );
 
-    if (timer.isRunning) {
-      _sessionStartElapsed = timer.sessionStartElapsed;
-      final DateTime? sessionStartTime = timer.sessionStartTime;
-      if (sessionStartTime != null) {
-        _sessionStartedAt = sessionStartTime.add(timer.sessionStartElapsed);
-      } else {
-        _sessionStartElapsed = timer.elapsed;
-        _sessionStartedAt = DateTime.now();
-      }
-
-      _timerService.startTicker(onTick: _tick);
-      await _timerService.updateWakelock(
-        _shouldEnableWakelockForCategory(currentCategory.id),
+    if (_persistenceEnabled) {
+      await _repo.saveActiveSession(
+        categoryId: currentCategory.id,
+        sessionStartTime: timer.sessionStartTime,
       );
-      if (_persistenceEnabled) {
-        await _timerService.scheduleCompletion(
-          remaining: _remainingDuration(timer),
-          categoryTitle: currentCategory.title,
-        );
-      }
     }
+
+    _tickerService.startTicker(onTick: _tick);
+    await _tickerService.updateWakelock(
+      _shouldEnableWakelockForCategory(currentCategory.id),
+    );
 
     return initialState;
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      _handleAppBackgrounded();
-      return;
-    }
-
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_handleAppResumed());
-    }
-  }
-
-  Future<void> toggleTimer() async {
-    final HomeViewState? current = state.valueOrNull;
-    if (current == null) {
-      return;
-    }
-
-    if (current.timer.isRunning) {
-      await _stopTimerAndRecordSession(current);
-      return;
-    }
-
-    final DateTime now = DateTime.now();
-    final TimerSnapshot nextTimer = current.timer.copyWith(
-      isRunning: true,
-      sessionStartTime: now.subtract(current.timer.elapsed),
-      sessionStartElapsed: current.timer.elapsed,
-    );
-    final HomeViewState next = current.copyWith(timer: nextTimer);
-    state = AsyncData(next);
-
-    _sessionStartElapsed = current.timer.elapsed;
-    _sessionStartedAt = now;
-    _timerService.startTicker(onTick: _tick);
-
-    await _timerService.onSessionStarted(
-      remaining: _remainingDuration(nextTimer),
-      enableWakelock: _shouldEnableWakelockForCategory(next.currentCategory.id),
-      categoryTitle: next.currentCategory.title,
-    );
-
-    if (_persistenceEnabled) {
-      await _repository.saveTimerSnapshot(nextTimer);
-    }
   }
 
   Future<void> switchCategory(SubjectCategory category) async {
@@ -160,20 +123,62 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       return;
     }
 
-    state = AsyncData(current.copyWith(currentCategory: category));
-    unawaited(_timerService.onCategorySwitched());
-    if (current.timer.isRunning) {
-      await _timerService.updateWakelock(
-        _shouldEnableWakelockForCategory(category.id),
-      );
-      await _timerService.scheduleCompletion(
-        remaining: _remainingDuration(current.timer),
-        categoryTitle: category.title,
+    if (current.currentCategory.id == category.id) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final DateTime previousSessionStart = _resolveSessionStartTime(
+      current.timer,
+    );
+    final Duration outgoingDuration = now.difference(previousSessionStart);
+
+    if (_persistenceEnabled && outgoingDuration > Duration.zero) {
+      await _repo.saveSession(
+        categoryId: current.currentCategory.id,
+        startedAt: previousSessionStart,
+        endedAt: now,
+        duration: outgoingDuration,
+        isProductive: _isProductiveCategoryId(current.currentCategory.id),
       );
     }
+
     if (_persistenceEnabled) {
-      await _repository.saveSelectedCategoryId(category.id);
+      await _repo.saveActiveSession(
+        categoryId: category.id,
+        sessionStartTime: now,
+      );
     }
+
+    await _sensory.playSessionStart();
+    if (_settingsService.enableHaptics) {
+      await HapticFeedback.heavyImpact();
+    }
+
+    final TimerSnapshot nextTimer = TimerSnapshot(
+      sessionStartTime: now,
+      elapsed: Duration.zero,
+    );
+
+    final HomeStats nextStats =
+        _persistenceEnabled
+            ? await _repo.loadHomeStats(
+              categories: current.categories,
+              currentCategoryId: category.id,
+            )
+            : current.stats;
+
+    state = AsyncData(
+      current.copyWith(
+        currentCategory: category,
+        timer: nextTimer,
+        stats: nextStats,
+      ),
+    );
+
+    await _tickerService.updateWakelock(
+      _shouldEnableWakelockForCategory(category.id),
+    );
   }
 
   Future<void> quickSwitchToMaths() async {
@@ -214,8 +219,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     );
 
     if (_persistenceEnabled) {
-      await _repository.insertCategory(category);
-      await _repository.saveSelectedCategoryId(category.id);
+      await _repo.insertCategory(category);
     }
 
     final List<SubjectCategory> nextCategories = <SubjectCategory>[
@@ -223,43 +227,19 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
       category,
     ];
 
-    final HomeStats nextStats =
-        _persistenceEnabled
-            ? await _repository.loadHomeStats(
-              categories: nextCategories,
-              currentCategoryId: category.id,
-            )
-            : current.stats.copyWith(next: category.title);
-
-    final HomeViewState nextState = current.copyWith(
-      categories: nextCategories,
-      currentCategory: category,
-      stats: nextStats,
-    );
-
-    state = AsyncData(nextState);
-    unawaited(_timerService.onCategorySwitched());
-
-    if (current.timer.isRunning) {
-      await _timerService.updateWakelock(
-        _shouldEnableWakelockForCategory(category.id),
-      );
-      await _timerService.scheduleCompletion(
-        remaining: _remainingDuration(current.timer),
-        categoryTitle: category.title,
-      );
-    }
+    state = AsyncData(current.copyWith(categories: nextCategories));
+    await switchCategory(category);
 
     return category;
   }
 
   Future<void> setKeepScreenAwakeEnabled(bool enabled) async {
     _keepScreenAwakeEnabled = enabled;
-    await _appSettingsService.setKeepScreenAwake(enabled);
+    await _settingsService.setKeepScreenAwake(enabled);
 
     final HomeViewState? current = state.valueOrNull;
-    if (current != null && current.timer.isRunning) {
-      await _timerService.updateWakelock(
+    if (current != null) {
+      await _tickerService.updateWakelock(
         _shouldEnableWakelockForCategory(current.currentCategory.id),
       );
     }
@@ -268,232 +248,35 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
   Future<void> updateDefaultFocusDurationMinutes(int minutes) async {
     final int normalizedMinutes = switch (minutes) {
       25 || 60 || 90 => minutes,
-      _ => _fallbackTarget.inMinutes,
+      _ => 60,
     };
 
-    await _appSettingsService.setDefaultFocusMinutes(normalizedMinutes);
+    await _settingsService.setDefaultFocusMinutes(normalizedMinutes);
+  }
 
+  Future<void> _tick() async {
     final HomeViewState? current = state.valueOrNull;
     if (current == null) {
       return;
     }
 
-    final Duration nextTarget = Duration(minutes: normalizedMinutes);
-    final Duration nextElapsed =
-        current.timer.elapsed > nextTarget ? nextTarget : current.timer.elapsed;
+    final DateTime sessionStartTime = _resolveSessionStartTime(current.timer);
+    final Duration elapsed = DateTime.now().difference(sessionStartTime);
+    final Duration normalizedElapsed =
+        elapsed.isNegative ? Duration.zero : elapsed;
+
+    if (normalizedElapsed.inSeconds == current.timer.elapsed.inSeconds) {
+      return;
+    }
 
     final TimerSnapshot nextTimer = current.timer.copyWith(
-      target: nextTarget,
-      elapsed: nextElapsed,
-      sessionStartElapsed:
-          current.timer.sessionStartElapsed > nextElapsed
-              ? nextElapsed
-              : current.timer.sessionStartElapsed,
+      sessionStartTime: sessionStartTime,
+      elapsed: normalizedElapsed,
     );
-
     state = AsyncData(current.copyWith(timer: nextTimer));
 
-    if (_persistenceEnabled) {
-      await _repository.saveTimerSnapshot(nextTimer);
-    }
-
-    if (nextTimer.isRunning) {
-      await _timerService.scheduleCompletion(
-        remaining: _remainingDuration(nextTimer),
-        categoryTitle: current.currentCategory.title,
-      );
-    }
-  }
-
-  Future<void> _tick() async {
-    final HomeViewState? current = state.valueOrNull;
-    if (current == null || !current.timer.isRunning) {
-      return;
-    }
-
-    final Duration nextElapsed =
-        current.timer.elapsed + const Duration(seconds: 1);
-    final bool completed = nextElapsed >= current.timer.target;
-
-    final TimerSnapshot nextTimer = current.timer.copyWith(
-      elapsed: completed ? current.timer.target : nextElapsed,
-      isRunning: !completed,
-      clearSessionStartTime: completed,
-      sessionStartElapsed:
-          completed ? current.timer.target : current.timer.sessionStartElapsed,
-    );
-    final HomeViewState next = current.copyWith(timer: nextTimer);
-    state = AsyncData(next);
-
-    if (_persistenceEnabled) {
-      await _repository.saveTimerSnapshot(nextTimer);
-    }
-
-    if (completed) {
-      await _completeTimerSession(next);
-    }
-  }
-
-  Future<void> _stopTimerAndRecordSession(HomeViewState current) async {
-    _timerService.stopTicker();
-    await _timerService.onSessionStopped();
-
-    final TimerSnapshot nextTimer = current.timer.copyWith(
-      isRunning: false,
-      clearSessionStartTime: true,
-      sessionStartElapsed: current.timer.elapsed,
-    );
-    await _persistSessionIfNeeded(
-      currentCategoryId: current.currentCategory.id,
-      endElapsed: nextTimer.elapsed,
-    );
-
-    final HomeStats stats =
-        _persistenceEnabled
-            ? await _repository.loadHomeStats(
-              categories: current.categories,
-              currentCategoryId: current.currentCategory.id,
-            )
-            : current.stats;
-
-    final HomeViewState next = current.copyWith(timer: nextTimer, stats: stats);
-    state = AsyncData(next);
-
-    if (_persistenceEnabled) {
-      await _repository.saveTimerSnapshot(nextTimer);
-    }
-  }
-
-  Future<void> _completeTimerSession(HomeViewState current) async {
-    _timerService.stopTicker();
-    await _timerService.onSessionCompleted();
-
-    final TimerSnapshot completedTimer = current.timer.copyWith(
-      isRunning: false,
-      clearSessionStartTime: true,
-      sessionStartElapsed: current.timer.elapsed,
-    );
-
-    final HomeViewState completedState = current.copyWith(
-      timer: completedTimer,
-    );
-    state = AsyncData(completedState);
-    if (_persistenceEnabled) {
-      await _repository.saveTimerSnapshot(completedTimer);
-    }
-
-    await _persistSessionIfNeeded(
-      currentCategoryId: completedState.currentCategory.id,
-      endElapsed: completedState.timer.elapsed,
-    );
-
-    final HomeStats stats =
-        _persistenceEnabled
-            ? await _repository.loadHomeStats(
-              categories: completedState.categories,
-              currentCategoryId: completedState.currentCategory.id,
-            )
-            : completedState.stats;
-
-    state = AsyncData(completedState.copyWith(stats: stats));
-  }
-
-  Future<void> _persistSessionIfNeeded({
-    required String currentCategoryId,
-    required Duration endElapsed,
-  }) async {
-    final DateTime? startedAt = _sessionStartedAt;
-    if (startedAt == null) {
-      return;
-    }
-
-    final Duration sessionDuration = endElapsed - _sessionStartElapsed;
-    if (sessionDuration <= Duration.zero) {
-      _sessionStartedAt = null;
-      _sessionStartElapsed = endElapsed;
-      return;
-    }
-
-    if (_persistenceEnabled) {
-      await _repository.saveSession(
-        categoryId: currentCategoryId,
-        startedAt: startedAt,
-        endedAt: DateTime.now(),
-        duration: sessionDuration,
-        isProductive:
-            currentCategoryId != 'break' && currentCategoryId != 'idle',
-      );
-    }
-
-    _sessionStartedAt = null;
-    _sessionStartElapsed = endElapsed;
-  }
-
-  void _handleAppBackgrounded() {
-    final HomeViewState? current = state.valueOrNull;
-    if (current == null || !current.timer.isRunning) {
-      return;
-    }
-
-    _backgroundedAt = DateTime.now();
-    _timerService.stopTicker();
-    if (_persistenceEnabled) {
-      unawaited(_repository.saveTimerSnapshot(current.timer));
-    }
-  }
-
-  Future<void> _handleAppResumed() async {
-    final HomeViewState? current = state.valueOrNull;
-    if (current == null || !current.timer.isRunning) {
-      _backgroundedAt = null;
-      return;
-    }
-
-    final DateTime? priorBackgroundedAt = _backgroundedAt;
-    _backgroundedAt = null;
-
-    Duration nextElapsed = current.timer.elapsed;
-    if (current.timer.sessionStartTime != null) {
-      final Duration absoluteElapsed = DateTime.now().difference(
-        current.timer.sessionStartTime!,
-      );
-      if (!absoluteElapsed.isNegative) {
-        nextElapsed = absoluteElapsed;
-      }
-    } else if (priorBackgroundedAt != null) {
-      final Duration drift = DateTime.now().difference(priorBackgroundedAt);
-      if (!drift.isNegative) {
-        nextElapsed = current.timer.elapsed + drift;
-      }
-    }
-
-    final bool completed = nextElapsed >= current.timer.target;
-
-    final TimerSnapshot nextTimer = current.timer.copyWith(
-      elapsed: completed ? current.timer.target : nextElapsed,
-      isRunning: !completed,
-      clearSessionStartTime: completed,
-      sessionStartElapsed:
-          completed ? current.timer.target : current.timer.sessionStartElapsed,
-    );
-    final HomeViewState next = current.copyWith(timer: nextTimer);
-    state = AsyncData(next);
-
-    if (_persistenceEnabled) {
-      await _repository.saveTimerSnapshot(nextTimer);
-    }
-
-    if (completed) {
-      await _completeTimerSession(next);
-      return;
-    }
-
-    _timerService.startTicker(onTick: _tick);
-    if (_persistenceEnabled) {
-      await _timerService.scheduleCompletion(
-        remaining: _remainingDuration(nextTimer),
-        categoryTitle: next.currentCategory.title,
-      );
+    if (_persistenceEnabled && normalizedElapsed.inSeconds % 30 == 0) {
+      await _repo.saveTimerSnapshot(nextTimer);
     }
   }
 
@@ -511,12 +294,19 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     return null;
   }
 
-  bool _isDeepWorkCategoryId(String categoryId) {
-    return categoryId != 'break' && categoryId != 'idle';
+  bool _isNonProductiveCategoryId(String categoryId) {
+    final String normalized = categoryId.toLowerCase();
+    return normalized == 'break' ||
+        normalized == 'idle' ||
+        normalized == 'sleep';
+  }
+
+  bool _isProductiveCategoryId(String categoryId) {
+    return !_isNonProductiveCategoryId(categoryId);
   }
 
   bool _shouldEnableWakelockForCategory(String categoryId) {
-    return _keepScreenAwakeEnabled && _isDeepWorkCategoryId(categoryId);
+    return _keepScreenAwakeEnabled && _isProductiveCategoryId(categoryId);
   }
 
   String _slugify(String value) {
@@ -532,8 +322,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     int suffix = 2;
 
     while (_categoryById(candidate) != null ||
-        (_persistenceEnabled &&
-            await _repository.categoryIdExists(candidate))) {
+        (_persistenceEnabled && await _repo.categoryIdExists(candidate))) {
       candidate = '$base-$suffix';
       suffix += 1;
     }
@@ -541,11 +330,20 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState>
     return candidate;
   }
 
-  Duration _remainingDuration(TimerSnapshot timer) {
-    final Duration remaining = timer.target - timer.elapsed;
-    if (remaining.isNegative) {
+  DateTime _resolveSessionStartTime(TimerSnapshot timer) {
+    try {
+      return timer.sessionStartTime;
+    } catch (_) {
+      final Duration fallbackElapsed = _safeElapsed(timer);
+      return DateTime.now().subtract(fallbackElapsed);
+    }
+  }
+
+  Duration _safeElapsed(TimerSnapshot timer) {
+    try {
+      return timer.elapsed;
+    } catch (_) {
       return Duration.zero;
     }
-    return remaining;
   }
 }

@@ -14,12 +14,14 @@ class TimerRepository {
        _preferences = preferences;
 
   static const String _selectedCategoryKey = 'selected_category_id';
-  static const String _timerElapsedKey = 'timer_elapsed_seconds';
-  static const String _timerTargetKey = 'timer_target_seconds';
-  static const String _timerRunningKey = 'timer_is_running';
-  static const String _timerLastUpdateKey = 'timer_last_update_ms';
   static const String _timerSessionStartTimeKey = 'timer_session_start_time_ms';
-  static const String _timerSessionStartElapsedKey =
+  static const String _timerElapsedKey = 'timer_elapsed_seconds';
+
+  // Legacy keys kept temporarily for migration cleanup from pre-continuous flow builds.
+  static const String _legacyTimerTargetKey = 'timer_target_seconds';
+  static const String _legacyTimerRunningKey = 'timer_is_running';
+  static const String _legacyTimerLastUpdateKey = 'timer_last_update_ms';
+  static const String _legacyTimerSessionStartElapsedKey =
       'timer_session_start_elapsed_seconds';
 
   final AppDatabase _database;
@@ -61,90 +63,51 @@ class TimerRepository {
     await _preferences.setString(_selectedCategoryKey, categoryId);
   }
 
-  Future<TimerSnapshot> loadTimerSnapshot({
-    required Duration defaultTarget,
-  }) async {
-    final int elapsedSeconds = _preferences.getInt(_timerElapsedKey) ?? 0;
-    final int targetSeconds =
-        _preferences.getInt(_timerTargetKey) ?? defaultTarget.inSeconds;
-    final bool wasRunning = _preferences.getBool(_timerRunningKey) ?? false;
-    final int? lastUpdateMs = _preferences.getInt(_timerLastUpdateKey);
+  Future<TimerSnapshot> loadTimerSnapshot() async {
+    final DateTime now = DateTime.now();
     final DateTime? savedSessionStartTime = _loadDateTime(
       _timerSessionStartTimeKey,
     );
-    final int sessionStartElapsedSeconds =
-        _preferences.getInt(_timerSessionStartElapsedKey) ?? elapsedSeconds;
+    final int elapsedSeconds = _preferences.getInt(_timerElapsedKey) ?? 0;
 
-    Duration elapsed = Duration(seconds: elapsedSeconds);
-    final Duration target = Duration(seconds: targetSeconds);
-    Duration sessionStartElapsed = Duration(
-      seconds: sessionStartElapsedSeconds,
-    );
-
-    DateTime? effectiveSessionStartTime = savedSessionStartTime;
-
-    if (wasRunning) {
-      if (savedSessionStartTime != null) {
-        final Duration trueElapsed = DateTime.now().difference(
-          savedSessionStartTime,
-        );
-        if (!trueElapsed.isNegative) {
-          elapsed = trueElapsed;
-        }
-      } else if (lastUpdateMs != null) {
-        final DateTime last = DateTime.fromMillisecondsSinceEpoch(lastUpdateMs);
-        final Duration drift = DateTime.now().difference(last);
-        if (!drift.isNegative) {
-          elapsed += drift;
-        }
-      }
-
-      effectiveSessionStartTime =
-          savedSessionStartTime ?? DateTime.now().subtract(elapsed);
-    }
-
-    final bool completed = elapsed >= target;
-    final Duration clampedElapsed = completed ? target : elapsed;
-    if (sessionStartElapsed > clampedElapsed) {
-      sessionStartElapsed = clampedElapsed;
-    }
+    final DateTime sessionStartTime =
+        savedSessionStartTime ??
+        now.subtract(Duration(seconds: elapsedSeconds));
+    final Duration elapsed = now.difference(sessionStartTime);
 
     final TimerSnapshot snapshot = TimerSnapshot(
-      elapsed: clampedElapsed,
-      target: target,
-      isRunning: wasRunning && !completed,
-      sessionStartTime:
-          wasRunning && !completed ? effectiveSessionStartTime : null,
-      sessionStartElapsed:
-          wasRunning && !completed ? sessionStartElapsed : clampedElapsed,
+      sessionStartTime: sessionStartTime,
+      elapsed: elapsed.isNegative ? Duration.zero : elapsed,
     );
 
     await saveTimerSnapshot(snapshot);
+    await _removeLegacyTimerKeys();
     return snapshot;
   }
 
   Future<void> saveTimerSnapshot(TimerSnapshot snapshot) async {
+    await _preferences.setInt(
+      _timerSessionStartTimeKey,
+      snapshot.sessionStartTime.millisecondsSinceEpoch,
+    );
     await _preferences.setInt(_timerElapsedKey, snapshot.elapsed.inSeconds);
-    await _preferences.setInt(_timerTargetKey, snapshot.target.inSeconds);
-    await _preferences.setBool(_timerRunningKey, snapshot.isRunning);
-    await _preferences.setInt(
-      _timerSessionStartElapsedKey,
-      snapshot.sessionStartElapsed.inSeconds,
-    );
+  }
 
-    if (snapshot.isRunning && snapshot.sessionStartTime != null) {
-      await _preferences.setInt(
-        _timerSessionStartTimeKey,
-        snapshot.sessionStartTime!.millisecondsSinceEpoch,
-      );
-    } else {
-      await _preferences.remove(_timerSessionStartTimeKey);
-    }
-
-    await _preferences.setInt(
-      _timerLastUpdateKey,
-      DateTime.now().millisecondsSinceEpoch,
+  Future<void> saveActiveSession({
+    required String categoryId,
+    required DateTime sessionStartTime,
+  }) async {
+    await saveSelectedCategoryId(categoryId);
+    await saveTimerSnapshot(
+      TimerSnapshot(sessionStartTime: sessionStartTime, elapsed: Duration.zero),
     );
+  }
+
+  Future<void> _removeLegacyTimerKeys() async {
+    await _preferences.remove(_legacyTimerTargetKey);
+    await _preferences.remove(_legacyTimerRunningKey);
+    await _preferences.remove(_legacyTimerLastUpdateKey);
+    await _preferences.remove(_legacyTimerSessionStartElapsedKey);
   }
 
   DateTime? _loadDateTime(String key) {

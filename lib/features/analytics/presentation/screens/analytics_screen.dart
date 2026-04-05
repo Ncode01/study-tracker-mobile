@@ -615,6 +615,14 @@ class _WeeklyTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double maxTrendHours = state.weeklyTrend.fold<double>(
+      0,
+      (double maxValue, WeeklyTrendBar bar) =>
+          bar.value > maxValue ? bar.value : maxValue,
+    );
+    final double chartMaxY =
+        (maxTrendHours <= 0 ? 24 : maxTrendHours).clamp(1, 24).toDouble();
+
     return GlassContainer(
       borderRadius: BorderRadius.circular(28),
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
@@ -633,7 +641,7 @@ class _WeeklyTrendCard extends StatelessWidget {
             height: 220,
             child: BarChart(
               BarChartData(
-                maxY: 10,
+                maxY: chartMaxY,
                 alignment: BarChartAlignment.spaceAround,
                 gridData: const FlGridData(show: false),
                 titlesData: FlTitlesData(
@@ -683,7 +691,7 @@ class _WeeklyTrendCard extends StatelessWidget {
                           color: AppColors.primaryPurple,
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
-                            toY: 10,
+                            toY: chartMaxY,
                             color: AppColors.glassBorder,
                           ),
                         ),

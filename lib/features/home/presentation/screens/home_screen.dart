@@ -16,6 +16,7 @@ import '../widgets/category_hero_tag.dart';
 import '../widgets/category_context_row.dart';
 import '../widgets/onboarding_flow_sheet.dart';
 import '../widgets/quick_switch_chips.dart';
+import '../widgets/switch_context_sheet.dart';
 import '../widgets/timer_ring.dart';
 import '../widgets/top_stats_bar.dart';
 
@@ -28,6 +29,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _didAttemptOnboarding = false;
+
+  void _showSwitchContextSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (_) => const FractionallySizedBox(
+            heightFactor: 0.82,
+            child: SwitchContextSheet(),
+          ),
+    );
+  }
 
   void _scheduleOnboardingIfNeeded(AsyncValue<HomeViewState> asyncState) {
     if (_didAttemptOnboarding || !asyncState.hasValue) {
@@ -101,11 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}';
 
                           final double timerProgress =
-                              state.timer.target.inSeconds <= 0
-                                  ? 0
-                                  : (elapsed.inSeconds /
-                                          state.timer.target.inSeconds)
-                                      .clamp(0.0, 1.0);
+                              (elapsed.inSeconds % 3600) / 3600.0;
 
                           return Padding(
                             padding: const EdgeInsets.symmetric(
@@ -167,16 +177,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         timeSpentLabel: l10n.homeTimerLabel,
                                         semanticsLabel: l10n
                                             .homeTimerSemanticsLabel(timerText),
-                                        semanticsHint:
-                                            l10n.homeTimerSemanticsHint,
+                                        semanticsHint: null,
                                         progress: timerProgress,
                                         accentColor:
                                             state.currentCategory.accentColor,
                                         size: ringSize,
-                                        onTap:
-                                            () => unawaited(
-                                              notifier.toggleTimer(),
-                                            ),
+                                        onTap: _showSwitchContextSheet,
                                       ),
                                       SizedBox(height: verticalGap),
                                       QuickSwitchChips(

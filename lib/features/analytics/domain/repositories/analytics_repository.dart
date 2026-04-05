@@ -6,6 +6,8 @@ import '../models/daily_study_stat.dart';
 class AnalyticsRepository {
   AnalyticsRepository({required AppDatabase database}) : _database = database;
 
+  static const int _secondsPerDay = 24 * 60 * 60;
+
   final AppDatabase _database;
 
   Future<AnalyticsDataBundle> loadBundle({
@@ -39,8 +41,8 @@ class AnalyticsRepository {
         SUM(s.durationSeconds) AS totalSeconds,
         SUM(
           CASE
-            WHEN LOWER(COALESCE(c.title, s.categoryId)) IN ('break', 'idle')
-              OR LOWER(s.categoryId) IN ('break', 'idle')
+            WHEN LOWER(COALESCE(c.title, s.categoryId)) IN ('break', 'idle', 'sleep')
+              OR LOWER(s.categoryId) IN ('break', 'idle', 'sleep')
             THEN 0
             ELSE s.durationSeconds
           END
@@ -57,6 +59,7 @@ class AnalyticsRepository {
 
     int totalSeconds = 0;
     int productiveSeconds = 0;
+    int inferredIdleSeconds = 0;
 
     final Map<String, int> byDayTotalSeconds = <String, int>{};
     final Map<String, int> byDayProductiveSeconds = <String, int>{};
@@ -68,9 +71,32 @@ class AnalyticsRepository {
 
       byDayTotalSeconds[dayKey] = dayTotalSeconds;
       byDayProductiveSeconds[dayKey] = dayProductiveSeconds;
+    }
 
-      totalSeconds += dayTotalSeconds;
-      productiveSeconds += dayProductiveSeconds;
+    final DateTime aggregationStart = _resolveAggregationStart(
+      since: since,
+      today: today,
+      byDayTotalSeconds: byDayTotalSeconds,
+    );
+
+    for (
+      DateTime day = aggregationStart;
+      !day.isAfter(today);
+      day = day.add(const Duration(days: 1))
+    ) {
+      final String dayKey = _dayKey(day);
+      final int rawDayTotal = (byDayTotalSeconds[dayKey] ?? 0).clamp(
+        0,
+        _secondsPerDay,
+      );
+      final int rawDayProductive = (byDayProductiveSeconds[dayKey] ?? 0).clamp(
+        0,
+        rawDayTotal,
+      );
+
+      totalSeconds += _secondsPerDay;
+      productiveSeconds += rawDayProductive;
+      inferredIdleSeconds += _secondsPerDay - rawDayTotal;
     }
 
     final Map<String, int> byCategorySeconds = <String, int>{};
@@ -115,14 +141,27 @@ class AnalyticsRepository {
     for (int i = 6; i >= 0; i--) {
       final DateTime day = today.subtract(Duration(days: i));
       final String dayKey = _dayKey(day);
+      final int rawDayTotal = (byDayTotalSeconds[dayKey] ?? 0).clamp(
+        0,
+        _secondsPerDay,
+      );
+      final int rawDayProductive = (byDayProductiveSeconds[dayKey] ?? 0).clamp(
+        0,
+        rawDayTotal,
+      );
 
       daily.add(
         DailyStudyStat(
           day: day,
-          totalMinutes: (byDayTotalSeconds[dayKey] ?? 0) ~/ 60,
-          productiveMinutes: (byDayProductiveSeconds[dayKey] ?? 0) ~/ 60,
+          totalMinutes: _secondsPerDay ~/ 60,
+          productiveMinutes: rawDayProductive ~/ 60,
         ),
       );
+    }
+
+    if (inferredIdleSeconds > 0) {
+      byCategorySeconds['idle'] =
+          (byCategorySeconds['idle'] ?? 0) + inferredIdleSeconds;
     }
 
     final List<DistributionEntry> distribution = _buildDistribution(
@@ -198,7 +237,30 @@ class AnalyticsRepository {
   bool _isBreakOrIdle(String categoryId, String categoryTitle) {
     final String id = categoryId.toLowerCase();
     final String title = categoryTitle.toLowerCase();
-    return id == 'break' || id == 'idle' || title == 'break' || title == 'idle';
+    return id == 'break' ||
+        id == 'idle' ||
+        id == 'sleep' ||
+        title == 'break' ||
+        title == 'idle' ||
+        title == 'sleep';
+  }
+
+  DateTime _resolveAggregationStart({
+    required DateTime? since,
+    required DateTime today,
+    required Map<String, int> byDayTotalSeconds,
+  }) {
+    if (since != null) {
+      return DateTime(since.year, since.month, since.day);
+    }
+
+    if (byDayTotalSeconds.isEmpty) {
+      return today;
+    }
+
+    final List<String> keys = byDayTotalSeconds.keys.toList(growable: false)
+      ..sort();
+    return DateTime.parse(keys.first);
   }
 
   String _dayKey(DateTime day) {

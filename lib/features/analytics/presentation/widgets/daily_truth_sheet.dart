@@ -14,6 +14,8 @@ import '../providers/analytics_providers.dart';
 class DailyTruthSheet extends ConsumerWidget {
   const DailyTruthSheet({super.key});
 
+  static const int _secondsPerDay = 24 * 60 * 60;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<AnalyticsViewState> asyncState = ref.watch(
@@ -41,12 +43,29 @@ class DailyTruthSheet extends ConsumerWidget {
           a.startedAt.compareTo(b.startedAt),
     );
 
-    final int totalIdleSeconds = todaySessions
-        .where((AnalyticsSession session) => _isIdleOrBreak(session))
+    final int loggedSeconds = todaySessions.fold<int>(
+      0,
+      (int sum, AnalyticsSession session) => sum + session.durationSeconds,
+    );
+    final int inferredIdleSeconds = math.max(_secondsPerDay - loggedSeconds, 0);
+    final int productiveSeconds = todaySessions
+        .where((AnalyticsSession session) => !_isIdleOrBreak(session))
         .fold<int>(0, (int sum, AnalyticsSession s) => sum + s.durationSeconds);
 
+    final int totalIdleSeconds =
+        todaySessions
+            .where((AnalyticsSession session) => _isIdleOrBreak(session))
+            .fold<int>(
+              0,
+              (int sum, AnalyticsSession s) => sum + s.durationSeconds,
+            ) +
+        inferredIdleSeconds;
+
     final _TimelineData timeline = _buildTimelineData(todaySessions);
-    final List<_SinkStat> topSinks = _buildTopSinks(todaySessions);
+    final List<_SinkStat> topSinks = _buildTopSinks(
+      sessions: todaySessions,
+      inferredIdleSeconds: inferredIdleSeconds,
+    );
 
     return Material(
       color: Colors.transparent,
@@ -110,9 +129,9 @@ class DailyTruthSheet extends ConsumerWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _MetricCard(
-                                  title: 'Time Drift',
-                                  value: _formatDuration(timeline.driftSeconds),
-                                  accentColor: AppColors.accentMaths,
+                                  title: 'Productive Time',
+                                  value: _formatDuration(productiveSeconds),
+                                  accentColor: AppColors.primaryPurple,
                                 ),
                               ),
                             ],
@@ -189,7 +208,12 @@ class DailyTruthSheet extends ConsumerWidget {
   bool _isIdleOrBreak(AnalyticsSession session) {
     final String id = session.categoryId.toLowerCase();
     final String title = session.categoryTitle.toLowerCase();
-    return id == 'break' || id == 'idle' || title == 'break' || title == 'idle';
+    return id == 'break' ||
+        id == 'idle' ||
+        id == 'sleep' ||
+        title == 'break' ||
+        title == 'idle' ||
+        title == 'sleep';
   }
 
   _TimelineData _buildTimelineData(List<AnalyticsSession> sessions) {
@@ -248,7 +272,10 @@ class DailyTruthSheet extends ConsumerWidget {
     );
   }
 
-  List<_SinkStat> _buildTopSinks(List<AnalyticsSession> sessions) {
+  List<_SinkStat> _buildTopSinks({
+    required List<AnalyticsSession> sessions,
+    required int inferredIdleSeconds,
+  }) {
     final Map<String, int> sinkSeconds = <String, int>{};
 
     for (final AnalyticsSession session in sessions) {
@@ -257,6 +284,11 @@ class DailyTruthSheet extends ConsumerWidget {
       }
       sinkSeconds[session.categoryTitle] =
           (sinkSeconds[session.categoryTitle] ?? 0) + session.durationSeconds;
+    }
+
+    if (inferredIdleSeconds > 0) {
+      sinkSeconds['Idle (Untracked)'] =
+          (sinkSeconds['Idle (Untracked)'] ?? 0) + inferredIdleSeconds;
     }
 
     if (sinkSeconds.isEmpty) {
@@ -276,9 +308,12 @@ class DailyTruthSheet extends ConsumerWidget {
     return sorted
         .take(3)
         .map((MapEntry<String, int> entry) {
+          final String key = entry.key.toLowerCase();
           final bool idleLike =
-              entry.key.toLowerCase() == 'break' ||
-              entry.key.toLowerCase() == 'idle';
+              key == 'break' ||
+              key == 'idle' ||
+              key == 'sleep' ||
+              key.contains('idle');
           final Color accent =
               idleLike ? AppColors.accentMaths : AppColors.primaryPurple;
           return _SinkStat(

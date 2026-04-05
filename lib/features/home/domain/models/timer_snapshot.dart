@@ -1,63 +1,77 @@
 class TimerSnapshot {
-  const TimerSnapshot({
-    required this.elapsed,
-    required this.target,
-    required this.isRunning,
-    this.sessionStartTime,
-    this.sessionStartElapsed = Duration.zero,
-  });
+  const TimerSnapshot({DateTime? sessionStartTime, required this.elapsed})
+    : _sessionStartTime = sessionStartTime;
 
+  final DateTime? _sessionStartTime;
   final Duration elapsed;
-  final Duration target;
-  final bool isRunning;
-  final DateTime? sessionStartTime;
-  final Duration sessionStartElapsed;
 
-  TimerSnapshot copyWith({
-    Duration? elapsed,
-    Duration? target,
-    bool? isRunning,
-    DateTime? sessionStartTime,
-    bool clearSessionStartTime = false,
-    Duration? sessionStartElapsed,
-  }) {
+  DateTime get sessionStartTime {
+    final DateTime? saved = _sessionStartTime;
+    if (saved != null) {
+      return saved;
+    }
+    return DateTime.now().subtract(elapsed);
+  }
+
+  TimerSnapshot copyWith({DateTime? sessionStartTime, Duration? elapsed}) {
     return TimerSnapshot(
+      sessionStartTime: sessionStartTime ?? _sessionStartTime,
       elapsed: elapsed ?? this.elapsed,
-      target: target ?? this.target,
-      isRunning: isRunning ?? this.isRunning,
-      sessionStartTime: clearSessionStartTime
-          ? null
-          : sessionStartTime ?? this.sessionStartTime,
-      sessionStartElapsed: sessionStartElapsed ?? this.sessionStartElapsed,
     );
   }
 
   Map<String, Object?> toMap() {
     return <String, Object?>{
+      'sessionStartTimeMs': sessionStartTime.millisecondsSinceEpoch,
       'elapsedSeconds': elapsed.inSeconds,
-      'targetSeconds': target.inSeconds,
-      'isRunning': isRunning ? 1 : 0,
-      'sessionStartTimeMs': sessionStartTime?.millisecondsSinceEpoch,
-      'sessionStartElapsedSeconds': sessionStartElapsed.inSeconds,
     };
   }
 
   factory TimerSnapshot.fromMap(Map<String, Object?> map) {
+    final DateTime now = DateTime.now();
+    final DateTime? parsedSessionStart = _toDateTime(map['sessionStartTimeMs']);
+    final Duration parsedElapsed = _toDuration(map['elapsedSeconds']);
+
+    final DateTime sessionStartTime =
+        parsedSessionStart ?? now.subtract(parsedElapsed);
+
+    final Duration elapsed = now.difference(sessionStartTime);
+
     return TimerSnapshot(
-      elapsed: Duration(seconds: map['elapsedSeconds'] as int? ?? 0),
-      target: Duration(seconds: map['targetSeconds'] as int? ?? 0),
-      isRunning: (map['isRunning'] as int? ?? 0) == 1,
-      sessionStartTime: _toDateTime(map['sessionStartTimeMs']),
-      sessionStartElapsed:
-          Duration(seconds: map['sessionStartElapsedSeconds'] as int? ?? 0),
+      sessionStartTime: sessionStartTime,
+      elapsed: elapsed.isNegative ? Duration.zero : elapsed,
     );
   }
 
   static DateTime? _toDateTime(Object? value) {
-    final int? milliseconds = value as int?;
-    if (milliseconds == null) {
-      return null;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
     }
-    return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    }
+    if (value is String) {
+      final int? parsed = int.tryParse(value);
+      if (parsed != null) {
+        return DateTime.fromMillisecondsSinceEpoch(parsed);
+      }
+    }
+    return null;
+  }
+
+  static Duration _toDuration(Object? value) {
+    if (value is int) {
+      return Duration(seconds: value);
+    }
+    if (value is num) {
+      return Duration(seconds: value.toInt());
+    }
+    if (value is String) {
+      final int? parsed = int.tryParse(value);
+      if (parsed != null) {
+        return Duration(seconds: parsed);
+      }
+    }
+    return Duration.zero;
   }
 }

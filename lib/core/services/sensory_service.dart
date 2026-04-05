@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/services.dart';
 
 import 'app_settings_service.dart';
 
@@ -14,39 +13,10 @@ class SensoryService {
   final AudioPlayer _audioPlayer =
       AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
-  Future<void> tap() async {
+  Future<void> playSessionStart() async {
     await _ensureSettingsLoaded();
-    if (!_appSettingsService.enableHaptics) {
-      return;
-    }
-    await HapticFeedback.selectionClick();
-  }
-
-  Future<void> sessionStarted() async {
-    await _ensureSettingsLoaded();
-    if (_appSettingsService.enableHaptics) {
-      await HapticFeedback.mediumImpact();
-    }
     if (_appSettingsService.enableSound) {
       await _tryPlayCue('audio/session_start.mp3');
-    }
-  }
-
-  Future<void> sessionStopped() async {
-    await _ensureSettingsLoaded();
-    if (!_appSettingsService.enableHaptics) {
-      return;
-    }
-    await HapticFeedback.lightImpact();
-  }
-
-  Future<void> sessionCompleted() async {
-    await _ensureSettingsLoaded();
-    if (_appSettingsService.enableHaptics) {
-      await HapticFeedback.heavyImpact();
-    }
-    if (_appSettingsService.enableSound) {
-      await _tryPlayCue('audio/session_complete.mp3');
     }
   }
 
