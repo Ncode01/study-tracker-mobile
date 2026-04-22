@@ -22,6 +22,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     accentColor: Color(0xFF3B82F6),
     section: 'A/LEVELS',
   );
+  static const Duration _shortBreakDuration = Duration(minutes: 5);
+  static const Duration _longBreakDuration = Duration(minutes: 15);
+  static const int _longBreakEveryFocusSessions = 4;
 
   TimerRepository? _repository;
   TimerService? _timerService;
@@ -29,6 +32,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
   SensoryService? _sensoryService;
   final bool _persistenceEnabled = true;
   bool _keepScreenAwakeEnabled = true;
+  int _focusMinutes = 60;
+  int _weeklyTargetMinutes = 10 * 60;
+  bool _tickInFlight = false;
 
   TimerRepository get _repo {
     return _repository ??= TimerRepository(
@@ -67,6 +73,8 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
 
     final AppSettingsSnapshot settings = await settingsService.snapshot();
     _keepScreenAwakeEnabled = settings.keepScreenAwake;
+    _focusMinutes = settings.defaultFocusMinutes;
+    _weeklyTargetMinutes = settings.weeklyFocusTargetMinutes;
 
     ref.onDispose(() {
       final TimerService? timerService = _timerService;
@@ -87,9 +95,11 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
       orElse: () => categories.first,
     );
 
-    final TimerSnapshot timer = await _repo.loadTimerSnapshot();
+    final TimerSnapshot timer = await _repo.loadTimerSnapshot(
+      focusMinutes: _focusMinutes,
+    );
 
-    final HomeStats stats = await _repo.loadHomeStats(
+    final HomeStats stats = await _loadStats(
       categories: categories,
       currentCategoryId: currentCategory.id,
     );
@@ -101,16 +111,11 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
       timer: timer,
     );
 
-    if (_persistenceEnabled) {
-      await _repo.saveActiveSession(
-        categoryId: currentCategory.id,
-        sessionStartTime: timer.sessionStartTime,
-      );
-    }
+    await _syncPersistence(initialState);
 
     _tickerService.startTicker(onTick: _tick);
     await _tickerService.updateWakelock(
-      _shouldEnableWakelockForCategory(currentCategory.id),
+      _shouldEnableWakelockForState(initialState),
     );
 
     return initialState;
@@ -127,73 +132,93 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     }
 
     final DateTime now = DateTime.now();
-    final DateTime previousSessionStart = _resolveSessionStartTime(
-      current.timer,
-    );
-    final Duration outgoingDuration = now.difference(previousSessionStart);
+    TimerSnapshot nextTimer = current.timer;
 
-    if (_persistenceEnabled && outgoingDuration > Duration.zero) {
-      await _repo.saveSession(
-        categoryId: current.currentCategory.id,
-        startedAt: previousSessionStart,
-        endedAt: now,
-        duration: outgoingDuration,
-        isProductive: _isProductiveCategoryId(current.currentCategory.id),
-      );
+    if (current.timer.isRunning && current.timer.phase == PomodoroPhase.focus) {
+      await _persistRunningSegmentIfNeeded(baseState: current, endedAt: now);
+      nextTimer = current.timer
+          .materializeAt(now)
+          .copyWith(isRunning: true, runningSince: now);
     }
 
-    if (_persistenceEnabled) {
-      await _repo.saveActiveSession(
-        categoryId: category.id,
-        sessionStartTime: now,
-      );
-    }
-
-    final TimerSnapshot nextTimer = TimerSnapshot(
-      sessionStartTime: now,
-      elapsed: Duration.zero,
+    final HomeStats nextStats = await _loadStats(
+      categories: current.categories,
+      currentCategoryId: category.id,
     );
 
-    final HomeStats nextStats =
-        _persistenceEnabled
-            ? await _repo.loadHomeStats(
-              categories: current.categories,
-              currentCategoryId: category.id,
-            )
-            : current.stats;
-
-    state = AsyncData(
-      current.copyWith(
-        currentCategory: category,
-        timer: nextTimer,
-        stats: nextStats,
-      ),
+    final HomeViewState nextState = current.copyWith(
+      currentCategory: category,
+      timer: nextTimer,
+      stats: nextStats,
     );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
 
     unawaited(_playSwitchFeedbackSafely());
 
     await _tickerService.updateWakelock(
-      _shouldEnableWakelockForCategory(category.id),
+      _shouldEnableWakelockForState(nextState),
     );
   }
 
-  Future<void> quickSwitchToMaths() async {
-    final SubjectCategory? maths = _categoryById('maths');
-    if (maths != null) {
-      await switchCategory(maths);
+  Future<void> startFocusForCategoryId({
+    required String categoryId,
+    String? categoryTitle,
+    Color? accentColor,
+    IconData? icon,
+    bool createIfMissing = false,
+  }) async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null) {
+      return;
     }
-  }
 
-  Future<void> quickSwitchToBreak() async {
-    final SubjectCategory? breakCategory = _categoryById('break');
-    if (breakCategory != null) {
-      await switchCategory(breakCategory);
+    final String normalizedId = _slugify(categoryId);
+    SubjectCategory? target = _categoryById(normalizedId);
+
+    if (target == null && createIfMissing) {
+      target = SubjectCategory(
+        id: normalizedId,
+        title: _normalizeExternalTitle(categoryTitle, normalizedId),
+        icon: icon ?? Icons.auto_awesome_rounded,
+        accentColor: accentColor ?? const Color(0xFF64748B),
+        section: 'CUSTOM',
+      );
+
+      if (_persistenceEnabled) {
+        await _repo.insertCategory(target);
+      }
+
+      final HomeViewState? latest = state.valueOrNull;
+      final HomeViewState base = latest ?? current;
+
+      if (_categoryById(normalizedId) == null) {
+        state = AsyncData(
+          base.copyWith(
+            categories: <SubjectCategory>[...base.categories, target],
+          ),
+        );
+      } else {
+        target = _categoryById(normalizedId);
+      }
     }
+
+    final HomeViewState? latest = state.valueOrNull;
+    if (latest == null) {
+      return;
+    }
+
+    final SubjectCategory category =
+        target ?? _categoryById(normalizedId) ?? latest.currentCategory;
+
+    await _startFocusForCategory(category: category, baseState: latest);
   }
 
   Future<SubjectCategory?> createCategory({
     required String title,
     required Color accentColor,
+    bool switchToCategory = true,
   }) async {
     final HomeViewState? current = state.valueOrNull;
     if (current == null) {
@@ -224,7 +249,9 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     ];
 
     state = AsyncData(current.copyWith(categories: nextCategories));
-    await switchCategory(category);
+    if (switchToCategory) {
+      await switchCategory(category);
+    }
 
     return category;
   }
@@ -236,7 +263,7 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     final HomeViewState? current = state.valueOrNull;
     if (current != null) {
       await _tickerService.updateWakelock(
-        _shouldEnableWakelockForCategory(current.currentCategory.id),
+        _shouldEnableWakelockForState(current),
       );
     }
   }
@@ -248,44 +275,443 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     };
 
     await _settingsService.setDefaultFocusMinutes(normalizedMinutes);
-  }
+    _focusMinutes = normalizedMinutes;
 
-  Future<void> _tick() async {
     final HomeViewState? current = state.valueOrNull;
     if (current == null) {
       return;
     }
 
-    final DateTime sessionStartTime = _resolveSessionStartTime(current.timer);
-    final Duration elapsed = DateTime.now().difference(sessionStartTime);
-    final Duration normalizedElapsed =
-        elapsed.isNegative ? Duration.zero : elapsed;
+    if (current.timer.phase == PomodoroPhase.focus &&
+        !current.timer.isRunning) {
+      final Duration nextDuration = Duration(minutes: normalizedMinutes);
+      final Duration clampedElapsed =
+          current.timer.elapsed > nextDuration
+              ? nextDuration
+              : current.timer.elapsed;
+      final TimerSnapshot nextTimer = current.timer.copyWith(
+        phaseDuration: nextDuration,
+        elapsed: clampedElapsed,
+      );
+      final HomeViewState nextState = current.copyWith(timer: nextTimer);
+      state = AsyncData(nextState);
+      await _syncPersistence(nextState);
+    }
+  }
+
+  Future<void> updateWeeklyTargetMinutes(int minutes) async {
+    final int normalizedMinutes = switch (minutes) {
+      300 || 600 || 900 || 1200 => minutes,
+      _ => 600,
+    };
+
+    await _settingsService.setWeeklyFocusTargetMinutes(normalizedMinutes);
+    _weeklyTargetMinutes = normalizedMinutes;
+
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+
+    final HomeStats nextStats = await _loadStats(
+      categories: current.categories,
+      currentCategoryId: current.currentCategory.id,
+    );
+    state = AsyncData(current.copyWith(stats: nextStats));
+  }
+
+  Future<void> startOrResumeTimer() async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null || current.timer.isRunning) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final TimerSnapshot nextTimer = current.timer.copyWith(
+      isRunning: true,
+      runningSince: now,
+    );
+    final HomeViewState nextState = current.copyWith(timer: nextTimer);
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(
+      _shouldEnableWakelockForState(nextState),
+    );
+  }
+
+  Future<void> pauseTimer() async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null || !current.timer.isRunning) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    await _persistRunningSegmentIfNeeded(baseState: current, endedAt: now);
+
+    final TimerSnapshot nextTimer = current.timer
+        .materializeAt(now)
+        .copyWith(isRunning: false, clearRunningSince: true);
+
+    final HomeStats nextStats = await _loadStats(
+      categories: current.categories,
+      currentCategoryId: current.currentCategory.id,
+    );
+
+    final HomeViewState nextState = current.copyWith(
+      timer: nextTimer,
+      stats: nextStats,
+    );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(false);
+  }
+
+  Future<void> stopTimer() async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    if (current.timer.isRunning) {
+      await _persistRunningSegmentIfNeeded(baseState: current, endedAt: now);
+    }
+
+    final TimerSnapshot nextTimer = TimerSnapshot.idleFocus(
+      focusDuration: Duration(minutes: _focusMinutes),
+      completedFocusSessions: 0,
+    );
+
+    final HomeStats nextStats = await _loadStats(
+      categories: current.categories,
+      currentCategoryId: current.currentCategory.id,
+    );
+
+    final HomeViewState nextState = current.copyWith(
+      timer: nextTimer,
+      stats: nextStats,
+    );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(false);
+  }
+
+  Future<void> startBreakNow() async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    if (current.timer.isRunning) {
+      await _persistRunningSegmentIfNeeded(baseState: current, endedAt: now);
+    }
+
+    final TimerSnapshot nextTimer = TimerSnapshot(
+      phase: PomodoroPhase.shortBreak,
+      phaseDuration: _shortBreakDuration,
+      elapsed: Duration.zero,
+      isRunning: true,
+      completedFocusSessions: current.timer.completedFocusSessions,
+      runningSince: now,
+    );
+
+    final HomeStats nextStats = await _loadStats(
+      categories: current.categories,
+      currentCategoryId: current.currentCategory.id,
+    );
+
+    final HomeViewState nextState = current.copyWith(
+      timer: nextTimer,
+      stats: nextStats,
+    );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(false);
+  }
+
+  Future<void> skipBreak() async {
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null || current.timer.phase == PomodoroPhase.focus) {
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    if (current.timer.isRunning) {
+      await _persistRunningSegmentIfNeeded(baseState: current, endedAt: now);
+    }
+
+    final TimerSnapshot nextTimer = TimerSnapshot.idleFocus(
+      focusDuration: Duration(minutes: _focusMinutes),
+      completedFocusSessions: current.timer.completedFocusSessions,
+    );
+
+    final HomeStats nextStats = await _loadStats(
+      categories: current.categories,
+      currentCategoryId: current.currentCategory.id,
+    );
+
+    final HomeViewState nextState = current.copyWith(
+      timer: nextTimer,
+      stats: nextStats,
+    );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(false);
+  }
+
+  Future<void> _startFocusForCategory({
+    required SubjectCategory category,
+    required HomeViewState baseState,
+  }) async {
+    final DateTime now = DateTime.now();
+
+    if (baseState.timer.isRunning) {
+      await _persistRunningSegmentIfNeeded(baseState: baseState, endedAt: now);
+    }
+
+    final TimerSnapshot nextTimer = TimerSnapshot(
+      phase: PomodoroPhase.focus,
+      phaseDuration: Duration(minutes: _focusMinutes),
+      elapsed: Duration.zero,
+      isRunning: true,
+      completedFocusSessions: baseState.timer.completedFocusSessions,
+      runningSince: now,
+    );
+
+    final HomeStats nextStats = await _loadStats(
+      categories: baseState.categories,
+      currentCategoryId: category.id,
+    );
+
+    final HomeViewState nextState = baseState.copyWith(
+      currentCategory: category,
+      timer: nextTimer,
+      stats: nextStats,
+    );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(
+      _shouldEnableWakelockForState(nextState),
+    );
+
+    unawaited(_playSwitchFeedbackSafely());
+  }
+
+  Future<void> _tick() async {
+    if (_tickInFlight) {
+      return;
+    }
+    _tickInFlight = true;
+
+    final HomeViewState? current = state.valueOrNull;
+    if (current == null || !current.timer.isRunning) {
+      _tickInFlight = false;
+      return;
+    }
+
+    try {
+      final DateTime now = DateTime.now();
+      final DateTime? segmentStart = current.timer.runningSince;
+      final TimerSnapshot progressed = current.timer.materializeAt(now);
+
+      final HomeViewState? latest = state.valueOrNull;
+      if (latest == null) {
+        return;
+      }
+      if (!_sameTimerRun(latest.timer, current.timer) ||
+          latest.currentCategory.id != current.currentCategory.id) {
+        return;
+      }
+
+      final HomeViewState progressedState = latest.copyWith(timer: progressed);
+      state = AsyncData(progressedState);
+
+      if (progressed.isPhaseCompleteAt(now)) {
+        await _handleCompletedPhase(
+          previous: current,
+          progressed: progressed,
+          completedAt: now,
+          segmentStart: segmentStart,
+        );
+        return;
+      }
+
+      if (_persistenceEnabled && progressed.elapsed.inSeconds % 15 == 0) {
+        await _repo.saveTimerSnapshot(progressed);
+      }
+    } finally {
+      _tickInFlight = false;
+    }
+  }
+
+  Future<void> _handleCompletedPhase({
+    required HomeViewState previous,
+    required TimerSnapshot progressed,
+    required DateTime completedAt,
+    required DateTime? segmentStart,
+  }) async {
+    if (segmentStart != null) {
+      await _persistSessionSegment(
+        baseState: previous,
+        startedAt: segmentStart,
+        endedAt: completedAt,
+      );
+    }
+
+    TimerSnapshot nextTimer;
+    if (progressed.phase == PomodoroPhase.focus) {
+      final int completedFocusSessions = progressed.completedFocusSessions + 1;
+      final PomodoroPhase breakPhase =
+          completedFocusSessions % _longBreakEveryFocusSessions == 0
+              ? PomodoroPhase.longBreak
+              : PomodoroPhase.shortBreak;
+
+      nextTimer = TimerSnapshot(
+        phase: breakPhase,
+        phaseDuration:
+            breakPhase == PomodoroPhase.longBreak
+                ? _longBreakDuration
+                : _shortBreakDuration,
+        elapsed: Duration.zero,
+        isRunning: true,
+        completedFocusSessions: completedFocusSessions,
+        runningSince: completedAt,
+      );
+    } else {
+      nextTimer = TimerSnapshot.idleFocus(
+        focusDuration: Duration(minutes: _focusMinutes),
+        completedFocusSessions: progressed.completedFocusSessions,
+      );
+    }
 
     final HomeViewState? latest = state.valueOrNull;
-    if (latest == null) {
+    if (latest == null || !_sameTimerRun(latest.timer, progressed)) {
       return;
     }
 
-    final DateTime latestSessionStart = _resolveSessionStartTime(latest.timer);
-    if (latest.currentCategory.id != current.currentCategory.id ||
-        latestSessionStart.millisecondsSinceEpoch !=
-            sessionStartTime.millisecondsSinceEpoch) {
-      return;
-    }
-
-    if (normalizedElapsed.inSeconds == latest.timer.elapsed.inSeconds) {
-      return;
-    }
-
-    final TimerSnapshot nextTimer = current.timer.copyWith(
-      sessionStartTime: sessionStartTime,
-      elapsed: normalizedElapsed,
+    final HomeStats nextStats = await _loadStats(
+      categories: latest.categories,
+      currentCategoryId: latest.currentCategory.id,
     );
-    state = AsyncData(latest.copyWith(timer: nextTimer));
 
-    if (_persistenceEnabled && normalizedElapsed.inSeconds % 30 == 0) {
-      await _repo.saveTimerSnapshot(nextTimer);
+    final HomeViewState nextState = latest.copyWith(
+      timer: nextTimer,
+      stats: nextStats,
+    );
+    state = AsyncData(nextState);
+
+    await _syncPersistence(nextState);
+    await _tickerService.updateWakelock(
+      _shouldEnableWakelockForState(nextState),
+    );
+
+    unawaited(_playSwitchFeedbackSafely());
+  }
+
+  bool _sameTimerRun(TimerSnapshot a, TimerSnapshot b) {
+    final int? aRunMs = a.runningSince?.millisecondsSinceEpoch;
+    final int? bRunMs = b.runningSince?.millisecondsSinceEpoch;
+    return a.phase == b.phase &&
+        a.isRunning == b.isRunning &&
+        aRunMs == bRunMs &&
+        a.completedFocusSessions == b.completedFocusSessions;
+  }
+
+  Future<void> _persistRunningSegmentIfNeeded({
+    required HomeViewState baseState,
+    required DateTime endedAt,
+  }) async {
+    final DateTime? startedAt = baseState.timer.runningSince;
+    if (startedAt == null) {
+      return;
     }
+
+    await _persistSessionSegment(
+      baseState: baseState,
+      startedAt: startedAt,
+      endedAt: endedAt,
+    );
+  }
+
+  Future<void> _persistSessionSegment({
+    required HomeViewState baseState,
+    required DateTime startedAt,
+    required DateTime endedAt,
+  }) async {
+    if (!_persistenceEnabled || !endedAt.isAfter(startedAt)) {
+      return;
+    }
+
+    final String categoryId = _activeCategoryIdForState(baseState);
+    await _repo.saveSession(
+      categoryId: categoryId,
+      startedAt: startedAt,
+      endedAt: endedAt,
+      duration: endedAt.difference(startedAt),
+      isProductive:
+          baseState.timer.phase == PomodoroPhase.focus &&
+          _isProductiveCategoryId(categoryId),
+    );
+  }
+
+  Future<void> _syncPersistence(HomeViewState stateValue) async {
+    if (!_persistenceEnabled) {
+      return;
+    }
+
+    await _repo.saveSelectedCategoryId(stateValue.currentCategory.id);
+    await _repo.saveTimerSnapshot(stateValue.timer);
+
+    if (stateValue.timer.isRunning && stateValue.timer.runningSince != null) {
+      await _repo.saveActiveSession(
+        categoryId: _activeCategoryIdForState(stateValue),
+        sessionStartTime: stateValue.timer.runningSince!,
+      );
+    } else {
+      await _repo.clearActiveSession();
+    }
+  }
+
+  Future<HomeStats> _loadStats({
+    required List<SubjectCategory> categories,
+    required String currentCategoryId,
+  }) async {
+    if (!_persistenceEnabled) {
+      return const HomeStats(
+        totalProductive: '0m',
+        streak: '0m',
+        next: '-',
+        weeklyTargetProgress: '0m / 10h',
+        weeklyAverage: '0m/day',
+        planAdherence: 'No plan yet',
+      );
+    }
+
+    return _repo.loadHomeStats(
+      categories: categories,
+      currentCategoryId: currentCategoryId,
+      weeklyTargetMinutes: _weeklyTargetMinutes,
+    );
+  }
+
+  String _activeCategoryIdForState(HomeViewState stateValue) {
+    if (stateValue.timer.phase == PomodoroPhase.focus) {
+      return stateValue.currentCategory.id;
+    }
+
+    for (final SubjectCategory category in stateValue.categories) {
+      if (category.id.toLowerCase() == 'break') {
+        return category.id;
+      }
+    }
+    return stateValue.currentCategory.id;
   }
 
   Future<void> _playSwitchFeedbackSafely() async {
@@ -342,8 +768,16 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     return !_isNonProductiveCategoryId(categoryId);
   }
 
-  bool _shouldEnableWakelockForCategory(String categoryId) {
-    return _keepScreenAwakeEnabled && _isProductiveCategoryId(categoryId);
+  bool _shouldEnableWakelockForState(HomeViewState stateValue) {
+    if (!_keepScreenAwakeEnabled || !stateValue.timer.isRunning) {
+      return false;
+    }
+    if (stateValue.timer.phase != PomodoroPhase.focus) {
+      return false;
+    }
+
+    final String activeCategoryId = _activeCategoryIdForState(stateValue);
+    return _isProductiveCategoryId(activeCategoryId);
   }
 
   String _slugify(String value) {
@@ -351,6 +785,28 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     final String slug = lowered.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
     final String trimmed = slug.replaceAll(RegExp(r'^-+|-+$'), '');
     return trimmed.isEmpty ? 'category' : trimmed;
+  }
+
+  String _normalizeExternalTitle(String? rawTitle, String normalizedId) {
+    final String trimmed = rawTitle?.trim() ?? '';
+    if (trimmed.isNotEmpty) {
+      return trimmed;
+    }
+
+    final List<String> words = normalizedId
+        .split('-')
+        .where((String part) => part.trim().isNotEmpty)
+        .toList(growable: false);
+    if (words.isEmpty) {
+      return 'Category';
+    }
+
+    return words
+        .map(
+          (String part) =>
+              '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
+        )
+        .join(' ');
   }
 
   Future<String> _generateUniqueCategoryId(String title) async {
@@ -365,22 +821,5 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     }
 
     return candidate;
-  }
-
-  DateTime _resolveSessionStartTime(TimerSnapshot timer) {
-    try {
-      return timer.sessionStartTime;
-    } catch (_) {
-      final Duration fallbackElapsed = _safeElapsed(timer);
-      return DateTime.now().subtract(fallbackElapsed);
-    }
-  }
-
-  Duration _safeElapsed(TimerSnapshot timer) {
-    try {
-      return timer.elapsed;
-    } catch (_) {
-      return Duration.zero;
-    }
   }
 }

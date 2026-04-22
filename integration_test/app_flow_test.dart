@@ -17,7 +17,13 @@ void main() {
     expect(find.byType(Scaffold), findsWidgets);
 
     await tester.tap(find.byIcon(Icons.bar_chart_outlined));
-    await tester.pumpAndSettle(const Duration(milliseconds: 250));
+    await tester.pump();
+    for (int i = 0; i < 30; i++) {
+      if (find.text('Daily Truth').evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
     expect(find.text('Daily Truth'), findsOneWidget);
     expect(find.text('Export Data'), findsOneWidget);

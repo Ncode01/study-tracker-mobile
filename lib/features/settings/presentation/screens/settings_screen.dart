@@ -80,6 +80,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         .updateDefaultFocusDurationMinutes(minutes);
   }
 
+  Future<void> _setWeeklyTargetMinutes(int minutes) async {
+    setState(() {
+      _settings = _settings?.copyWith(weeklyFocusTargetMinutes: minutes);
+    });
+
+    await ref
+        .read(homeViewNotifierProvider.notifier)
+        .updateWeeklyTargetMinutes(minutes);
+  }
+
   Future<void> _wipeAllData() async {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
@@ -145,6 +155,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           keepScreenAwake: true,
           onboardingCompleted: false,
           defaultFocusMinutes: 60,
+          weeklyFocusTargetMinutes: 600,
         );
 
     return Scaffold(
@@ -304,6 +315,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     onTap:
                                         () => unawaited(
                                           _setFocusMinutes(minutes),
+                                        ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Weekly Focus Target',
+                          style: AppTypography.display(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            for (final int minutes in const <int>[
+                              300,
+                              600,
+                              900,
+                              1200,
+                            ])
+                              Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    right: minutes == 1200 ? 0 : 8,
+                                  ),
+                                  child: _FocusMinutesChip(
+                                    label: '${minutes ~/ 60}h',
+                                    selected:
+                                        settings.weeklyFocusTargetMinutes ==
+                                        minutes,
+                                    onTap:
+                                        () => unawaited(
+                                          _setWeeklyTargetMinutes(minutes),
                                         ),
                                   ),
                                 ),

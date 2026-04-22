@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/data/local/app_database.dart';
 import '../models/home_stats.dart';
@@ -14,8 +15,18 @@ class TimerRepository {
        _preferences = preferences;
 
   static const String _selectedCategoryKey = 'selected_category_id';
-  static const String _timerSessionStartTimeKey = 'timer_session_start_time_ms';
-  static const String _timerElapsedKey = 'timer_elapsed_seconds';
+  static const String _activeSessionCategoryKey = 'active_session_category_id';
+  static const String _activeSessionStartTimeKey =
+      'timer_session_start_time_ms';
+
+  static const String _pomodoroPhaseKey = 'pomodoro_phase';
+  static const String _pomodoroPhaseDurationSecondsKey =
+      'pomodoro_phase_duration_seconds';
+  static const String _pomodoroElapsedSecondsKey = 'pomodoro_elapsed_seconds';
+  static const String _pomodoroIsRunningKey = 'pomodoro_is_running';
+  static const String _pomodoroRunningSinceMsKey = 'pomodoro_running_since_ms';
+  static const String _pomodoroCompletedFocusSessionsKey =
+      'pomodoro_completed_focus_sessions';
 
   // Legacy keys kept temporarily for migration cleanup from pre-continuous flow builds.
   static const String _legacyTimerTargetKey = 'timer_target_seconds';
@@ -23,6 +34,7 @@ class TimerRepository {
   static const String _legacyTimerLastUpdateKey = 'timer_last_update_ms';
   static const String _legacyTimerSessionStartElapsedKey =
       'timer_session_start_elapsed_seconds';
+  static const String _legacyTimerElapsedKey = 'timer_elapsed_seconds';
 
   final AppDatabase _database;
   final SharedPreferences _preferences;
@@ -63,44 +75,83 @@ class TimerRepository {
     await _preferences.setString(_selectedCategoryKey, categoryId);
   }
 
-  Future<TimerSnapshot> loadTimerSnapshot() async {
+  Future<TimerSnapshot> loadTimerSnapshot({required int focusMinutes}) async {
+    final Duration focusDuration = Duration(minutes: focusMinutes);
+
+    final String? phaseRaw = _preferences.getString(_pomodoroPhaseKey);
+    final TimerSnapshot fallback = TimerSnapshot.idleFocus(
+      focusDuration: focusDuration,
+    );
+
+    if (phaseRaw == null || phaseRaw.trim().isEmpty) {
+      await saveTimerSnapshot(fallback);
+      await _removeLegacyTimerKeys();
+      return fallback;
+    }
+
+    final TimerSnapshot persisted = TimerSnapshot.fromMap(<String, Object?>{
+      'phase': phaseRaw,
+      'phaseDurationSeconds':
+          _preferences.getInt(_pomodoroPhaseDurationSecondsKey) ??
+          focusDuration.inSeconds,
+      'elapsedSeconds': _preferences.getInt(_pomodoroElapsedSecondsKey) ?? 0,
+      'isRunning': _preferences.getBool(_pomodoroIsRunningKey) ?? false,
+      'runningSinceMs': _preferences.getInt(_pomodoroRunningSinceMsKey),
+      'completedFocusSessions':
+          _preferences.getInt(_pomodoroCompletedFocusSessionsKey) ?? 0,
+    });
+
     final DateTime now = DateTime.now();
-    final DateTime? savedSessionStartTime = _loadDateTime(
-      _timerSessionStartTimeKey,
-    );
-    final int elapsedSeconds = _preferences.getInt(_timerElapsedKey) ?? 0;
-
-    final DateTime sessionStartTime =
-        savedSessionStartTime ??
-        now.subtract(Duration(seconds: elapsedSeconds));
-    final Duration elapsed = now.difference(sessionStartTime);
-
-    final TimerSnapshot snapshot = TimerSnapshot(
-      sessionStartTime: sessionStartTime,
-      elapsed: elapsed.isNegative ? Duration.zero : elapsed,
-    );
-
-    await saveTimerSnapshot(snapshot);
+    final TimerSnapshot normalized = persisted.materializeAt(now);
+    await saveTimerSnapshot(normalized);
     await _removeLegacyTimerKeys();
-    return snapshot;
+    return normalized;
   }
 
   Future<void> saveTimerSnapshot(TimerSnapshot snapshot) async {
+    final Map<String, Object?> map = snapshot.toMap();
+
+    await _preferences.setString(_pomodoroPhaseKey, map['phase']! as String);
     await _preferences.setInt(
-      _timerSessionStartTimeKey,
-      snapshot.sessionStartTime.millisecondsSinceEpoch,
+      _pomodoroPhaseDurationSecondsKey,
+      map['phaseDurationSeconds']! as int,
     );
-    await _preferences.setInt(_timerElapsedKey, snapshot.elapsed.inSeconds);
+    await _preferences.setInt(
+      _pomodoroElapsedSecondsKey,
+      map['elapsedSeconds']! as int,
+    );
+    await _preferences.setBool(
+      _pomodoroIsRunningKey,
+      (map['isRunning'] as int? ?? 0) == 1,
+    );
+
+    final int? runningSinceMs = map['runningSinceMs'] as int?;
+    if (runningSinceMs == null) {
+      await _preferences.remove(_pomodoroRunningSinceMsKey);
+    } else {
+      await _preferences.setInt(_pomodoroRunningSinceMsKey, runningSinceMs);
+    }
+
+    await _preferences.setInt(
+      _pomodoroCompletedFocusSessionsKey,
+      map['completedFocusSessions']! as int,
+    );
   }
 
   Future<void> saveActiveSession({
     required String categoryId,
     required DateTime sessionStartTime,
   }) async {
-    await saveSelectedCategoryId(categoryId);
-    await saveTimerSnapshot(
-      TimerSnapshot(sessionStartTime: sessionStartTime, elapsed: Duration.zero),
+    await _preferences.setString(_activeSessionCategoryKey, categoryId);
+    await _preferences.setInt(
+      _activeSessionStartTimeKey,
+      sessionStartTime.millisecondsSinceEpoch,
     );
+  }
+
+  Future<void> clearActiveSession() async {
+    await _preferences.remove(_activeSessionCategoryKey);
+    await _preferences.remove(_activeSessionStartTimeKey);
   }
 
   Future<void> _removeLegacyTimerKeys() async {
@@ -108,14 +159,7 @@ class TimerRepository {
     await _preferences.remove(_legacyTimerRunningKey);
     await _preferences.remove(_legacyTimerLastUpdateKey);
     await _preferences.remove(_legacyTimerSessionStartElapsedKey);
-  }
-
-  DateTime? _loadDateTime(String key) {
-    final int? milliseconds = _preferences.getInt(key);
-    if (milliseconds == null) {
-      return null;
-    }
-    return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+    await _preferences.remove(_legacyTimerElapsedKey);
   }
 
   Future<void> saveSession({
@@ -149,27 +193,131 @@ class TimerRepository {
   Future<HomeStats> loadHomeStats({
     required List<SubjectCategory> categories,
     required String currentCategoryId,
+    required int weeklyTargetMinutes,
   }) async {
     final db = await _database.database;
-    final rows = await db.query('sessions');
+    final List<Map<String, Object?>> rows = await db.query(
+      'sessions',
+      columns: const <String>[
+        'categoryId',
+        'startedAt',
+        'endedAt',
+        'durationSeconds',
+        'isProductive',
+      ],
+    );
 
     int totalProductiveSeconds = 0;
     int todayProductiveSeconds = 0;
     final DateTime now = DateTime.now();
+    final DateTime weekStart = _startOfWeek(now);
+    final DateTime weekEnd = weekStart.add(const Duration(days: 7));
 
-    for (final row in rows) {
+    final List<_TimeRange> productiveWeekRanges = <_TimeRange>[];
+
+    for (final Map<String, Object?> row in rows) {
       final int durationSeconds = row['durationSeconds'] as int? ?? 0;
       final bool productive = (row['isProductive'] as int? ?? 0) == 1;
       if (!productive) {
         continue;
       }
 
-      totalProductiveSeconds += durationSeconds;
-      final DateTime end = DateTime.parse(row['endedAt'] as String);
-      if (_isSameDate(end, now)) {
-        todayProductiveSeconds += durationSeconds;
+      final DateTime? startAt = DateTime.tryParse(
+        row['startedAt'] as String? ?? '',
+      );
+      final DateTime? endedAt = DateTime.tryParse(
+        row['endedAt'] as String? ?? '',
+      );
+
+      if (startAt == null || endedAt == null || !endedAt.isAfter(startAt)) {
+        continue;
+      }
+
+      final int normalizedDurationSeconds =
+          durationSeconds > 0
+              ? durationSeconds
+              : endedAt.difference(startAt).inSeconds;
+      totalProductiveSeconds += normalizedDurationSeconds;
+
+      if (_isSameDate(endedAt, now)) {
+        todayProductiveSeconds += normalizedDurationSeconds;
+      }
+
+      final _TimeRange? weekRange = _clampRange(
+        start: startAt,
+        end: endedAt,
+        windowStart: weekStart,
+        windowEnd: weekEnd,
+      );
+      if (weekRange != null) {
+        productiveWeekRanges.add(weekRange);
       }
     }
+
+    final int weeklyProductiveSeconds = _totalMergedSeconds(
+      productiveWeekRanges,
+    );
+    final int safeWeeklyTargetMinutes =
+        weeklyTargetMinutes <= 0 ? 10 * 60 : weeklyTargetMinutes;
+    final int weeklyTargetSeconds =
+        Duration(minutes: safeWeeklyTargetMinutes).inSeconds;
+    final int elapsedWeekDays = now.difference(weekStart).inDays + 1;
+    final int weeklyAverageSeconds =
+        elapsedWeekDays <= 0
+            ? 0
+            : (weeklyProductiveSeconds / elapsedWeekDays).round();
+
+    final bool hasPlannedItemsTable = await _tableExists(
+      db: db,
+      tableName: 'planned_items',
+    );
+    final List<_TimeRange> plannedWeekRanges = <_TimeRange>[];
+
+    if (hasPlannedItemsTable) {
+      final List<Map<String, Object?>> plannedRows = await db.rawQuery(
+        '''
+        SELECT startAt, endAt
+        FROM planned_items
+        WHERE startAt < ?
+          AND endAt > ?
+      ''',
+        <Object?>[weekEnd.toIso8601String(), weekStart.toIso8601String()],
+      );
+
+      for (final Map<String, Object?> row in plannedRows) {
+        final DateTime? startAt = DateTime.tryParse(
+          row['startAt'] as String? ?? '',
+        );
+        final DateTime? endedAt = DateTime.tryParse(
+          row['endAt'] as String? ?? '',
+        );
+
+        if (startAt == null || endedAt == null || !endedAt.isAfter(startAt)) {
+          continue;
+        }
+
+        final _TimeRange? weekRange = _clampRange(
+          start: startAt,
+          end: endedAt,
+          windowStart: weekStart,
+          windowEnd: weekEnd,
+        );
+        if (weekRange != null) {
+          plannedWeekRanges.add(weekRange);
+        }
+      }
+    }
+
+    final int plannedWeekSeconds = _totalMergedSeconds(plannedWeekRanges);
+    final int overlapWeekSeconds = _totalMergedOverlapSeconds(
+      first: plannedWeekRanges,
+      second: productiveWeekRanges,
+    );
+
+    final String adherenceLabel =
+        plannedWeekSeconds <= 0
+            ? 'No planned slots yet'
+            : '${((overlapWeekSeconds / plannedWeekSeconds) * 100).round().clamp(0, 100)}% on-plan';
 
     final SubjectCategory fallback =
         categories.isNotEmpty
@@ -198,7 +346,126 @@ class TimerRepository {
       totalProductive: _formatDuration(totalProductiveSeconds),
       streak: _formatDuration(todayProductiveSeconds),
       next: nextCategory.title,
+      weeklyTargetProgress:
+          '${_formatDuration(weeklyProductiveSeconds)} / ${_formatDuration(weeklyTargetSeconds)}',
+      weeklyAverage: '${_formatDuration(weeklyAverageSeconds)}/day',
+      planAdherence: adherenceLabel,
     );
+  }
+
+  Future<bool> _tableExists({
+    required Database db,
+    required String tableName,
+  }) async {
+    final List<Map<String, Object?>> rows = await db.rawQuery(
+      'SELECT name FROM sqlite_master WHERE type = ? AND name = ? LIMIT 1',
+      <Object?>['table', tableName],
+    );
+    return rows.isNotEmpty;
+  }
+
+  DateTime _startOfWeek(DateTime date) {
+    final DateTime day = DateTime(date.year, date.month, date.day);
+    return day.subtract(Duration(days: day.weekday - 1));
+  }
+
+  _TimeRange? _clampRange({
+    required DateTime start,
+    required DateTime end,
+    required DateTime windowStart,
+    required DateTime windowEnd,
+  }) {
+    if (!end.isAfter(start)) {
+      return null;
+    }
+
+    final DateTime clampedStart =
+        start.isBefore(windowStart) ? windowStart : start;
+    final DateTime clampedEnd = end.isAfter(windowEnd) ? windowEnd : end;
+
+    if (!clampedEnd.isAfter(clampedStart)) {
+      return null;
+    }
+
+    return _TimeRange(start: clampedStart, end: clampedEnd);
+  }
+
+  int _totalMergedSeconds(List<_TimeRange> ranges) {
+    if (ranges.isEmpty) {
+      return 0;
+    }
+
+    final List<_TimeRange> merged = _mergeRanges(ranges);
+    int total = 0;
+    for (final _TimeRange range in merged) {
+      total += range.durationSeconds;
+    }
+    return total;
+  }
+
+  int _totalMergedOverlapSeconds({
+    required List<_TimeRange> first,
+    required List<_TimeRange> second,
+  }) {
+    if (first.isEmpty || second.isEmpty) {
+      return 0;
+    }
+
+    final List<_TimeRange> left = _mergeRanges(first);
+    final List<_TimeRange> right = _mergeRanges(second);
+
+    int i = 0;
+    int j = 0;
+    int overlapSeconds = 0;
+
+    while (i < left.length && j < right.length) {
+      final _TimeRange a = left[i];
+      final _TimeRange b = right[j];
+
+      final DateTime overlapStart =
+          a.start.isAfter(b.start) ? a.start : b.start;
+      final DateTime overlapEnd = a.end.isBefore(b.end) ? a.end : b.end;
+
+      if (overlapEnd.isAfter(overlapStart)) {
+        overlapSeconds += overlapEnd.difference(overlapStart).inSeconds;
+      }
+
+      if (a.end.isBefore(b.end)) {
+        i++;
+      } else {
+        j++;
+      }
+    }
+
+    return overlapSeconds;
+  }
+
+  List<_TimeRange> _mergeRanges(List<_TimeRange> ranges) {
+    if (ranges.length <= 1) {
+      return List<_TimeRange>.from(ranges);
+    }
+
+    final List<_TimeRange> sorted = List<_TimeRange>.from(ranges)
+      ..sort((_TimeRange a, _TimeRange b) => a.start.compareTo(b.start));
+
+    final List<_TimeRange> merged = <_TimeRange>[];
+    _TimeRange current = sorted.first;
+
+    for (int index = 1; index < sorted.length; index++) {
+      final _TimeRange next = sorted[index];
+
+      if (!next.start.isAfter(current.end)) {
+        final DateTime end =
+            next.end.isAfter(current.end) ? next.end : current.end;
+        current = _TimeRange(start: current.start, end: end);
+      } else {
+        merged.add(current);
+        current = next;
+      }
+    }
+
+    merged.add(current);
+    return merged;
   }
 
   bool _isSameDate(DateTime a, DateTime b) {
@@ -224,4 +491,13 @@ class TimerRepository {
 
     return '${hours}h ${minutes}m';
   }
+}
+
+class _TimeRange {
+  const _TimeRange({required this.start, required this.end});
+
+  final DateTime start;
+  final DateTime end;
+
+  int get durationSeconds => end.difference(start).inSeconds;
 }

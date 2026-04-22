@@ -7,6 +7,7 @@ class AppSettingsSnapshot {
     required this.keepScreenAwake,
     required this.onboardingCompleted,
     required this.defaultFocusMinutes,
+    required this.weeklyFocusTargetMinutes,
   });
 
   final bool enableHaptics;
@@ -14,6 +15,7 @@ class AppSettingsSnapshot {
   final bool keepScreenAwake;
   final bool onboardingCompleted;
   final int defaultFocusMinutes;
+  final int weeklyFocusTargetMinutes;
 
   AppSettingsSnapshot copyWith({
     bool? enableHaptics,
@@ -21,6 +23,7 @@ class AppSettingsSnapshot {
     bool? keepScreenAwake,
     bool? onboardingCompleted,
     int? defaultFocusMinutes,
+    int? weeklyFocusTargetMinutes,
   }) {
     return AppSettingsSnapshot(
       enableHaptics: enableHaptics ?? this.enableHaptics,
@@ -28,6 +31,8 @@ class AppSettingsSnapshot {
       keepScreenAwake: keepScreenAwake ?? this.keepScreenAwake,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       defaultFocusMinutes: defaultFocusMinutes ?? this.defaultFocusMinutes,
+      weeklyFocusTargetMinutes:
+          weeklyFocusTargetMinutes ?? this.weeklyFocusTargetMinutes,
     );
   }
 }
@@ -44,6 +49,8 @@ class AppSettingsService {
   static const String _onboardingCompletedKey = 'settings_onboarding_done';
   static const String _defaultFocusMinutesKey =
       'settings_default_focus_minutes';
+  static const String _weeklyFocusTargetMinutesKey =
+      'settings_weekly_focus_target_minutes';
 
   final SharedPreferences _preferences;
   late AppSettingsSnapshot _snapshot;
@@ -53,6 +60,7 @@ class AppSettingsService {
   bool get keepScreenAwake => _snapshot.keepScreenAwake;
   bool get onboardingCompleted => _snapshot.onboardingCompleted;
   int get defaultFocusMinutes => _snapshot.defaultFocusMinutes;
+  int get weeklyFocusTargetMinutes => _snapshot.weeklyFocusTargetMinutes;
 
   Future<AppSettingsSnapshot> init() async {
     _snapshot = _loadSnapshotFromPrefs();
@@ -108,6 +116,16 @@ class AppSettingsService {
     );
   }
 
+  Future<void> setWeeklyFocusTargetMinutes(int minutes) async {
+    final int normalizedMinutes = _normalizeWeeklyTargetMinutes(minutes);
+    await _update(
+      next: _snapshot.copyWith(weeklyFocusTargetMinutes: normalizedMinutes),
+      persist:
+          (SharedPreferences prefs) =>
+              prefs.setInt(_weeklyFocusTargetMinutesKey, normalizedMinutes),
+    );
+  }
+
   Future<void> resetAll() async {
     await _preferences.clear();
     _snapshot = _defaultSnapshot;
@@ -131,6 +149,9 @@ class AppSettingsService {
       defaultFocusMinutes: _normalizeFocusMinutes(
         _preferences.getInt(_defaultFocusMinutesKey) ?? 60,
       ),
+      weeklyFocusTargetMinutes: _normalizeWeeklyTargetMinutes(
+        _preferences.getInt(_weeklyFocusTargetMinutesKey) ?? 600,
+      ),
     );
   }
 
@@ -140,6 +161,7 @@ class AppSettingsService {
     keepScreenAwake: true,
     onboardingCompleted: false,
     defaultFocusMinutes: 60,
+    weeklyFocusTargetMinutes: 600,
   );
 
   int _normalizeFocusMinutes(int minutes) {
@@ -148,5 +170,13 @@ class AppSettingsService {
       return minutes;
     }
     return 60;
+  }
+
+  int _normalizeWeeklyTargetMinutes(int minutes) {
+    const List<int> allowed = <int>[300, 600, 900, 1200];
+    if (allowed.contains(minutes)) {
+      return minutes;
+    }
+    return 600;
   }
 }

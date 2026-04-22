@@ -16,6 +16,7 @@ class TimerRing extends StatelessWidget {
     this.onTap,
     this.size = 280,
     this.semanticsHint,
+    this.detailText,
   });
 
   final String timeText;
@@ -26,6 +27,7 @@ class TimerRing extends StatelessWidget {
   final VoidCallback? onTap;
   final double size;
   final String? semanticsHint;
+  final String? detailText;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +75,19 @@ class TimerRing extends StatelessWidget {
                             height: 1,
                           ),
                         ),
+                        if (detailText != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            detailText!,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.display(
+                              color: AppColors.textMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

@@ -23,6 +23,8 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
   String _query = '';
 
   Future<void> _handleCreateNew() async {
+    final notifier = ref.read(homeViewNotifierProvider.notifier);
+
     final CreateCategoryResult? payload =
         await showDialog<CreateCategoryResult>(
           context: context,
@@ -33,11 +35,23 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
       return;
     }
 
-    final SubjectCategory? created = await ref
-        .read(homeViewNotifierProvider.notifier)
-        .createCategory(title: payload.title, accentColor: payload.accentColor);
+    final SubjectCategory? created = await notifier.createCategory(
+      title: payload.title,
+      accentColor: payload.accentColor,
+      switchToCategory: false,
+    );
 
     if (!mounted || created == null) {
+      return;
+    }
+
+    await notifier.startFocusForCategoryId(
+      categoryId: created.id,
+      categoryTitle: created.title,
+      accentColor: created.accentColor,
+    );
+
+    if (!mounted) {
       return;
     }
 
@@ -76,6 +90,14 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
                 });
               },
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose a category to start focus now.',
+              style: AppTypography.display(
+                color: AppColors.textMuted,
+                fontSize: 12,
+              ),
+            ),
             const SizedBox(height: 16),
             Flexible(
               child: SingleChildScrollView(
@@ -87,12 +109,17 @@ class _SwitchContextSheetState extends ConsumerState<SwitchContextSheet> {
                         title: section,
                         categories: _applyFilter(grouped[section] ?? const []),
                         currentCategoryId: currentCategoryId,
-                        onSelect: (SubjectCategory category) {
-                          unawaited(
-                            ref
-                                .read(homeViewNotifierProvider.notifier)
-                                .switchCategory(category),
-                          );
+                        onSelect: (SubjectCategory category) async {
+                          await ref
+                              .read(homeViewNotifierProvider.notifier)
+                              .startFocusForCategoryId(
+                                categoryId: category.id,
+                                categoryTitle: category.title,
+                                accentColor: category.accentColor,
+                              );
+                          if (!mounted) {
+                            return;
+                          }
                           Navigator.of(context).pop();
                         },
                         onCreateNew: _handleCreateNew,
@@ -172,7 +199,7 @@ class _SectionGrid extends StatelessWidget {
   final String title;
   final List<SubjectCategory> categories;
   final String currentCategoryId;
-  final ValueChanged<SubjectCategory> onSelect;
+  final Future<void> Function(SubjectCategory) onSelect;
   final VoidCallback onCreateNew;
 
   @override

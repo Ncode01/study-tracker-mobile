@@ -1181,13 +1181,18 @@ class _TimelineLegend extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             _LegendDot(
-              color: AppColors.primaryPurple.withValues(alpha: 0.86),
-              label: 'Plan',
+              color: Colors.greenAccent.withValues(alpha: 0.86),
+              label: 'Done',
             ),
             const SizedBox(width: 8),
             _LegendDot(
-              color: AppColors.accentPhysics.withValues(alpha: 0.86),
-              label: 'Real',
+              color: AppColors.idleGrey.withValues(alpha: 0.9),
+              label: 'Missed',
+            ),
+            const SizedBox(width: 8),
+            _LegendDot(
+              color: AppColors.accentPhysics.withValues(alpha: 0.72),
+              label: 'Extra',
             ),
             if (isToday) ...<Widget>[
               const SizedBox(width: 8),
@@ -1334,30 +1339,38 @@ class _TimelinePlanActualPainter extends CustomPainter {
       return;
     }
 
-    final Paint plannedPaint =
-        Paint()..color = AppColors.primaryPurple.withValues(alpha: 0.08);
-    final Paint actualPaint =
-        Paint()..color = AppColors.accentPhysics.withValues(alpha: 0.08);
+    final Paint missedPaint =
+        Paint()..color = AppColors.idleGrey.withValues(alpha: 0.20);
+    final Paint extraPaint =
+        Paint()..color = AppColors.accentPhysics.withValues(alpha: 0.07);
     final Paint overlapPaint =
-        Paint()..color = Colors.greenAccent.withValues(alpha: 0.11);
+        Paint()..color = Colors.greenAccent.withValues(alpha: 0.16);
 
     final List<_MinuteBand> mergedPlanned = _mergeBands(plannedBands);
     final List<_MinuteBand> mergedActual = _mergeBands(actualBands);
-
-    for (final _MinuteBand band in mergedPlanned) {
-      final Rect rect = _rectForBand(band: band, left: left, width: width);
-      canvas.drawRect(rect, plannedPaint);
-    }
-
-    for (final _MinuteBand band in mergedActual) {
-      final Rect rect = _rectForBand(band: band, left: left, width: width);
-      canvas.drawRect(rect, actualPaint);
-    }
-
     final List<_MinuteBand> overlapBands = _intersections(
       mergedPlanned,
       mergedActual,
     );
+    final List<_MinuteBand> missedBands = _subtractBands(
+      source: mergedPlanned,
+      subtractor: mergedActual,
+    );
+    final List<_MinuteBand> extraBands = _subtractBands(
+      source: mergedActual,
+      subtractor: mergedPlanned,
+    );
+
+    for (final _MinuteBand band in missedBands) {
+      final Rect rect = _rectForBand(band: band, left: left, width: width);
+      canvas.drawRect(rect, missedPaint);
+    }
+
+    for (final _MinuteBand band in extraBands) {
+      final Rect rect = _rectForBand(band: band, left: left, width: width);
+      canvas.drawRect(rect, extraPaint);
+    }
+
     for (final _MinuteBand band in overlapBands) {
       final Rect rect = _rectForBand(band: band, left: left, width: width);
       canvas.drawRect(rect, overlapPaint);
@@ -1438,6 +1451,52 @@ class _TimelinePlanActualPainter extends CustomPainter {
     }
 
     return intersections;
+  }
+
+  List<_MinuteBand> _subtractBands({
+    required List<_MinuteBand> source,
+    required List<_MinuteBand> subtractor,
+  }) {
+    if (source.isEmpty) {
+      return const <_MinuteBand>[];
+    }
+    if (subtractor.isEmpty) {
+      return List<_MinuteBand>.from(source);
+    }
+
+    final List<_MinuteBand> result = <_MinuteBand>[];
+
+    int j = 0;
+    for (final _MinuteBand src in source) {
+      double cursor = src.startMinute;
+
+      while (j < subtractor.length &&
+          subtractor[j].endMinute <= src.startMinute) {
+        j++;
+      }
+
+      int k = j;
+      while (k < subtractor.length &&
+          subtractor[k].startMinute < src.endMinute) {
+        final _MinuteBand cut = subtractor[k];
+        if (cut.startMinute > cursor) {
+          result.add(
+            _MinuteBand(startMinute: cursor, endMinute: cut.startMinute),
+          );
+        }
+        cursor = math.max(cursor, cut.endMinute).toDouble();
+        if (cursor >= src.endMinute) {
+          break;
+        }
+        k++;
+      }
+
+      if (cursor < src.endMinute) {
+        result.add(_MinuteBand(startMinute: cursor, endMinute: src.endMinute));
+      }
+    }
+
+    return result;
   }
 
   @override

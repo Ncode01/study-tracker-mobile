@@ -12,7 +12,6 @@ import '../../../../core/widgets/glass_container.dart';
 import '../../../../core/widgets/glass_empty_state.dart';
 import '../../../home/presentation/widgets/ambient_background.dart';
 import '../../application/hub_view_notifier.dart';
-import '../../domain/models/hub_class_schedule.dart';
 import '../providers/hub_providers.dart';
 
 class HubScreen extends ConsumerStatefulWidget {

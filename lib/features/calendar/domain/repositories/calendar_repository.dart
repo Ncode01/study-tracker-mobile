@@ -24,6 +24,7 @@ class SqliteCalendarRepository implements CalendarRepository {
        _preferences = preferences;
 
   static const String _selectedCategoryKey = 'selected_category_id';
+  static const String _activeSessionCategoryKey = 'active_session_category_id';
   static const String _timerSessionStartTimeKey = 'timer_session_start_time_ms';
 
   final AppDatabase _database;
@@ -135,9 +136,9 @@ class SqliteCalendarRepository implements CalendarRepository {
     required DateTime startOfDay,
     required DateTime endOfDay,
   }) async {
-    final String? activeCategoryId = _preferences.getString(
-      _selectedCategoryKey,
-    );
+    final String? activeCategoryId =
+        _preferences.getString(_activeSessionCategoryKey) ??
+        _preferences.getString(_selectedCategoryKey);
     final int? activeSessionStartMs = _preferences.getInt(
       _timerSessionStartTimeKey,
     );
@@ -341,6 +342,10 @@ class SqliteCalendarRepository implements CalendarRepository {
           (row['durationMinutes'] as num?)?.toInt() ?? 60;
       final String attendanceStatus =
           row['attendanceStatus'] as String? ?? 'pending';
+      final Color liveBlockAccentColor = _hubStatusAccentColor(
+        rawStatus: attendanceStatus,
+        fallback: accentColor,
+      );
       final DateTime? startDate = DateTime.tryParse(
         row['startDate'] as String? ?? '',
       );
@@ -368,7 +373,7 @@ class SqliteCalendarRepository implements CalendarRepository {
             id: _virtualHubLiveId(classId: classId, day: selectedDate),
             categoryId: subjectId,
             categoryTitle: categoryTitle,
-            accentColor: accentColor,
+            accentColor: liveBlockAccentColor,
             title: '$categoryTitle Live Class',
             startAt: startAt,
             endAt: endAt,
@@ -551,6 +556,16 @@ class SqliteCalendarRepository implements CalendarRepository {
       'attended' => 'attended',
       'missed' => 'missed',
       _ => 'pending',
+    };
+  }
+
+  Color _hubStatusAccentColor({
+    required String rawStatus,
+    required Color fallback,
+  }) {
+    return switch (rawStatus) {
+      'attended' => const Color(0xFF22C55E),
+      _ => fallback,
     };
   }
 

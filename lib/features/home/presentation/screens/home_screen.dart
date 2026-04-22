@@ -6,16 +6,19 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/fading_skeleton.dart';
+import '../../../../core/widgets/glass_button.dart';
 import '../../../../core/widgets/glass_container.dart';
+import '../../domain/models/home_stats.dart';
 import '../../domain/models/home_view_state.dart';
+import '../../domain/models/timer_snapshot.dart';
 import '../providers/home_providers.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/category_hero_tag.dart';
 import '../widgets/category_context_row.dart';
 import '../widgets/onboarding_flow_sheet.dart';
-import '../widgets/quick_switch_chips.dart';
 import '../widgets/switch_context_sheet.dart';
 import '../widgets/timer_ring.dart';
 import '../widgets/top_stats_bar.dart';
@@ -104,18 +107,82 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           final double ringSize = (constraints.maxHeight * 0.44)
                               .clamp(220.0, 280.0);
 
-                          final Duration elapsed = state.timer.elapsed;
-                          final int hours = elapsed.inHours;
-                          final int minutes = elapsed.inMinutes.remainder(60);
-                          final int seconds = elapsed.inSeconds.remainder(60);
+                          final DateTime now = DateTime.now();
+                          final Duration elapsed = state.timer.elapsedAt(now);
+                          final Duration remaining = state.timer.remainingAt(
+                            now,
+                          );
 
                           String twoDigits(int value) =>
                               value.toString().padLeft(2, '0');
-                          final String timerText =
-                              '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}';
+
+                          String formatClock(Duration duration) {
+                            final int hours = duration.inHours;
+                            final int minutes = duration.inMinutes.remainder(
+                              60,
+                            );
+                            final int seconds = duration.inSeconds.remainder(
+                              60,
+                            );
+                            if (hours <= 0) {
+                              return '${twoDigits(minutes)}:${twoDigits(seconds)}';
+                            }
+                            return '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}';
+                          }
+
+                          final String timerText = formatClock(remaining);
+
+                          final String phaseLabel = switch (state.timer.phase) {
+                            PomodoroPhase.focus =>
+                              state.timer.isRunning
+                                  ? 'FOCUS'
+                                  : elapsed > Duration.zero
+                                  ? 'FOCUS PAUSED'
+                                  : 'READY',
+                            PomodoroPhase.shortBreak =>
+                              state.timer.isRunning
+                                  ? 'SHORT BREAK'
+                                  : 'BREAK PAUSED',
+                            PomodoroPhase.longBreak =>
+                              state.timer.isRunning
+                                  ? 'LONG BREAK'
+                                  : 'BREAK PAUSED',
+                          };
+
+                          final String detailText =
+                              'Elapsed ${formatClock(elapsed)} · ${state.timer.completedFocusSessions} focus sessions';
 
                           final double timerProgress =
-                              (elapsed.inSeconds % 3600) / 3600.0;
+                              state.timer.phaseDuration.inSeconds <= 0
+                                  ? 0
+                                  : (elapsed.inSeconds /
+                                          state.timer.phaseDuration.inSeconds)
+                                      .clamp(0.0, 1.0);
+
+                          final bool isRunning = state.timer.isRunning;
+                          final bool isFocusPhase =
+                              state.timer.phase == PomodoroPhase.focus;
+                          final String primaryLabel =
+                              isRunning
+                                  ? 'Pause'
+                                  : elapsed > Duration.zero
+                                  ? 'Resume'
+                                  : isFocusPhase
+                                  ? 'Start Focus'
+                                  : 'Start Break';
+
+                          final VoidCallback onPrimaryTap =
+                              isRunning
+                                  ? () => unawaited(notifier.pauseTimer())
+                                  : () =>
+                                      unawaited(notifier.startOrResumeTimer());
+
+                          final String tertiaryLabel =
+                              isFocusPhase ? 'Rest' : 'Skip Break';
+                          final VoidCallback onTertiaryTap =
+                              isFocusPhase
+                                  ? () => unawaited(notifier.startBreakNow())
+                                  : () => unawaited(notifier.skipBreak());
 
                           return Padding(
                             padding: const EdgeInsets.symmetric(
@@ -174,29 +241,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       SizedBox(height: verticalGap),
                                       TimerRing(
                                         timeText: timerText,
-                                        timeSpentLabel: l10n.homeTimerLabel,
+                                        timeSpentLabel: phaseLabel,
                                         semanticsLabel: l10n
                                             .homeTimerSemanticsLabel(timerText),
                                         semanticsHint: null,
                                         progress: timerProgress,
                                         accentColor:
                                             state.currentCategory.accentColor,
+                                        detailText: detailText,
                                         size: ringSize,
                                         onTap: _showSwitchContextSheet,
                                       ),
                                       SizedBox(height: verticalGap),
-                                      QuickSwitchChips(
-                                        mathsLabel: l10n.homeQuickMaths,
-                                        breakLabel: l10n.homeQuickBreak,
-                                        onMathsTap:
-                                            () => unawaited(
-                                              notifier.quickSwitchToMaths(),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Expanded(
+                                            child: GlassButton(
+                                              label: primaryLabel,
+                                              icon:
+                                                  isRunning
+                                                      ? Icons.pause_rounded
+                                                      : Icons
+                                                          .play_arrow_rounded,
+                                              onTap: onPrimaryTap,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
                                             ),
-                                        onBreakTap:
-                                            () => unawaited(
-                                              notifier.quickSwitchToBreak(),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: GlassButton(
+                                              label: 'Stop',
+                                              icon: Icons.stop_rounded,
+                                              onTap:
+                                                  () => unawaited(
+                                                    notifier.stopTimer(),
+                                                  ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
+                                              iconColor: AppColors.idleGrey,
                                             ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: GlassButton(
+                                              label: tertiaryLabel,
+                                              icon:
+                                                  isFocusPhase
+                                                      ? Icons
+                                                          .free_breakfast_outlined
+                                                      : Icons
+                                                          .fast_forward_rounded,
+                                              onTap: onTertiaryTap,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
+                                              iconColor:
+                                                  isFocusPhase
+                                                      ? AppColors.idleGrey
+                                                      : AppColors.accentMaths,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      SizedBox(height: verticalGap),
+                                      _PomodoroMetricsCard(stats: state.stats),
                                     ],
                                   ),
                                 ),
@@ -216,6 +335,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PomodoroMetricsCard extends StatelessWidget {
+  const _PomodoroMetricsCard({required this.stats});
+
+  final HomeStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      borderRadius: BorderRadius.circular(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: _Metric(
+              label: 'WEEK TARGET',
+              value: stats.weeklyTargetProgress,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _Metric(label: 'AVG / DAY', value: stats.weeklyAverage),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _Metric(label: 'PLAN HIT', value: stats.planAdherence),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  const _Metric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.display(
+            color: AppColors.textMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.mono(
+            color: AppColors.textMain,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:study_tracker_mobile/core/data/local/app_database.dart';
+import 'package:study_tracker_mobile/features/home/domain/models/timer_snapshot.dart';
 import 'package:study_tracker_mobile/features/home/domain/repositories/timer_repository.dart';
 
 void main() {
@@ -41,37 +42,39 @@ void main() {
       await db.close();
     });
 
-    test(
-      'restart continuity restores elapsed from persisted session start',
-      () async {
-        final DateTime anchor = DateTime.now().subtract(
-          const Duration(hours: 2, minutes: 15),
-        );
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          'timer_session_start_time_ms': anchor.millisecondsSinceEpoch,
-          'timer_elapsed_seconds': 1,
-        });
-        final SharedPreferences prefs = await SharedPreferences.getInstance();
+    test('restart continuity restores running Pomodoro elapsed', () async {
+      final DateTime anchor = DateTime.now().subtract(
+        const Duration(hours: 2, minutes: 15),
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'pomodoro_phase': 'focus',
+        'pomodoro_phase_duration_seconds': 6 * 60 * 60,
+        'pomodoro_elapsed_seconds': 0,
+        'pomodoro_is_running': true,
+        'pomodoro_running_since_ms': anchor.millisecondsSinceEpoch,
+        'pomodoro_completed_focus_sessions': 2,
+      });
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-        final TimerRepository repository = TimerRepository(
-          database: _FixedAppDatabase(db),
-          preferences: prefs,
-        );
+      final TimerRepository repository = TimerRepository(
+        database: _FixedAppDatabase(db),
+        preferences: prefs,
+      );
 
-        final snapshot = await repository.loadTimerSnapshot();
+      final TimerSnapshot snapshot = await repository.loadTimerSnapshot(
+        focusMinutes: 60,
+      );
 
-        expect(
-          snapshot.sessionStartTime.millisecondsSinceEpoch,
-          anchor.millisecondsSinceEpoch,
-        );
+      expect(snapshot.phase, PomodoroPhase.focus);
+      expect(snapshot.isRunning, isTrue);
+      expect(snapshot.completedFocusSessions, 2);
 
-        final int driftSeconds =
-            (snapshot.elapsed.inSeconds -
-                    DateTime.now().difference(anchor).inSeconds)
-                .abs();
-        expect(driftSeconds <= 2, isTrue);
-      },
-    );
+      final int driftSeconds =
+          (snapshot.elapsed.inSeconds -
+                  DateTime.now().difference(anchor).inSeconds)
+              .abs();
+      expect(driftSeconds <= 2, isTrue);
+    });
 
     test('saveSession ignores negative durations', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});

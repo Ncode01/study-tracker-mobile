@@ -8,35 +8,46 @@ import '../../domain/models/subject_category.dart';
 
 final homeViewNotifierProvider =
     AsyncNotifierProvider<HomeViewNotifier, HomeViewState>(
-  HomeViewNotifier.new,
-);
+      HomeViewNotifier.new,
+    );
 
 final homeStatsProvider = Provider<HomeStats>((ref) {
-  return ref.watch(homeViewNotifierProvider).maybeWhen(
+  return ref
+      .watch(homeViewNotifierProvider)
+      .maybeWhen(
         data: (HomeViewState state) => state.stats,
-        orElse: () => const HomeStats(
-          totalProductive: '0m',
-          streak: '0m',
-          next: '-',
-        ),
+        orElse:
+            () => const HomeStats(
+              totalProductive: '0m',
+              streak: '0m',
+              next: '-',
+              weeklyTargetProgress: '0m / 10h',
+              weeklyAverage: '0m/day',
+              planAdherence: 'No plan yet',
+            ),
       );
 });
 
 final currentCategoryProvider = Provider<SubjectCategory>((ref) {
-  return ref.watch(homeViewNotifierProvider).maybeWhen(
+  return ref
+      .watch(homeViewNotifierProvider)
+      .maybeWhen(
         data: (HomeViewState state) => state.currentCategory,
-        orElse: () => const SubjectCategory(
-          id: 'loading',
-          title: 'Loading',
-          icon: Icons.hourglass_empty_rounded,
-          accentColor: Colors.white,
-          section: 'A/LEVELS',
-        ),
+        orElse:
+            () => const SubjectCategory(
+              id: 'loading',
+              title: 'Loading',
+              icon: Icons.hourglass_empty_rounded,
+              accentColor: Colors.white,
+              section: 'A/LEVELS',
+            ),
       );
 });
 
 final categoryListProvider = Provider<List<SubjectCategory>>((ref) {
-  return ref.watch(homeViewNotifierProvider).maybeWhen(
+  return ref
+      .watch(homeViewNotifierProvider)
+      .maybeWhen(
         data: (HomeViewState state) => state.categories,
         orElse: () => const <SubjectCategory>[],
       );
