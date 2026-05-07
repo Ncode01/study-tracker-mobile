@@ -175,6 +175,102 @@ void main() {
     expect(nextState.currentCategory.id, 'maths');
     expect(nextState.timer.elapsed.inSeconds <= 1, isTrue);
   });
+
+  test('switchCategory while running starts a fresh timer for new category', () async {
+    final Database db = await databaseFactoryFfi.openDatabase(
+      inMemoryDatabasePath,
+    );
+    addTearDown(() async {
+      await db.close();
+    });
+
+    await db.execute('''
+      CREATE TABLE categories(
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        iconCodePoint INTEGER NOT NULL,
+        iconFontFamily TEXT,
+        accentColorValue INTEGER NOT NULL,
+        section TEXT NOT NULL,
+        isDefault INTEGER NOT NULL DEFAULT 1
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE sessions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        categoryId TEXT NOT NULL,
+        startedAt TEXT NOT NULL,
+        endedAt TEXT NOT NULL,
+        durationSeconds INTEGER NOT NULL,
+        isProductive INTEGER NOT NULL
+      )
+    ''');
+
+    await db.insert('categories', <String, Object?>{
+      'id': 'physics',
+      'title': 'Physics',
+      'iconCodePoint': 0xe3f4,
+      'iconFontFamily': 'MaterialIcons',
+      'accentColorValue': 0xFF3B82F6,
+      'section': 'A/LEVELS',
+      'isDefault': 1,
+    });
+    await db.insert('categories', <String, Object?>{
+      'id': 'maths',
+      'title': 'Maths',
+      'iconCodePoint': 0xe2aa,
+      'iconFontFamily': 'MaterialIcons',
+      'accentColorValue': 0xFFF43F5E,
+      'section': 'A/LEVELS',
+      'isDefault': 1,
+    });
+
+    final DateTime runningSince = DateTime.now().subtract(
+      const Duration(minutes: 5),
+    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'selected_category_id': 'physics',
+      'pomodoro_phase': 'focus',
+      'pomodoro_phase_duration_seconds': 3600,
+      'pomodoro_elapsed_seconds': 0,
+      'pomodoro_is_running': true,
+      'pomodoro_running_since_ms': runningSince.millisecondsSinceEpoch,
+      'pomodoro_completed_focus_sessions': 0,
+    });
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+
+    final ProviderContainer container = ProviderContainer(
+      overrides: <Override>[
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        databaseProvider.overrideWithValue(_FixedAppDatabase(db)),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final HomeViewState initialState = await container.read(
+      homeViewNotifierProvider.future,
+    );
+    final maths = initialState.categories.firstWhere((c) => c.id == 'maths');
+
+    await container.read(homeViewNotifierProvider.notifier).switchCategory(maths);
+
+    final HomeViewState nextState =
+        container.read(homeViewNotifierProvider).value!;
+    expect(nextState.currentCategory.id, 'maths');
+    expect(nextState.timer.isRunning, isTrue);
+    expect(nextState.timer.elapsed.inSeconds <= 1, isTrue);
+
+    final List<Map<String, Object?>> savedSessions = await db.query(
+      'sessions',
+      columns: const <String>['categoryId', 'durationSeconds'],
+      orderBy: 'id ASC',
+    );
+
+    expect(savedSessions.length, 1);
+    expect(savedSessions.first['categoryId'], 'physics');
+    expect((savedSessions.first['durationSeconds'] as int?) ?? 0, greaterThan(0));
+  });
 }
 
 class _FixedAppDatabase extends AppDatabase {

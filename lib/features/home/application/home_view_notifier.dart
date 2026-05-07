@@ -132,13 +132,17 @@ class HomeViewNotifier extends AsyncNotifier<HomeViewState> {
     }
 
     final DateTime now = DateTime.now();
+    final bool runningFocusSession =
+        current.timer.isRunning && current.timer.phase == PomodoroPhase.focus;
     TimerSnapshot nextTimer = current.timer;
 
-    if (current.timer.isRunning && current.timer.phase == PomodoroPhase.focus) {
+    if (runningFocusSession) {
       await _persistRunningSegmentIfNeeded(baseState: current, endedAt: now);
-      nextTimer = current.timer
-          .materializeAt(now)
-          .copyWith(isRunning: true, runningSince: now);
+      nextTimer = current.timer.copyWith(
+        elapsed: Duration.zero,
+        isRunning: true,
+        runningSince: now,
+      );
     }
 
     final HomeStats nextStats = await _loadStats(
